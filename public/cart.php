@@ -1,3 +1,4 @@
+<?php require_once dirname(__DIR__) . '/config/init.php'; ?>
 <!DOCTYPE html>
 <html class="light" lang="en">
 
@@ -56,7 +57,8 @@
                 </a>
 
                 <div class="flex items-center gap-2 sm:gap-4 ml-auto">
-                    <a href="<?= BASE_URL ?>public/market" class="text-sm font-medium hover:text-primary transition-colors">Lanjut
+                    <a href="<?= BASE_URL ?>public/market"
+                        class="text-sm font-medium hover:text-primary transition-colors">Lanjut
                         Belanja</a>
                 </div>
             </div>
@@ -143,28 +145,31 @@
                 document.querySelector('.lg\\:col-span-1').style.display = 'block';
             }
 
+            const BASE_URL = '<?= BASE_URL ?>';
+            const getImageUrl = (path) => {
+                if (!path) return '';
+                if (path.startsWith('http') || path.startsWith('//')) return path;
+                // If path starts with assets/, it needs BASE_URL
+                return BASE_URL + path;
+            };
+
             let html = '';
             let total = 0;
 
             cart.forEach((item, index) => {
                 total += item.total_price;
 
-                // Determine units based on category
-                // Default: kg
-                let unit = 'kg';
-                let weightLabel = 'Berat';
-                let priceUnit = '/ kg';
+                // Determine units from item data
+                let unit = item.unit || 'kg';
+                let weightLabel = (['pcs', 'box', 'porsi'].includes(unit)) ? 'Qty' : 'Berat';
+                let priceUnit = '/ ' + unit;
 
-                if (item.category && ['Frozen Food', 'Produk Jadi'].includes(item.category)) {
-                    unit = 'pcs';
-                    weightLabel = 'Qty';
-                    priceUnit = '/ pcs';
-                }
+                const itemImg = getImageUrl(item.image);
 
                 html += `
                 <div class="p-4 sm:p-6 flex gap-4 sm:gap-6 items-start sm:items-center">
                     <div class="h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 border border-slate-200 dark:border-slate-700">
-                        ${item.image ? `<img src="${item.image}" alt="${item.name}" class="h-full w-full object-cover object-center">` : '<div class="flex h-full items-center justify-center text-slate-400"><span class="material-symbols-outlined">image_not_supported</span></div>'}
+                        ${itemImg ? `<img src="${itemImg}" alt="${item.name}" class="h-full w-full object-cover object-center">` : '<div class="flex h-full items-center justify-center text-slate-400"><span class="material-symbols-outlined">image_not_supported</span></div>'}
                     </div>
                     <div class="flex flex-1 flex-col">
                         <div class="flex justify-between">
@@ -185,8 +190,43 @@
             });
 
             cartItemsContainer.innerHTML = html;
-            subtotalEl.innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
-            totalEl.innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+
+            let subtotal = 0;
+            cart.forEach(item => subtotal += item.total_price);
+            subtotalEl.innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal);
+
+            // Fetch dynamic totals from API
+            fetch('api_calculate_total.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: cart })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.total !== undefined) {
+                        totalEl.innerText = data.total_formatted;
+
+                        // Show discounts if any
+                        let discountHtml = '';
+                        if (data.total_discount > 0) {
+                            data.discounts_detail.forEach(d => {
+                                discountHtml += `
+                                <div class="flex justify-between text-sm text-green-600 font-bold">
+                                    <span>${d.label}</span>
+                                    <span>${d.amount_formatted}</span>
+                                </div>
+                            `;
+                            });
+                        }
+
+                        // Inject discount before total
+                        const summaryContainer = subtotalEl.parentElement.parentElement;
+                        // Remove old discounts if any
+                        summaryContainer.querySelectorAll('.text-green-600').forEach(el => el.remove());
+                        // Insert new ones
+                        subtotalEl.parentElement.insertAdjacentHTML('afterend', discountHtml);
+                    }
+                });
         }
 
         function removeItem(index) {

@@ -91,8 +91,8 @@ $result = $conn->query($sql);
     <main class="flex-1 flex flex-col h-full relative overflow-hidden">
         <?php $page_title = "Input Target Harian"; include ROOT_PATH . "includes/admin/header.php"; ?>
         
-        <div class="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth relative">
-            <div class="max-w-5xl mx-auto pb-20"> <!-- Added padding bottom for sticky button -->
+        <div class="flex-1 overflow-y-auto scroll-smooth relative">
+            <div class="max-w-5xl mx-auto p-6 md:p-8 pb-20"> <!-- Moved padding here -->
                 
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
                     <div>
@@ -127,7 +127,7 @@ $result = $conn->query($sql);
                 <?php endif; ?>
 
                 <!-- Filter & Actions Card -->
-                <div class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6 sticky top-0 z-20">
+                <div class="bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur-md p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-md mb-6 sticky top-0 z-30">
                     <form id="dateForm" action="" method="GET" class="flex flex-col md:flex-row gap-4 items-end md:items-center justify-between">
                         <div class="w-full md:w-auto">
                             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pilih Tanggal Target</label>

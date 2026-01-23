@@ -3,11 +3,12 @@
 
 // Ensure DB connection is available
 if (!isset($conn)) {
-    // Basic check, though usually included by parent file
-    if (file_exists("../config/database.php")) {
-        require_once("../config/database.php");
-    } elseif (file_exists("db_connect.php")) {
-        require_once("db_connect.php");
+    // init.php defines ROOT_PATH and usually handles the connection
+    if (defined('ROOT_PATH')) {
+        require_once ROOT_PATH . 'config/database.php';
+    } else {
+        // Fallback for direct or unconventional inclusion
+        require_once __DIR__ . "/../../config/database.php";
     }
 }
 

@@ -1,7 +1,14 @@
 <?php
+// configlinux
+// $host = "localhost";
+// $user = "andi";
+// $pass = "passwordbaru";
+// $db_name = "lapak_bangsawan";
+
+// config windows
 $host = "localhost";
-$user = "andi";
-$pass = "passwordbaru";
+$user = "root";
+$pass = "";
 $db_name = "lapak_bangsawan";
 
 // Create connection

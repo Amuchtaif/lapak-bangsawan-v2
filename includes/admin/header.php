@@ -1,6 +1,6 @@
-<?php require_once("notification_logic.php"); ?>
+<?php require_once __DIR__ . "/notification_logic.php"; ?>
 <header
-    class="h-16 flex items-center justify-between px-6 bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 z-10 sticky top-0">
+    class="h-16 flex items-center justify-between px-6 bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 z-[100] sticky top-0">
     <div class="flex items-center gap-4 lg:hidden">
         <button id="sidebar-toggle"
             class="p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700">
@@ -19,7 +19,7 @@
         <div class="hidden md:flex relative group">
             <span
                 class="absolute left-3 top-1/2 -translate-y-1/2 material-icons-round text-slate-400 text-lg group-focus-within:text-primary transition-colors">search</span>
-            <form action="products.php" method="GET">
+            <form action="products" method="GET">
                 <input
                     class="pl-10 pr-4 py-2 w-64 bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/50 transition-all"
                     placeholder="Cari produk..." type="text" name="search"
@@ -65,7 +65,7 @@
                                 Stok Habis
                             </div>
                             <?php while ($item = mysqli_fetch_assoc($empty_stock_items_result)): ?>
-                                <a href="products.php?search=<?php echo urlencode($item['name']); ?>"
+                                <a href="products?search=<?php echo urlencode($item['name']); ?>"
                                     class="block px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-800/50 last:border-0">
                                     <div class="flex gap-3">
                                         <div class="size-10 rounded-lg bg-slate-100 dark:bg-slate-700 shrink-0 overflow-hidden">
@@ -95,7 +95,7 @@
                                 Stok Menipis
                             </div>
                             <?php while ($item = mysqli_fetch_assoc($low_stock_items_result)): ?>
-                                <a href="products.php?search=<?php echo urlencode($item['name']); ?>"
+                                <a href="products?search=<?php echo urlencode($item['name']); ?>"
                                     class="block px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-800/50 last:border-0">
                                     <div class="flex gap-3">
                                         <div class="size-10 rounded-lg bg-slate-100 dark:bg-slate-700 shrink-0 overflow-hidden">
@@ -127,7 +127,7 @@
                                 Pesan Baru
                             </div>
                             <?php while ($msg = mysqli_fetch_assoc($unread_messages_result)): ?>
-                                <a href="messages.php"
+                                <a href="messages"
                                     class="block px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-800/50 last:border-0">
                                     <div class="flex flex-col gap-1">
                                         <div class="flex justify-between items-start">
@@ -157,11 +157,11 @@
                 <?php if ($total_notif > 0): ?>
                     <div
                         class="p-2 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-700">
-                        <a href="products.php?filter=low_stock"
+                        <a href="products?filter=low_stock"
                             class="block w-full text-center py-2 text-xs font-medium text-primary hover:text-blue-700 transition-colors">
                             Cek Stok
                         </a>
-                        <a href="messages.php"
+                        <a href="messages"
                             class="block w-full text-center py-2 text-xs font-medium text-primary hover:text-blue-700 transition-colors">
                             Lihat Pesan
                         </a>

@@ -1,7 +1,7 @@
 <?php
 require("auth_session.php");
 require_once dirname(__DIR__) . "/config/init.php";
-require("notification_logic.php");
+require(ROOT_PATH . "includes/admin/notification_logic.php");
 
 // Revenue (Completed)
 $revenue_query = "SELECT SUM(total_amount) as r FROM orders WHERE status='completed'";

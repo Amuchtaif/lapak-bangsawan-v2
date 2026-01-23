@@ -1,3 +1,4 @@
+<?php require_once dirname(__DIR__) . '/config/init.php'; ?>
 <!DOCTYPE html>
 <?php
 // Generate Order Token for Idempotency
@@ -205,7 +206,14 @@ $order_token = bin2hex(random_bytes(16));
     </main>
 
     <script>
-        // Load Cart
+        const BASE_URL = '<?= BASE_URL ?>';
+        const getImageUrl = (path) => {
+            if (!path) return '';
+            if (path.startsWith('http') || path.startsWith('//')) return path;
+            return BASE_URL + path;
+        };
+
+        // Load Cart and Elements
         const cart = JSON.parse(localStorage.getItem('cart')) || [];
         const itemsContainer = document.getElementById('order-items');
         const totalEl = document.getElementById('order-total');
@@ -219,24 +227,58 @@ $order_token = bin2hex(random_bytes(16));
         let total = 0;
         cart.forEach(item => {
             total += item.total_price;
+            const itemImg = getImageUrl(item.image);
             itemsContainer.innerHTML += `
                <div class="flex gap-4">
                     <div class="size-16 shrink-0 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 overflow-hidden flex items-center justify-center">
-                        ${item.image ? `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">` : '<span class="material-symbols-outlined text-slate-400">image</span>'}
+                        ${itemImg ? `<img src="${itemImg}" alt="${item.name}" class="w-full h-full object-cover">` : '<span class="material-symbols-outlined text-slate-400">image</span>'}
                     </div>
                     <div class="flex-1 min-w-0">
                         <h4 class="font-bold text-sm text-slate-900 dark:text-white line-clamp-2 leading-tight mb-1">${item.name}</h4>
                         <div class="flex justify-between items-end">
-                             <p class="text-xs text-slate-500">${item.weight} <span class="lowercase">${['Frozen Food', 'Produk Jadi'].includes(item.category) ? 'pcs' : 'kg'}</span></p>
+                             <p class="text-xs text-slate-500">${item.weight} <span class="lowercase">${item.unit || 'kg'}</span></p>
                              <span class="font-bold text-sm">Rp ${new Intl.NumberFormat('id-ID').format(item.total_price)}</span>
                         </div>
                     </div>
                 </div>
             `;
         });
-        const formattedTotal = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
-        totalEl.innerText = formattedTotal;
-        if (subtotalEl) subtotalEl.innerText = formattedTotal;
+        const formattedSubtotal = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+        if (subtotalEl) subtotalEl.innerText = formattedSubtotal;
+
+        // Fetch dynamic totals for discounts
+        fetch('api_calculate_total.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: cart })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.total !== undefined) {
+                    totalEl.innerText = data.total_formatted;
+
+                    // Show discounts if any
+                    let discountHtml = '';
+                    if (data.total_discount > 0) {
+                        data.discounts_detail.forEach(d => {
+                            discountHtml += `
+                            <div class="flex justify-between text-green-600 font-bold text-sm">
+                                <span>${d.label}</span>
+                                <span>${d.amount_formatted}</span>
+                            </div>
+                        `;
+                        });
+                    }
+
+                    // Inject before the divider
+                    const divider = document.querySelector('.border-t.border-slate-200.dark\\:border-slate-600.my-2');
+                    if (divider) {
+                        // Remove old ones
+                        divider.parentElement.querySelectorAll('.text-green-600').forEach(el => el.remove());
+                        divider.insertAdjacentHTML('beforebegin', discountHtml);
+                    }
+                }
+            });
 
         // Payment Toggle
         function togglePaymentInfo() {

@@ -1,7 +1,7 @@
 <?php
 require("auth_session.php");
 require_once dirname(__DIR__) . "/config/init.php";
-require("notification_logic.php");
+require(ROOT_PATH . "includes/admin/notification_logic.php");
 
 if (isset($_GET['ajax'])) {
     ob_start();
@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $category_id = intval($_POST['category_id']);
         $price = floatval($_POST['price']);
         $stock = floatval($_POST['stock']);
+        $unit = mysqli_real_escape_string($conn, $_POST['unit'] ?? 'kg');
         $description = mysqli_real_escape_string($conn, $_POST['description']);
 
         $image_path = '';
@@ -46,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         if (isset($_POST['add_product'])) {
-            $sql = "INSERT INTO products (category_id, name, slug, description, price, stock, image) VALUES ($category_id, '$name', '$slug', '$description', $price, $stock, '$image_path')";
+            $sql = "INSERT INTO products (category_id, name, slug, description, price, stock, unit, image) VALUES ($category_id, '$name', '$slug', '$description', $price, $stock, '$unit', '$image_path')";
             if ($conn->query($sql)) {
                 $_SESSION['status_msg'] = "Product added successfully.";
                 $_SESSION['status_type'] = "success";
@@ -57,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         } elseif (isset($_POST['update_product'])) {
             $id = intval($_POST['id']);
-            $sql = "UPDATE products SET category_id=$category_id, name='$name', slug='$slug', description='$description', price=$price, stock=$stock";
+            $sql = "UPDATE products SET category_id=$category_id, name='$name', slug='$slug', description='$description', price=$price, stock=$stock, unit='$unit'";
             if ($image_path)
                 $sql .= ", image='$image_path'";
             $sql .= " WHERE id=$id";
@@ -88,19 +89,33 @@ $offset = ($page - 1) * $limit;
 $where = "";
 $conditions = [];
 
-if (isset($_GET['filter']) && $_GET['filter'] == 'low_stock') {
-    $conditions[] = "products.stock <= 5"; 
+if (isset($_GET['category_id']) && !empty($_GET['category_id'])) {
+    $cat_id = intval($_GET['category_id']);
+    $conditions[] = "products.category_id = $cat_id";
+}
+
+if (isset($_GET['stock_status']) && !empty($_GET['stock_status'])) {
+    if ($_GET['stock_status'] == 'low_stock') {
+        $conditions[] = "products.stock > 0 AND products.stock <= 5";
+    } elseif ($_GET['stock_status'] == 'out_of_stock') {
+        $conditions[] = "products.stock = 0";
+    }
 }
 
 if (isset($_GET['search']) && !empty($_GET['search'])) {
     $search = mysqli_real_escape_string($conn, $_GET['search']);
-    $conditions[] = "products.name LIKE '%$search%'";
+    $conditions[] = "(products.name LIKE '%$search%' OR products.description LIKE '%$search%')";
 }
 
 if (count($conditions) > 0) {
     $where = "WHERE " . implode(' AND ', $conditions);
 }
 
+// Sorting Logic
+$order_by = "products.id DESC"; // Default
+if (isset($_GET['sort']) && $_GET['sort'] == 'stock_desc') {
+    $order_by = "products.stock DESC, products.name ASC";
+}
 
 // Count Total
 $count_query = "SELECT COUNT(*) as total FROM products $where";
@@ -109,7 +124,12 @@ $total_rows = $total_result->fetch_assoc()['total'];
 $total_pages = ceil($total_rows / $limit);
 
 // Fetch Data
-$q = "SELECT products.*, categories.name as category_name FROM products LEFT JOIN categories ON products.category_id = categories.id $where ORDER BY products.id DESC LIMIT $limit OFFSET $offset";
+$q = "SELECT products.*, categories.name as category_name 
+      FROM products 
+      LEFT JOIN categories ON products.category_id = categories.id 
+      $where 
+      ORDER BY $order_by 
+      LIMIT $limit OFFSET $offset";
 $result = $conn->query($q);
 
 // Fetch Categories
@@ -187,31 +207,43 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
         <div class="flex-1 lg:overflow-y-auto p-4 md:p-8 scroll-smooth">
             <div class="max-w-7xl mx-auto flex flex-col gap-6">
                 <!-- Page Content -->
+                <!-- Notification Area -->
                 <?php if (isset($_SESSION['status_msg'])): ?>
                     <div
-                        class="auto-close-alert p-4 rounded-lg <?php echo $_SESSION['status_type'] == 'success' ? 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'; ?> flex items-center gap-3 transition-opacity duration-500">
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-2 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
                         <span
-                            class="material-icons-round"><?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?></span>
-                        <p><?php echo $_SESSION['status_msg']; ?></p>
+                            class="material-icons-round <?php echo $_SESSION['status_type'] == 'success' ? 'text-green-500' : 'text-red-500'; ?>">
+                            <?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?>
+                        </span>
+                        <div>
+                            <h3 class="font-medium text-slate-900 dark:text-white">
+                                <?php echo $_SESSION['status_type'] == 'success' ? 'Berhasil' : 'Gagal'; ?>
+                            </h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $_SESSION['status_msg']; ?></p>
+                        </div>
                     </div>
-                    <?php
-                    unset($_SESSION['status_msg']);
-                    unset($_SESSION['status_type']);
-                    ?>
+                    <?php unset($_SESSION['status_msg']); unset($_SESSION['status_type']); ?>
                 <?php endif; ?>
 
                 <?php if ($success): ?>
                     <div
-                        class="auto-close-alert bg-green-100 text-green-700 p-3 rounded-lg mb-4 transition-opacity duration-500 flex items-center gap-2">
-                        <span class="material-icons-round text-sm">check_circle</span>
-                        <?php echo $success; ?>
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-2 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        <span class="material-icons-round text-green-500">check_circle</span>
+                        <div>
+                            <h3 class="font-medium text-slate-900 dark:text-white">Berhasil</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $success; ?></p>
+                        </div>
                     </div>
                 <?php endif; ?>
+
                 <?php if ($error): ?>
                     <div
-                        class="auto-close-alert bg-red-100 text-red-700 p-3 rounded-lg mb-4 transition-opacity duration-500 flex items-center gap-2">
-                        <span class="material-icons-round text-sm">error</span>
-                        <?php echo $error; ?>
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-2 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        <span class="material-icons-round text-red-500">error</span>
+                        <div>
+                            <h3 class="font-medium text-slate-900 dark:text-white">Gagal</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $error; ?></p>
+                        </div>
                     </div>
                 <?php endif; ?>
 
@@ -271,6 +303,12 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                         value="<?php echo $edit_row['stock'] ?? ''; ?>"
                                         class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-primary focus:border-primary">
                                     <p id="stock-hint" class="text-xs text-slate-500 mt-1 hidden">For Frozen Food, stock must be an integer.</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Unit (kg/pcs/box)</label>
+                                    <input type="text" name="unit" required placeholder="kg"
+                                        value="<?php echo $edit_row['unit'] ?? 'kg'; ?>"
+                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-primary focus:border-primary">
                                 </div>
                             </div>
 
@@ -350,6 +388,57 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                         </div>
                     </div>
 
+                    <!-- Filter Bar -->
+                    <div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <form action="" method="GET" class="flex flex-col md:flex-row gap-4">
+                            <!-- Preserve Search if any -->
+                            <?php if(isset($_GET['search'])): ?>
+                                <input type="hidden" name="search" value="<?php echo htmlspecialchars($_GET['search']); ?>">
+                            <?php endif; ?>
+
+                            <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <!-- Category Filter -->
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Kategori</label>
+                                    <select name="category_id" onchange="this.form.submit()" 
+                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800/50 dark:border-slate-700 text-sm focus:ring-primary focus:border-primary">
+                                        <option value="">Semua Kategori</option>
+                                        <?php foreach ($categories as $cat): ?>
+                                            <option value="<?php echo $cat['id']; ?>" <?php echo (isset($_GET['category_id']) && $_GET['category_id'] == $cat['id']) ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($cat['name']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+
+                                <!-- Stock Status Filter -->
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Status Stok</label>
+                                    <select name="stock_status" onchange="this.form.submit()"
+                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800/50 dark:border-slate-700 text-sm focus:ring-primary focus:border-primary">
+                                        <option value="">Semua Status</option>
+                                        <option value="low_stock" <?php echo (isset($_GET['stock_status']) && $_GET['stock_status'] == 'low_stock') ? 'selected' : ''; ?>>Stok Rendah (≤ 5)</option>
+                                        <option value="out_of_stock" <?php echo (isset($_GET['stock_status']) && $_GET['stock_status'] == 'out_of_stock') ? 'selected' : ''; ?>>Stok Habis (0)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Sort Order -->
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Urutan</label>
+                                    <select name="sort" onchange="this.form.submit()"
+                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800/50 dark:border-slate-700 text-sm focus:ring-primary focus:border-primary">
+                                        <option value="">Terbaru (Default)</option>
+                                        <option value="stock_desc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'stock_desc') ? 'selected' : ''; ?>>Stok Tertinggi</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-end">
+                                <a href="products.php" class="text-xs text-slate-500 hover:text-primary transition-colors underline mb-2">Reset Filter</a>
+                            </div>
+                        </form>
+                    </div>
+
                     <!-- List View Container for AJAX -->
                     <div id="product-list-container" class="flex flex-col gap-6">
                     <?php if (isset($_GET['ajax'])): ob_clean(); endif; ?>
@@ -365,7 +454,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                         <th class="px-6 py-4">Gambar</th>
                                         <th class="px-6 py-4">Nama Produk</th>
                                         <th class="px-6 py-4">Kategori</th>
-                                        <th class="px-6 py-4">Harga/Kg</th>
+                                        <th class="px-6 py-4">Harga/Unit</th>
                                         <th class="px-6 py-4">Stok</th>
                                         <th class="px-6 py-4 text-right">Aksi</th>
                                     </tr>
@@ -392,7 +481,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                                 <?php echo htmlspecialchars($row['name']); ?>
                                             </td>
                                             <td class="px-6 py-4"><?php echo htmlspecialchars($row['category_name']); ?></td>
-                                            <td class="px-6 py-4">Rp <?php echo number_format($row['price'], 0, ',', '.'); ?>
+                                            <td class="px-6 py-4 text-xs">Rp <?php echo number_format($row['price'], 0, ',', '.'); ?> / <?php echo $row['unit']; ?>
                                             </td>
                                             <td class="px-6 py-4 <?php 
                                                 if ($row['stock'] == 0) {
@@ -402,11 +491,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                                 }
                                             ?>">
                                                 <?php 
-                                                if (in_array($row['category_name'], ['Produk Jadi', 'Frozen Food'])) {
-                                                    echo (int)$row['stock'];
-                                                } else {
-                                                    echo $row['stock'];
-                                                }
+                                                echo $row['stock'] . ' ' . $row['unit'];
                                                 ?>
                                             </td>
                                             <td class="px-6 py-4 text-right">

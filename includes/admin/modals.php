@@ -1,10 +1,11 @@
 <!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="relative z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div id="deleteModal" class="fixed inset-0 z-[9999] hidden" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
     <!-- Background backdrop, show/hide based on modal state. -->
     <div id="deleteModalBackdrop"
         class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300 ease-out opacity-0"></div>
 
-    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+    <div class="fixed inset-0 z-[10000] w-screen overflow-y-auto">
         <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <!-- Modal panel, show/hide based on modal state. -->
             <div id="deleteModalPanel"

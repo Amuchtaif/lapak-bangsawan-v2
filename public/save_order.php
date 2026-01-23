@@ -69,6 +69,12 @@ if ($check_customer->num_rows == 0) {
     }
 }
 
+// 1. Recalculate Totals on Server for Integrity
+$calculation = calculateCartTotal($items);
+$total = $calculation['total'];
+$total_discount = $calculation['total_discount'];
+$discounts_detail = $calculation['discounts_detail'];
+
 // Start Transaction
 $conn->begin_transaction();
 
@@ -87,9 +93,8 @@ try {
             VALUES ($next_order_id, '$name', '$phone', '$address', $total, '$status', '$payment_method', $token_val, '$order_notes')";
 
     if (!$conn->query($sql)) {
-        // Double check for duplicate entry error which acts as a second layer of idempotency
-        if ($conn->errno == 1062) { // Duplicate entry
-            throw new Exception("Duplicate order detected (Concurrent Request).");
+        if ($conn->errno == 1062) {
+            throw new Exception("Duplicate order detected.");
         }
         throw new Exception("Failed to create order: " . $conn->error);
     }
@@ -102,7 +107,7 @@ try {
         $p_name = mysqli_real_escape_string($conn, $item['name']);
         $weight = floatval($item['weight']);
         $price_per_kg = floatval($item['price']);
-        $subtotal = floatval($item['total_price']);
+        $subtotal = $price_per_kg * $weight;
 
         // Check Stock
         $stock_query = $conn->query("SELECT stock FROM products WHERE id = $p_id FOR UPDATE");
@@ -112,37 +117,40 @@ try {
         $current_stock = floatval($stock_query->fetch_assoc()['stock']);
 
         if ($current_stock < $weight) {
-            throw new Exception("Insufficient stock for product: " . $p_name . ". Available: " . $current_stock);
+            throw new Exception("Stok tidak cukup untuk: " . $p_name . ". Sisa: " . $current_stock);
         }
 
         // Deduct Stock
         $new_stock = $current_stock - $weight;
-        $update_stock = $conn->query("UPDATE products SET stock = $new_stock WHERE id = $p_id");
-        if (!$update_stock) {
-            throw new Exception("Failed to update stock for: " . $p_name);
-        }
+        $conn->query("UPDATE products SET stock = $new_stock WHERE id = $p_id");
 
         // Insert Order Item
         $item_sql = "INSERT INTO order_items (order_id, product_name, weight, price_per_kg, subtotal) 
                      VALUES ($order_id, '$p_name', $weight, $price_per_kg, $subtotal)";
-        if (!$conn->query($item_sql)) {
-            throw new Exception("Failed to add order item: " . $p_name);
-        }
+        $conn->query($item_sql);
     }
 
     // Commit Transaction
     $conn->commit();
 
-
     // Generate WhatsApp Link
     $message = "Halo Lapak Bangsawan, saya ingin konfirmasi pesanan saya:\n\n";
     $message .= "*Order ID:* #ORD-" . str_pad($order_id, 5, '0', STR_PAD_LEFT) . "\n";
     $message .= "*Nama:* $name\n";
-    $message .= "*Total:* Rp " . number_format($total, 0, ',', '.') . "\n\n";
     $message .= "*Item:*\n";
     foreach ($items as $item) {
-        $message .= "- " . $item['name'] . " (" . $item['weight'] . ")\n";
+        $u = $item['unit'] ?? 'kg';
+        $message .= "- " . $item['name'] . " (" . $item['weight'] . " $u)\n";
     }
+
+    if ($total_discount > 0) {
+        $message .= "\n*Rincian Diskon Grosir:*\n";
+        foreach ($discounts_detail as $d) {
+            $message .= "- " . $d['label'] . ": -Rp " . number_format($d['amount'], 0, ',', '.') . "\n";
+        }
+    }
+
+    $message .= "\n*Total Akhir:* Rp " . number_format($total, 0, ',', '.') . "\n";
     $message .= "\n*Alamat Pengiriman:*\n$address\n";
 
     if (!empty($order_notes)) {

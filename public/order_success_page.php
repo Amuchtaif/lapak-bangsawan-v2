@@ -1,3 +1,4 @@
+<?php require_once dirname(__DIR__) . '/config/init.php'; ?>
 <!DOCTYPE html>
 
 <html class="light" lang="en">

@@ -4,7 +4,7 @@ $username = $_SESSION['username'] ?? 'Admin User';
 ?>
 <aside id="admin-sidebar"
     class="fixed inset-y-0 left-0 z-50 w-64 bg-surface-light dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 flex flex-col h-full transform -translate-x-full lg:translate-x-0 lg:static lg:flex transition-transform duration-300 ease-in-out">
-    <a href="dashboard.php" class="h-16 flex items-center px-6 border-b border-slate-100 dark:border-slate-800">
+    <a href="dashboard" class="h-16 flex items-center px-6 border-b border-slate-100 dark:border-slate-800">
         <div class="flex items-center gap-2 font-bold text-xl text-slate-800 dark:text-white">
             <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white overflow-hidden">
                 <img src="<?= BASE_URL ?>assets/images/logo.jpeg" alt="Logo" class="w-full h-full object-cover">
@@ -12,54 +12,78 @@ $username = $_SESSION['username'] ?? 'Admin User';
             <span>Lapak<span class="text-primary">Bangsawan</span></span>
         </div>
     </a>
-    <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+    <style>
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        #admin-sidebar-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        #admin-sidebar-nav {
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+    </style>
+    <nav id="admin-sidebar-nav" class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'dashboard.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
-            href="dashboard.php">
+            href="dashboard">
             <span class="material-icons-round">dashboard</span>
             Dashboard
         </a>
         <div class="pt-4 pb-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Inventaris</div>
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'products.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
-            href="products.php">
+            href="products">
             <span class="material-icons-round">inventory_2</span>
             Produk
         </a>
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'categories.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
-            href="categories.php">
+            href="categories">
             <span class="material-icons-round">category</span>
             Kategori
         </a>
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'form_input_target.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
-            href="form_input_target.php">
+            href="form_input_target">
             <span class="material-icons-round">edit_calendar</span>
             Input Target Harian
         </a>
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'report_stock.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
-            href="report_stock.php">
+            href="report_stock">
             <span class="material-icons-round">analytics</span>
             Laporan Stok
         </a>
-        
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'expenses.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
+            href="expenses">
+            <span class="material-icons-round">payments</span>
+            Biaya Operasional
+        </a>
+
         <a class="flex items-center justify-between px-3 py-2.5 rounded-lg <?php echo ($current_page == 'orders.php' || $current_page == 'manual_transaction.php') ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
-            href="orders.php">
+            href="orders">
             <div class="flex items-center gap-3">
                 <span class="material-icons-round">shopping_bag</span>
                 Pesanan
             </div>
         </a>
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'customers.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
-            href="customers.php">
+            href="customers">
             <span class="material-icons-round">people</span>
             Pelanggan
         </a>
         <div class="pt-4 pb-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Manajemen</div>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'wholesale_rules.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
+            href="wholesale_rules">
+            <span class="material-icons-round">sell</span>
+            Aturan Grosir
+        </a>
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'messages.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
-            href="messages.php">
+            href="messages">
             <span class="material-icons-round">mail</span>
             Pesan Masuk
         </a>
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'settings.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
-            href="settings.php">
+            href="settings">
             <span class="material-icons-round">settings</span>
             Pengaturan
         </a>
@@ -93,8 +117,7 @@ $username = $_SESSION['username'] ?? 'Admin User';
                 </p>
                 <p class="text-xs text-slate-500 truncate">Manajer Toko</p>
             </div>
-            <a href="logout.php"
-                class="material-icons-round text-slate-400 hover:text-red-500 transition-colors">logout</a>
+            <a href="logout" class="material-icons-round text-slate-400 hover:text-red-500 transition-colors">logout</a>
         </div>
     </div>
 </aside>

@@ -1,6 +1,6 @@
 <?php
 require("auth_session.php");
-require("../db_connect.php");
+require_once dirname(__DIR__) . "/config/init.php";
 
 $success_msg = "";
 $error_msg = "";
@@ -88,10 +88,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
         $new_id = $max_id ? $max_id + 1 : 1;
         $status = 'completed';
         $payment_method = 'cod'; // Default for manual
-        $notes = "Transaksi Manual (Admin)";
+        $notes = isset($_POST['order_notes']) ? mysqli_real_escape_string($conn, $_POST['order_notes']) : "Transaksi Manual (Admin)";
+        $transaction_time = !empty($_POST['transaction_time']) ? $_POST['transaction_time'] : date('Y-m-d H:i:s');
 
-        $stmt_order = $conn->prepare("INSERT INTO orders (id, customer_name, customer_phone, customer_address, total_amount, status, payment_method, order_notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt_order->bind_param("isssdsss", $new_id, $customer_name, $customer_phone, $customer_address, $total_amount, $status, $payment_method, $notes);
+        $stmt_order = $conn->prepare("INSERT INTO orders (id, customer_name, customer_phone, customer_address, total_amount, status, payment_method, order_notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt_order->bind_param("isssds s ss", $new_id, $customer_name, $customer_phone, $customer_address, $total_amount, $status, $payment_method, $notes, $transaction_time);
 
         if (!$stmt_order->execute())
             throw new Exception("Gagal membuat pesanan: " . $conn->error);
@@ -149,19 +150,29 @@ while ($p = $products->fetch_assoc()) {
             font-size: 0.875rem;
             transition: all 0.2s ease;
         }
+
         .ts-control:focus-within {
             border-color: #0d59f2;
             box-shadow: 0 0 0 3px rgba(13, 89, 242, 0.1);
         }
+
         .ts-dropdown {
             border-radius: 0.5rem;
             overflow: hidden;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             animation: slideDown 0.2s ease-out;
         }
+
         @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .dark .ts-control {
@@ -169,6 +180,7 @@ while ($p = $products->fetch_assoc()) {
             border-color: #334155;
             color: #cbd5e1;
         }
+
         .dark .ts-control:focus-within {
             border-color: #0d59f2;
             box-shadow: 0 0 0 3px rgba(13, 89, 242, 0.2);
@@ -183,6 +195,7 @@ while ($p = $products->fetch_assoc()) {
         .dark .ts-dropdown .option.active {
             background-color: #334155;
         }
+
         .dark .ts-input {
             color: #cbd5e1;
         }
@@ -221,20 +234,27 @@ while ($p = $products->fetch_assoc()) {
                         class="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors">
                         <span class="material-icons-round">arrow_back</span> Kembali
                     </a>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">Transaksi Baru</h1>
                 </div>
 
                 <?php if ($success_msg): ?>
-                    <div class="bg-green-100 text-green-700 p-4 rounded-lg flex items-center gap-2 mb-4 auto-close-alert transition-opacity duration-500">
-                        <span class="material-icons-round">check_circle</span>
-                        <?php echo $success_msg; ?>
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-4 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        <span class="material-icons-round text-green-500">check_circle</span>
+                        <div>
+                            <h3 class="font-medium text-slate-900 dark:text-white">Berhasil</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $success_msg; ?></p>
+                        </div>
                     </div>
                 <?php endif; ?>
 
                 <?php if ($error_msg): ?>
-                    <div class="bg-red-100 text-red-700 p-4 rounded-lg flex items-center gap-2 mb-4 auto-close-alert transition-opacity duration-500">
-                        <span class="material-icons-round">error</span>
-                        <?php echo $error_msg; ?>
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-4 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        <span class="material-icons-round text-red-500">error</span>
+                        <div>
+                            <h3 class="font-medium text-slate-900 dark:text-white">Gagal</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $error_msg; ?></p>
+                        </div>
                     </div>
                 <?php endif; ?>
 
@@ -318,7 +338,8 @@ while ($p = $products->fetch_assoc()) {
                             </div>
 
                             <!-- Header Row (Desktop Only) -->
-                            <div class="hidden md:grid md:grid-cols-12 gap-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg text-xs font-bold uppercase text-slate-500 mb-2 sticky top-0 z-10">
+                            <div
+                                class="hidden md:grid md:grid-cols-12 gap-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg text-xs font-bold uppercase text-slate-500 mb-2 sticky top-0 z-10">
                                 <div class="col-span-5">Produk</div>
                                 <div class="col-span-2">Harga/Kg</div>
                                 <div class="col-span-2">Berat (Kg)</div>
@@ -336,8 +357,38 @@ while ($p = $products->fetch_assoc()) {
                         </div>
                     </div>
 
-                    <!-- Right Column: Summary -->
-                    <div class="lg:col-span-1">
+                    <!-- Right Column: Summary & Notes -->
+                    <div class="lg:col-span-1 flex flex-col gap-6">
+
+                        <!-- Transaction Time Card -->
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                            <h2
+                                class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 uppercase tracking-wider">
+                                <span class="material-icons-round text-primary text-sm">event</span>
+                                Waktu Transaksi
+                            </h2>
+                            <input type="datetime-local" name="transaction_time"
+                                value="<?php echo date('Y-m-d\TH:i'); ?>"
+                                class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary text-sm transition-all">
+                            <p class="text-[10px] text-slate-400 mt-2">Atur tanggal dan waktu transaksi (default:
+                                sekarang).</p>
+                        </div>
+
+                        <!-- Order Notes Card -->
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                            <h2
+                                class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 uppercase tracking-wider">
+                                <span class="material-icons-round text-primary text-sm">notes</span>
+                                Catatan Pesanan
+                            </h2>
+                            <textarea name="order_notes" rows="3"
+                                placeholder="Tulis instruksi khusus (misal: potong dadu, kirim sore)..."
+                                class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary text-sm transition-all"></textarea>
+                        </div>
+
+                        <!-- Summary Card -->
                         <div
                             class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 sticky top-6">
                             <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-6">Ringkasan</h2>
@@ -370,15 +421,16 @@ while ($p = $products->fetch_assoc()) {
     <!-- Template for Item Row -->
     <template id="item_template">
         <!-- Checkbox wrapper for Tom Select issue -->
-        <div class="item-row grid grid-cols-1 md:grid-cols-12 gap-4 items-start md:items-center bg-slate-50/50 dark:bg-slate-800/20 p-4 md:p-2 rounded-lg border border-slate-100 dark:border-slate-800/50">
-            
+        <div
+            class="item-row grid grid-cols-1 md:grid-cols-12 gap-4 items-start md:items-center bg-slate-50/50 dark:bg-slate-800/20 p-4 md:p-2 rounded-lg border border-slate-100 dark:border-slate-800/50">
+
             <!-- Product Select -->
             <div class="col-span-1 md:col-span-5 w-full">
                 <label class="block md:hidden text-xs font-bold text-slate-500 uppercase mb-1">Produk</label>
                 <div class="">
                     <select name="product_id[]"
                         class="product-select w-full rounded-md border-slate-200 bg-slate-50 dark:bg-slate-900 text-sm py-2"
-                        onchange="updateRow(this)"> 
+                        onchange="updateRow(this)">
                         <option value="" data-price="0">-- Pilih Produk --</option>
                         <?php foreach ($prod_arr as $p): ?>
                             <option value="<?php echo $p['id']; ?>" data-price="<?php echo $p['price']; ?>"
@@ -392,29 +444,30 @@ while ($p = $products->fetch_assoc()) {
             </div>
 
             <!-- Price Display -->
-             <div class="col-span-1 md:col-span-2 flex justify-between md:block items-center">
+            <div class="col-span-1 md:col-span-2 flex justify-between md:block items-center">
                 <label class="block md:hidden text-xs font-bold text-slate-500 uppercase">Harga/Kg</label>
                 <span class="font-medium price-display text-sm">Rp 0</span>
             </div>
 
             <!-- Quantity Input -->
             <div class="col-span-1 md:col-span-2 flex justify-between md:block items-center">
-                 <label class="block md:hidden text-xs font-bold text-slate-500 uppercase">Berat (Kg)</label>
+                <label class="block md:hidden text-xs font-bold text-slate-500 uppercase">Berat (Kg)</label>
                 <input type="number" name="qty[]" step="0.5" value="1" min="0.5"
                     class="w-full md:w-20 rounded-md border-slate-200 bg-slate-50 dark:bg-slate-900 text-sm py-2 text-center"
                     oninput="updateRow(this)">
             </div>
 
             <!-- Subtotal -->
-             <div class="col-span-1 md:col-span-2 flex justify-between md:block items-center md:text-right">
+            <div class="col-span-1 md:col-span-2 flex justify-between md:block items-center md:text-right">
                 <label class="block md:hidden text-xs font-bold text-slate-500 uppercase">Subtotal</label>
                 <span class="font-medium subtotal-display text-sm">Rp 0</span>
             </div>
 
             <!-- Delete Button -->
             <div class="col-span-1 md:col-span-1 text-right md:text-center mt-2 md:mt-0">
-                <button type="button" onclick="removeRow(this)" class="w-full md:w-auto text-red-500 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 p-2 rounded-lg md:rounded flex items-center justify-center gap-2">
-                     <span class="md:hidden text-sm font-medium">Hapus Item</span>
+                <button type="button" onclick="removeRow(this)"
+                    class="w-full md:w-auto text-red-500 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 p-2 rounded-lg md:rounded flex items-center justify-center gap-2">
+                    <span class="md:hidden text-sm font-medium">Hapus Item</span>
                     <span class="material-icons-round text-base">close</span>
                 </button>
             </div>
@@ -466,7 +519,7 @@ while ($p = $products->fetch_assoc()) {
             // Clone
             const clone = template.content.cloneNode(true);
             const row = clone.querySelector('.item-row'); // Now it's a div, not a tr
-            
+
             container.appendChild(row);
             document.getElementById('empty_state').classList.add('hidden');
 

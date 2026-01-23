@@ -129,9 +129,11 @@ $best_sellers = $conn->query($best_seller_query);
                 </div>
                 <div class="flex items-center gap-2 sm:gap-4">
                     <nav class="hidden md:flex items-center gap-6 mr-4">
-                        <a class="text-sm font-medium hover:text-primary transition-colors" href="<?= BASE_URL ?>public/home">Beranda</a>
+                        <a class="text-sm font-medium hover:text-primary transition-colors"
+                            href="<?= BASE_URL ?>public/home">Beranda</a>
                         <a class="text-sm font-medium text-primary" href="<?= BASE_URL ?>public/market">Belanja</a>
-                        <a class="text-sm font-medium hover:text-primary transition-colors" href="<?= BASE_URL ?>public/about">Tentang
+                        <a class="text-sm font-medium hover:text-primary transition-colors"
+                            href="<?= BASE_URL ?>public/about">Tentang
                             Kami</a>
                     </nav>
                     <a href="<?= BASE_URL ?>public/cart"
@@ -228,9 +230,13 @@ $best_sellers = $conn->query($best_seller_query);
                             <article
                                 class="group bg-white dark:bg-card-dark rounded-xl shadow-sm border border-amber-200 dark:border-amber-900/30 hover:shadow-md hover:border-amber-500/50 transition-all duration-300 flex flex-col h-full relative overflow-hidden"
                                 data-id="<?php echo $bs_product['id']; ?>" data-price="<?php echo $bs_product['price']; ?>"
-                                data-name="<?php echo htmlspecialchars($bs_product['name']); ?>"
-                                data-image="<?php echo htmlspecialchars($bs_product['image']); ?>"
-                                data-category="<?php echo htmlspecialchars($bs_product['category_name']); ?>">
+                                data-name="<?php echo htmlspecialchars($bs_product['name']); ?>" data-image="<?php
+                                   $img_src = $bs_product['image'];
+                                   if ($img_src && !filter_var($img_src, FILTER_VALIDATE_URL)) {
+                                       $img_src = BASE_URL . $img_src;
+                                   }
+                                   echo htmlspecialchars($img_src);
+                                   ?>" data-category="<?php echo htmlspecialchars($bs_product['category_name']); ?>">
 
                                 <!-- Badge Best Seller -->
                                 <div
@@ -240,7 +246,7 @@ $best_sellers = $conn->query($best_seller_query);
                                 </div>
 
                                 <div class="relative h-32 sm:h-48 overflow-hidden rounded-t-xl bg-slate-100">
-                                    <?php 
+                                    <?php
                                     if ($bs_product['image']) {
                                         $img_src = $bs_product['image'];
                                         if (!filter_var($img_src, FILTER_VALIDATE_URL)) {
@@ -332,9 +338,9 @@ $best_sellers = $conn->query($best_seller_query);
                     // Kategori yang dihitung per pcs
                     $isPcsCategory = in_array($category, ['Frozen Food', 'Produk Jadi']);
 
-                    $unit = $isPcsCategory ? 'pcs' : 'kg';
-                    $step = $isPcsCategory ? 1 : 0.5;
-                    $min = $isPcsCategory ? 1 : 0.5;
+                    $unit = $product['unit'] ?: ($isPcsCategory ? 'pcs' : 'kg');
+                    $step = ($unit == 'pcs' || $unit == 'box' || $unit == 'porsi') ? 1 : 0.5;
+                    $min = ($unit == 'pcs' || $unit == 'box' || $unit == 'porsi') ? 1 : 0.5;
 
                     $initialQty = $isPcsCategory ? 1 : 1.0;
                     $initialQtyDisplay = $isPcsCategory ? '1' : '1.0';
@@ -344,11 +350,16 @@ $best_sellers = $conn->query($best_seller_query);
                     <article
                         class="group bg-white dark:bg-card-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-md hover:border-primary/30 transition-all duration-300 flex flex-col h-full"
                         data-id="<?php echo $product['id']; ?>" data-price="<?php echo $product['price']; ?>"
-                        data-name="<?php echo htmlspecialchars($product['name']); ?>"
-                        data-image="<?php echo htmlspecialchars($product['image']); ?>"
-                        data-category="<?php echo htmlspecialchars($product['category_name']); ?>">
+                        data-name="<?php echo htmlspecialchars($product['name']); ?>" data-image="<?php
+                           $img_src = $product['image'];
+                           if ($img_src && !filter_var($img_src, FILTER_VALIDATE_URL)) {
+                               $img_src = BASE_URL . $img_src;
+                           }
+                           echo htmlspecialchars($img_src);
+                           ?>" data-category="<?php echo htmlspecialchars($product['category_name']); ?>"
+                        data-unit="<?php echo htmlspecialchars($unit); ?>">
                         <div class="relative h-32 sm:h-48 overflow-hidden rounded-t-xl bg-slate-100">
-                            <?php 
+                            <?php
                             if ($product['image']) {
                                 $img_src = $product['image'];
                                 if (!filter_var($img_src, FILTER_VALIDATE_URL)) {
@@ -475,10 +486,8 @@ $best_sellers = $conn->query($best_seller_query);
             const weightDisplay = article.querySelector('.weight-display');
             const totalPriceDisplay = article.querySelector('.total-price-display');
             const unitPrice = parseFloat(article.dataset.price);
-            const category = article.dataset.category;
-
-            // Kategori yang menggunakan pcs
-            const isPcsCategory = ['Frozen Food', 'Produk Jadi'].includes(category);
+            const unit = article.dataset.unit;
+            const isPcsCategory = (unit == 'pcs' || unit == 'box' || unit == 'porsi');
 
             let currentWeight = parseFloat(weightDisplay.innerText);
             let newWeight = currentWeight + change;
@@ -499,17 +508,13 @@ $best_sellers = $conn->query($best_seller_query);
             const id = article.dataset.id;
             const name = article.dataset.name;
             const image = article.dataset.image;
-            const category = article.dataset.category; // Get category
+            const category = article.dataset.category;
+            const unit = article.dataset.unit;
             const unitPrice = parseFloat(article.dataset.price);
             const weight = parseFloat(article.querySelector('.weight-display').innerText);
             const totalPrice = unitPrice * weight;
 
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
-            // Check if item exists (with same id AND same weight? Or just aggregate?)
-            // For simplicity, we just PUSH new items as lines.
-            // But if exact same ID, maybe just update qty?
-            // Let's stick to simple push for now, or maybe check ID.
 
             cart.push({
                 product_id: id,
@@ -517,7 +522,8 @@ $best_sellers = $conn->query($best_seller_query);
                 image: image,
                 price: unitPrice,
                 weight: weight,
-                category: category, // Store category
+                unit: unit,
+                category: category,
                 total_price: totalPrice,
                 added_at: Date.now()
             });

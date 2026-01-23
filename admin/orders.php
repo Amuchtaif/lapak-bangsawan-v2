@@ -1,6 +1,6 @@
 <?php
 require("auth_session.php");
-require("../db_connect.php");
+require_once dirname(__DIR__) . "/config/init.php";
 
 // Update Status
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
@@ -129,17 +129,24 @@ $orders_result = $conn->query($orders_query);
                     <!-- Order Detail View -->
                     <div class="flex flex-col gap-6">
                         <!-- Notification Area -->
+                        <!-- Notification Area -->
                         <?php if (isset($_SESSION['status_msg'])): ?>
                             <div
-                                class="auto-close-alert p-4 rounded-lg <?php echo $_SESSION['status_type'] == 'success' ? 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'; ?> flex items-center gap-3 transition-opacity duration-500">
+                                class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-2 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
                                 <span
-                                    class="material-icons-round"><?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?></span>
-                                <p><?php echo $_SESSION['status_msg']; ?></p>
+                                    class="material-icons-round <?php echo $_SESSION['status_type'] == 'success' ? 'text-green-500' : 'text-red-500'; ?>">
+                                    <?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?>
+                                </span>
+                                <div>
+                                    <h3 class="font-medium text-slate-900 dark:text-white">
+                                        <?php echo $_SESSION['status_type'] == 'success' ? 'Berhasil' : 'Gagal'; ?>
+                                    </h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $_SESSION['status_msg']; ?>
+                                    </p>
+                                </div>
                             </div>
-                            <?php
-                            unset($_SESSION['status_msg']);
-                            unset($_SESSION['status_type']);
-                            ?>
+                            <?php unset($_SESSION['status_msg']);
+                            unset($_SESSION['status_type']); ?>
                         <?php endif; ?>
                         <div class="flex items-center justify-between">
                             <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Pesanan
@@ -176,9 +183,19 @@ $orders_result = $conn->query($orders_query);
                             <div
                                 class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                                 <h3 class="font-bold text-slate-900 dark:text-white mb-4">Info Pengiriman</h3>
-                                <p class="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-line">
+                                <p class="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-line mb-4">
                                     <?php echo htmlspecialchars($order_data['customer_address']); ?>
                                 </p>
+
+                                <?php if (!empty($order_data['order_notes'])): ?>
+                                    <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                                        <h4 class="font-bold text-sm text-slate-900 dark:text-white mb-1">Catatan Pesanan</h4>
+                                        <p class="text-sm text-amber-600 dark:text-amber-400 italic">
+                                            "<?php echo htmlspecialchars($order_data['order_notes']); ?>"
+                                        </p>
+                                    </div>
+                                <?php endif; ?>
+
                                 <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
                                     <h4 class="font-bold text-sm text-slate-900 dark:text-white mb-1">Metode Pembayaran</h4>
                                     <p class="text-sm text-slate-600 dark:text-slate-400 capitalize">
@@ -280,17 +297,24 @@ $orders_result = $conn->query($orders_query);
                     <div
                         class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 mb-6">
 
+                        <!-- Notification Area -->
                         <?php if (isset($_SESSION['status_msg'])): ?>
                             <div
-                                class="auto-close-alert mb-6 p-4 rounded-lg <?php echo $_SESSION['status_type'] == 'success' ? 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'; ?> flex items-center gap-3 transition-opacity duration-500">
+                                class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
                                 <span
-                                    class="material-icons-round"><?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?></span>
-                                <p><?php echo $_SESSION['status_msg']; ?></p>
+                                    class="material-icons-round <?php echo $_SESSION['status_type'] == 'success' ? 'text-green-500' : 'text-red-500'; ?>">
+                                    <?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?>
+                                </span>
+                                <div>
+                                    <h3 class="font-medium text-slate-900 dark:text-white">
+                                        <?php echo $_SESSION['status_type'] == 'success' ? 'Berhasil' : 'Gagal'; ?>
+                                    </h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $_SESSION['status_msg']; ?>
+                                    </p>
+                                </div>
                             </div>
-                            <?php
-                            unset($_SESSION['status_msg']);
-                            unset($_SESSION['status_type']);
-                            ?>
+                            <?php unset($_SESSION['status_msg']);
+                            unset($_SESSION['status_type']); ?>
                         <?php endif; ?>
 
                         <div class="mb-8 w-full">
