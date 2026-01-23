@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+    header("Location: " . BASE_URL . "admin/login.php");
     exit();
 }
 
@@ -13,7 +13,7 @@ if (isset($_SESSION['last_activity'])) {
         // Session expired
         session_unset();
         session_destroy();
-        header("Location: login.php?timeout=1");
+        header("Location: " . BASE_URL . "admin/login.php?timeout=1");
         exit();
     }
 }

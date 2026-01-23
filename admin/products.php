@@ -1,6 +1,6 @@
 <?php
 require("auth_session.php");
-require("../config/database.php");
+require_once dirname(__DIR__) . "/config/init.php";
 require("notification_logic.php");
 
 if (isset($_GET['ajax'])) {
@@ -130,7 +130,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Product Management - Lapak Bangsawan</title>
-    <link rel="icon" href="../assets/images/favicon-laba.png" type="image/x-icon">
+    <link rel="icon" href="<?= BASE_URL ?>assets/images/favicon-laba.png" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
@@ -181,9 +181,9 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
 
 <body
     class="bg-background-light dark:bg-background-dark text-slate-600 dark:text-slate-300 font-display transition-colors duration-200 antialiased lg:overflow-hidden lg:h-screen flex flex-col lg:flex-row">
-    <?php include("sidebar.php"); ?>
+    <?php include ROOT_PATH . "includes/admin/sidebar.php"; ?>
     <main class="flex-1 flex flex-col lg:h-full relative lg:overflow-hidden">
-        <?php $page_title = "Produk"; include("header.php"); ?>
+        <?php $page_title = "Produk"; include ROOT_PATH . "includes/admin/header.php"; ?>
         <div class="flex-1 lg:overflow-y-auto p-4 md:p-8 scroll-smooth">
             <div class="max-w-7xl mx-auto flex flex-col gap-6">
                 <!-- Page Content -->
@@ -478,7 +478,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                     </div>
                 <?php endif; ?>
             </div>
-            <?php include("footer.php"); ?>
+            <?php include ROOT_PATH . "includes/admin/footer.php"; ?>
         </div>
     </main>
     <script>

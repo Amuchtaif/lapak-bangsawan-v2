@@ -1,6 +1,6 @@
 <?php
 require("auth_session.php");
-require("../config/database.php");
+require_once dirname(__DIR__) . "/config/init.php";
 
 $type = $_GET['type'] ?? 'excel';
 

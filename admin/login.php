@@ -1,6 +1,6 @@
 <?php
 session_start();
-require('../config/database.php');
+require_once dirname(__DIR__) . '/config/init.php';
 $error = '';
 if (isset($_POST['username'])) {
     $username = stripslashes($_REQUEST['username']);
@@ -32,7 +32,7 @@ if (isset($_POST['username'])) {
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Lapak Bangsawan - Login</title>
-    <link rel="icon" href="../assets/images/favicon-laba.png" type="image/x-icon">
+    <link rel="icon" href="<?= BASE_URL ?>assets/images/favicon-laba.png" type="image/x-icon">
     <link href="https://fonts.googleapis.com" rel="preconnect" />
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap"

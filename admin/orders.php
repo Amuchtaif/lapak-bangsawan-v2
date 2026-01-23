@@ -59,7 +59,7 @@ $orders_result = $conn->query($orders_query);
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Order Management - Lapak Bangsawan</title>
-    <link rel="icon" href="../assets/images/favicon-laba.png" type="image/x-icon">
+    <link rel="icon" href="<?= BASE_URL ?>assets/images/favicon-laba.png" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
@@ -110,10 +110,10 @@ $orders_result = $conn->query($orders_query);
 
 <body
     class="bg-background-light dark:bg-background-dark text-slate-600 dark:text-slate-300 font-display transition-colors duration-200 antialiased overflow-hidden h-screen flex">
-    <?php include("sidebar.php"); ?>
+    <?php include ROOT_PATH . "includes/admin/sidebar.php"; ?>
     <main class="flex-1 flex flex-col h-full relative overflow-hidden">
         <?php $page_title = "Pesanan";
-        include("header.php"); ?>
+        include ROOT_PATH . "includes/admin/header.php"; ?>
         <div class="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth flex flex-col">
             <div class="max-w-7xl mx-auto w-full flex flex-col gap-6 flex-grow">
 
@@ -438,7 +438,7 @@ $orders_result = $conn->query($orders_query);
 
 
             </div>
-            <?php include("footer.php"); ?>
+            <?php include ROOT_PATH . "includes/admin/footer.php"; ?>
         </div>
     </main>
 </body>

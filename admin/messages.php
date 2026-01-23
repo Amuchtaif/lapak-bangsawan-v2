@@ -1,6 +1,6 @@
 <?php
 require("auth_session.php");
-require("../config/database.php");
+require_once dirname(__DIR__) . "/config/init.php";
 
 // Delete
 if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id'])) {
@@ -40,7 +40,7 @@ $result = $conn->query("SELECT * FROM messages ORDER BY created_at DESC LIMIT $s
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Messages - Lapak Bangsawan</title>
-    <link rel="icon" href="../assets/images/favicon-laba.png" type="image/x-icon">
+    <link rel="icon" href="<?= BASE_URL ?>assets/images/favicon-laba.png" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
@@ -68,10 +68,10 @@ $result = $conn->query("SELECT * FROM messages ORDER BY created_at DESC LIMIT $s
 
 <body
     class="bg-background-light dark:bg-background-dark text-slate-600 dark:text-slate-300 font-display transition-colors duration-200 antialiased overflow-hidden h-screen flex">
-    <?php include("sidebar.php"); ?>
+    <?php include ROOT_PATH . "includes/admin/sidebar.php"; ?>
     <main class="flex-1 flex flex-col h-full relative overflow-hidden">
         <?php $page_title = "Pesan Masuk";
-        include("header.php"); ?>
+        include ROOT_PATH . "includes/admin/header.php"; ?>
 
         <div class="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth">
             <div class="max-w-7xl mx-auto flex flex-col gap-6">
@@ -198,7 +198,7 @@ $result = $conn->query("SELECT * FROM messages ORDER BY created_at DESC LIMIT $s
                     </div>
                 </div>
             </div>
-            <?php include("footer.php"); ?>
+            <?php include ROOT_PATH . "includes/admin/footer.php"; ?>
         </div>
 
         <!-- Delete Confirmation Modal -->
