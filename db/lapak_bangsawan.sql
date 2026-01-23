@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.3-1.fc43
+-- version 5.2.0
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost
--- Generation Time: Jan 22, 2026 at 11:36 PM
--- Server version: 10.11.13-MariaDB
--- PHP Version: 8.4.15
+-- Host: 127.0.0.1
+-- Generation Time: Jan 23, 2026 at 09:57 AM
+-- Server version: 10.4.27-MariaDB
+-- PHP Version: 8.2.0
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -92,28 +92,28 @@ CREATE TABLE `daily_sales_targets` (
 --
 
 INSERT INTO `daily_sales_targets` (`id`, `product_id`, `target_date`, `target_qty_kg`, `created_at`) VALUES
-(1, 26, '2026-01-22', 20.00, '2026-01-22 12:55:54'),
-(2, 27, '2026-01-22', 10.00, '2026-01-22 12:55:54'),
-(3, 28, '2026-01-22', 10.00, '2026-01-22 12:55:54'),
-(4, 29, '2026-01-22', 10.00, '2026-01-22 12:55:54'),
-(5, 30, '2026-01-22', 9.00, '2026-01-22 12:55:54'),
-(6, 31, '2026-01-22', 15.00, '2026-01-22 12:55:54'),
-(7, 34, '2026-01-22', 8.00, '2026-01-22 12:55:54'),
-(8, 24, '2026-01-22', 49.00, '2026-01-22 12:55:54'),
-(9, 25, '2026-01-22', 0.00, '2026-01-22 12:55:54'),
-(10, 33, '2026-01-22', 18.00, '2026-01-22 12:55:54'),
-(11, 9, '2026-01-22', 10.00, '2026-01-22 12:55:54'),
-(12, 10, '2026-01-22', 10.00, '2026-01-22 12:55:54'),
-(13, 11, '2026-01-22', 10.00, '2026-01-22 12:55:54'),
-(14, 12, '2026-01-22', 10.00, '2026-01-22 12:55:54'),
-(15, 18, '2026-01-22', 10.00, '2026-01-22 12:55:54'),
-(16, 37, '2026-01-22', 10.00, '2026-01-22 12:55:54'),
-(17, 20, '2026-01-22', 10.00, '2026-01-22 12:55:54'),
-(18, 21, '2026-01-22', 6.00, '2026-01-22 12:55:54'),
-(19, 22, '2026-01-22', 0.00, '2026-01-22 12:55:54'),
-(20, 23, '2026-01-22', 0.00, '2026-01-22 12:55:54'),
-(21, 36, '2026-01-22', 0.00, '2026-01-22 12:55:54'),
-(22, 19, '2026-01-22', 10.00, '2026-01-22 12:55:54');
+(1, 26, '2026-01-22', '20.00', '2026-01-22 12:55:54'),
+(2, 27, '2026-01-22', '10.00', '2026-01-22 12:55:54'),
+(3, 28, '2026-01-22', '10.00', '2026-01-22 12:55:54'),
+(4, 29, '2026-01-22', '10.00', '2026-01-22 12:55:54'),
+(5, 30, '2026-01-22', '9.00', '2026-01-22 12:55:54'),
+(6, 31, '2026-01-22', '15.00', '2026-01-22 12:55:54'),
+(7, 34, '2026-01-22', '8.00', '2026-01-22 12:55:54'),
+(8, 24, '2026-01-22', '49.00', '2026-01-22 12:55:54'),
+(9, 25, '2026-01-22', '0.00', '2026-01-22 12:55:54'),
+(10, 33, '2026-01-22', '18.00', '2026-01-22 12:55:54'),
+(11, 9, '2026-01-22', '10.00', '2026-01-22 12:55:54'),
+(12, 10, '2026-01-22', '10.00', '2026-01-22 12:55:54'),
+(13, 11, '2026-01-22', '10.00', '2026-01-22 12:55:54'),
+(14, 12, '2026-01-22', '10.00', '2026-01-22 12:55:54'),
+(15, 18, '2026-01-22', '10.00', '2026-01-22 12:55:54'),
+(16, 37, '2026-01-22', '10.00', '2026-01-22 12:55:54'),
+(17, 20, '2026-01-22', '10.00', '2026-01-22 12:55:54'),
+(18, 21, '2026-01-22', '6.00', '2026-01-22 12:55:54'),
+(19, 22, '2026-01-22', '0.00', '2026-01-22 12:55:54'),
+(20, 23, '2026-01-22', '0.00', '2026-01-22 12:55:54'),
+(21, 36, '2026-01-22', '0.00', '2026-01-22 12:55:54'),
+(22, 19, '2026-01-22', '10.00', '2026-01-22 12:55:54');
 
 -- --------------------------------------------------------
 
@@ -129,6 +129,37 @@ CREATE TABLE `messages` (
   `is_read` tinyint(1) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `messages`
+--
+
+INSERT INTO `messages` (`id`, `name`, `email`, `message`, `is_read`, `created_at`) VALUES
+(2, 'Andi Muchtaif', 'amuchtaif@gmail.com', 'tingkatkan segi user experience website', 0, '2026-01-23 03:22:55');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `operational_expenses`
+--
+
+CREATE TABLE `operational_expenses` (
+  `id` int(11) NOT NULL,
+  `expense_date` date NOT NULL,
+  `category` enum('Pembelian Bahan Baku','Sewa & Utilitas','Gaji Karyawan','Marketing','Perlengkapan','Lainnya') NOT NULL,
+  `description` text DEFAULT NULL,
+  `amount` decimal(15,2) NOT NULL,
+  `proof_image` varchar(255) DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `operational_expenses`
+--
+
+INSERT INTO `operational_expenses` (`id`, `expense_date`, `category`, `description`, `amount`, `proof_image`, `created_by`, `created_at`) VALUES
+(1, '2026-01-01', 'Sewa & Utilitas', 'Bayar langganan wifi', '200000.00', '', 1, '2026-01-23 04:12:55');
 
 -- --------------------------------------------------------
 
@@ -154,17 +185,17 @@ CREATE TABLE `orders` (
 --
 
 INSERT INTO `orders` (`id`, `customer_name`, `customer_phone`, `customer_address`, `total_amount`, `payment_method`, `order_notes`, `status`, `created_at`, `order_token`) VALUES
-(1, 'Atar', '082119242560', 'Desa ciperna, blok sikroya, kec talun, (rumah Pak Mansyur)', 122000.00, 'cod', NULL, 'cancelled', '2026-01-03 01:02:44', NULL),
-(2, 'Muhamad Tohirudin', '081391916130', 'Jl. Abdullah No 91 Dusun Pahing Rt 010 Rw 003 Desa Cilimus Kecamatan Cilimus\nKab. Kuningan Jawa Barat, Indonesia', 28000.00, 'transfer', NULL, 'completed', '2026-01-03 01:22:34', NULL),
-(3, 'Rizky ahadillah', '082216925947', 'Ambil Di tempat', 115500.00, 'cod', NULL, 'completed', '2026-01-03 01:29:40', NULL),
-(4, 'YOGAN MOHAMMAD AHAD ', '089512904218', 'Markas pondok as Sunnah ', 75000.00, 'transfer', NULL, 'pending', '2026-01-12 14:31:25', 'f96dd97085d551e1c6450c4d835ab1c3'),
-(5, 'YOGAN MOHAMMAD AHAD ', '089512904218', 'Kompleks pondok pesantren as, Sunnah Cirebon ', 140000.00, 'cod', NULL, 'pending', '2026-01-12 14:33:20', '9ea8484aff5f4ad9a728eecbe15ea40a'),
-(6, 'Iza Tumila', '087834273892', 'Pesona Kahuripan blok B no 2 Jl. Surapandan, Argasunya, Kec. Harjamukti, Kota Cirebon, Jawa Barat 14000, Indonesia', 55000.00, 'transfer', NULL, 'pending', '2026-01-13 02:25:17', '9116d636f4ce4052df526bec995daccb'),
-(7, 'Abdurrahman', '085814583225', 'Tpa anak sholeh', 60000.00, 'cod', NULL, 'pending', '2026-01-19 02:24:02', '61d9697882889533e59feb5d58aea320'),
-(8, 'Ita Ummu Umay', '089516914897', 'jl.wanagati no 10A RT 05 RW 03 (kontrakan dawet Ireng no 10A3) kelurahan karyamulya kecamatan kesambi kota Cirebon ', 32000.00, 'cod', NULL, 'pending', '2026-01-21 07:59:28', 'c6e487ad11e4f74d930e8c90bd9ac859'),
-(9, 'Ummu Aliya', '081320142611', 'Gg istiqomah 2 ', 96000.00, 'cod', NULL, 'pending', '2026-01-21 12:46:07', 'aa23382aecfd18771659383b284b6300'),
-(10, 'Yayat', '08994453450', 'Dawet ireng 10A4', 96000.00, 'cod', NULL, 'pending', '2026-01-21 12:58:54', '481756dc63139eecf7340b445c650014'),
-(11, 'Abdurrahman', '085814583225', 'Tpa anak sholeh', 94000.00, 'cod', 'Transaksi Manual (Admin)', 'completed', '2026-01-22 13:47:24', NULL);
+(1, 'Atar', '082119242560', 'Desa ciperna, blok sikroya, kec talun, (rumah Pak Mansyur)', '122000.00', 'cod', NULL, 'cancelled', '2026-01-03 01:02:44', NULL),
+(2, 'Muhamad Tohirudin', '081391916130', 'Jl. Abdullah No 91 Dusun Pahing Rt 010 Rw 003 Desa Cilimus Kecamatan Cilimus\nKab. Kuningan Jawa Barat, Indonesia', '28000.00', 'transfer', NULL, 'completed', '2026-01-03 01:22:34', NULL),
+(3, 'Rizky ahadillah', '082216925947', 'Ambil Di tempat', '115500.00', 'cod', NULL, 'completed', '2026-01-03 01:29:40', NULL),
+(4, 'YOGAN MOHAMMAD AHAD ', '089512904218', 'Markas pondok as Sunnah ', '75000.00', 'transfer', NULL, 'pending', '2026-01-12 14:31:25', 'f96dd97085d551e1c6450c4d835ab1c3'),
+(5, 'YOGAN MOHAMMAD AHAD ', '089512904218', 'Kompleks pondok pesantren as, Sunnah Cirebon ', '140000.00', 'cod', NULL, 'pending', '2026-01-12 14:33:20', '9ea8484aff5f4ad9a728eecbe15ea40a'),
+(6, 'Iza Tumila', '087834273892', 'Pesona Kahuripan blok B no 2 Jl. Surapandan, Argasunya, Kec. Harjamukti, Kota Cirebon, Jawa Barat 14000, Indonesia', '55000.00', 'transfer', NULL, 'pending', '2026-01-13 02:25:17', '9116d636f4ce4052df526bec995daccb'),
+(7, 'Abdurrahman', '085814583225', 'Tpa anak sholeh', '60000.00', 'cod', NULL, 'pending', '2026-01-19 02:24:02', '61d9697882889533e59feb5d58aea320'),
+(8, 'Ita Ummu Umay', '089516914897', 'jl.wanagati no 10A RT 05 RW 03 (kontrakan dawet Ireng no 10A3) kelurahan karyamulya kecamatan kesambi kota Cirebon ', '32000.00', 'cod', NULL, 'pending', '2026-01-21 07:59:28', 'c6e487ad11e4f74d930e8c90bd9ac859'),
+(9, 'Ummu Aliya', '081320142611', 'Gg istiqomah 2 ', '96000.00', 'cod', NULL, 'pending', '2026-01-21 12:46:07', 'aa23382aecfd18771659383b284b6300'),
+(10, 'Yayat', '08994453450', 'Dawet ireng 10A4', '96000.00', 'cod', NULL, 'pending', '2026-01-21 12:58:54', '481756dc63139eecf7340b445c650014'),
+(11, 'Abdurrahman', '085814583225', 'Tpa anak sholeh', '94000.00', 'cod', 'Transaksi Manual (Admin)', 'completed', '2026-01-22 13:47:24', NULL);
 
 -- --------------------------------------------------------
 
@@ -186,28 +217,28 @@ CREATE TABLE `order_items` (
 --
 
 INSERT INTO `order_items` (`id`, `order_id`, `product_name`, `weight`, `price_per_kg`, `subtotal`) VALUES
-(10, 1, 'Fillet Dada Kulit', 1.00, 44000.00, 44000.00),
-(11, 1, 'Daging Ayam Fresh', 1.00, 33000.00, 33000.00),
-(12, 1, 'Fillet Paha Kulit', 1.00, 45000.00, 45000.00),
-(13, 2, 'Fillet Dada Kulit', 1.00, 44000.00, 44000.00),
-(14, 2, 'Daging Ayam Fresh', 1.00, 33000.00, 33000.00),
-(15, 2, 'Fillet Paha Kulit', 1.00, 45000.00, 45000.00),
-(16, 3, 'Ikan Ekor Kuning', 1.00, 28000.00, 28000.00),
-(17, 4, 'Daging Ayam Fresh', 3.50, 33000.00, 115500.00),
-(18, 4, 'Fillet Paha Kulit', 1.00, 42000.00, 42000.00),
-(19, 4, 'Ikan Nila', 1.00, 33000.00, 33000.00),
-(20, 5, 'Fillet Paha Kulit', 1.00, 42000.00, 42000.00),
-(21, 5, 'Ikan Nila', 1.00, 33000.00, 33000.00),
-(22, 5, 'Fillet Dada Kulit', 1.00, 41000.00, 41000.00),
-(23, 5, 'Ekor', 1.00, 24000.00, 24000.00),
-(24, 6, 'Daging Ayam Fresh', 1.00, 30000.00, 30000.00),
-(25, 6, 'Ikan Lele', 1.00, 25000.00, 25000.00),
-(26, 7, 'Daging Ayam Fresh', 2.00, 30000.00, 60000.00),
-(27, 8, 'Daging Ayam Fresh', 1.00, 32000.00, 32000.00),
-(28, 9, 'Daging Ayam Fresh', 3.00, 32000.00, 96000.00),
-(29, 10, 'Daging Ayam Fresh', 3.00, 32000.00, 96000.00),
-(30, 11, 'Ikan Lele', 2.00, 25000.00, 50000.00),
-(31, 11, 'Chicken Eggroll', 2.00, 22000.00, 44000.00);
+(10, 1, 'Fillet Dada Kulit', '1.00', '44000.00', '44000.00'),
+(11, 1, 'Daging Ayam Fresh', '1.00', '33000.00', '33000.00'),
+(12, 1, 'Fillet Paha Kulit', '1.00', '45000.00', '45000.00'),
+(13, 2, 'Fillet Dada Kulit', '1.00', '44000.00', '44000.00'),
+(14, 2, 'Daging Ayam Fresh', '1.00', '33000.00', '33000.00'),
+(15, 2, 'Fillet Paha Kulit', '1.00', '45000.00', '45000.00'),
+(16, 3, 'Ikan Ekor Kuning', '1.00', '28000.00', '28000.00'),
+(17, 4, 'Daging Ayam Fresh', '3.50', '33000.00', '115500.00'),
+(18, 4, 'Fillet Paha Kulit', '1.00', '42000.00', '42000.00'),
+(19, 4, 'Ikan Nila', '1.00', '33000.00', '33000.00'),
+(20, 5, 'Fillet Paha Kulit', '1.00', '42000.00', '42000.00'),
+(21, 5, 'Ikan Nila', '1.00', '33000.00', '33000.00'),
+(22, 5, 'Fillet Dada Kulit', '1.00', '41000.00', '41000.00'),
+(23, 5, 'Ekor', '1.00', '24000.00', '24000.00'),
+(24, 6, 'Daging Ayam Fresh', '1.00', '30000.00', '30000.00'),
+(25, 6, 'Ikan Lele', '1.00', '25000.00', '25000.00'),
+(26, 7, 'Daging Ayam Fresh', '2.00', '30000.00', '60000.00'),
+(27, 8, 'Daging Ayam Fresh', '1.00', '32000.00', '32000.00'),
+(28, 9, 'Daging Ayam Fresh', '3.00', '32000.00', '96000.00'),
+(29, 10, 'Daging Ayam Fresh', '3.00', '32000.00', '96000.00'),
+(30, 11, 'Ikan Lele', '2.00', '25000.00', '50000.00'),
+(31, 11, 'Chicken Eggroll', '2.00', '22000.00', '44000.00');
 
 -- --------------------------------------------------------
 

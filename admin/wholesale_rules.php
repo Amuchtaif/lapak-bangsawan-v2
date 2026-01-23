@@ -165,7 +165,7 @@ if (isset($_GET['edit_id'])) {
                     </p>
                     <h1 class="text-3xl font-black text-slate-900 dark:text-white">Manajemen Aturan Grosir Dinamis</h1>
                     <p class="text-slate-500 dark:text-slate-400 mt-1">Kelola strategi diskon berbasis volume untuk
-                        meningkatkan penjualan B2B.</p>
+                        meningkatkan penjualan.</p>
                 </div>
 
                 <!-- Input Card -->
@@ -209,7 +209,7 @@ if (isset($_GET['edit_id'])) {
                                     placeholder="Contoh: 10" required
                                     class="w-full pr-12 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-4 focus:ring-primary/10 transition-all">
                                 <span
-                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">Kg/Unit</span>
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">Kg</span>
                             </div>
                         </div>
 
@@ -262,7 +262,7 @@ if (isset($_GET['edit_id'])) {
                                     class="bg-slate-50/50 dark:bg-slate-800/50 text-slate-400 font-bold uppercase text-[10px] tracking-widest border-b border-slate-100 dark:border-slate-700">
                                     <th class="px-8 py-4">Kategori</th>
                                     <th class="px-8 py-4 text-center">Min. Order</th>
-                                    <th class="px-8 py-4 text-center">Potongan (Rp/Unit)</th>
+                                    <th class="px-8 py-4 text-center">Potongan (Rp/Kategori)</th>
                                     <th class="px-8 py-4 text-center">Status</th>
                                     <th class="px-8 py-4 text-right">Aksi</th>
                                 </tr>
