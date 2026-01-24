@@ -58,7 +58,7 @@ while ($row = $cat_res->fetch_assoc()) {
 }
 
 // Fetch Rules
-$rules_res = $conn->query("SELECT * FROM wholesale_rules ORDER BY category_name ASC");
+$rules_res = $conn->query("SELECT * FROM wholesale_rules ORDER BY category_name ASC, min_weight_kg DESC");
 
 // Edit rule logic
 $edit_rule = null;
