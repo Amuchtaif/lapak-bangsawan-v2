@@ -211,7 +211,7 @@ $expenses_result = $conn->query($query);
                     </div>
 
                     <div
-                        class="bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                        class="bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-visible">
                         <form action="" method="POST" enctype="multipart/form-data" class="p-6 md:p-8">
                             <input type="hidden" name="add_expense" value="1">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
@@ -226,16 +226,40 @@ $expenses_result = $conn->query($query);
                                     <label
                                         class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Kategori
                                         Pengeluaran</label>
-                                    <select name="category" required
-                                        class="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/50 transition-all">
-                                        <option value="" disabled selected>Pilih Kategori</option>
-                                        <option value="Pembelian Bahan Baku">Pembelian Bahan Baku</option>
-                                        <option value="Sewa & Utilitas">Sewa & Utilitas</option>
-                                        <option value="Gaji Karyawan">Gaji Karyawan</option>
-                                        <option value="Marketing">Marketing</option>
-                                        <option value="Perlengkapan">Perlengkapan</option>
-                                        <option value="Lainnya">Lainnya</option>
-                                    </select>
+                                    <div class="custom-select-wrapper relative">
+                                        <select name="category" required class="hidden">
+                                            <option value="" disabled selected>Pilih Kategori</option>
+                                            <option value="Pembelian Bahan Baku">Pembelian Bahan Baku</option>
+                                            <option value="Sewa & Utilitas">Sewa & Utilitas</option>
+                                            <option value="Gaji Karyawan">Gaji Karyawan</option>
+                                            <option value="Marketing">Marketing</option>
+                                            <option value="Perlengkapan">Perlengkapan</option>
+                                            <option value="Lainnya">Lainnya</option>
+                                        </select>
+                                        <button type="button"
+                                            class="custom-select-trigger w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/50 transition-all text-left flex items-center justify-between">
+                                            <span class="selected-label">Pilih Kategori</span>
+                                            <span
+                                                class="material-icons-round text-slate-400 selected-icon transition-transform">expand_more</span>
+                                        </button>
+                                        <div
+                                            class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
+                                            <div class="max-h-60 overflow-y-auto p-2 dropdown-options-scroll">
+                                                <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm"
+                                                    data-value="Pembelian Bahan Baku">Pembelian Bahan Baku</div>
+                                                <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm"
+                                                    data-value="Sewa & Utilitas">Sewa & Utilitas</div>
+                                                <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm"
+                                                    data-value="Gaji Karyawan">Gaji Karyawan</div>
+                                                <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm"
+                                                    data-value="Marketing">Marketing</div>
+                                                <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm"
+                                                    data-value="Perlengkapan">Perlengkapan</div>
+                                                <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm"
+                                                    data-value="Lainnya">Lainnya</div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="mb-5">
@@ -353,10 +377,10 @@ $expenses_result = $conn->query($query);
 
                     <!-- Table Container -->
                     <div
-                        class="bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+                        class="bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-visible flex flex-col">
                         <!-- Search Header -->
                         <div
-                            class="p-4 md:p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-50/30 dark:bg-slate-800/20">
+                            class="p-4 md:p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-50/30 dark:bg-slate-800/20 rounded-t-2xl">
                             <div class="relative w-full md:w-96 group">
                                 <span
                                     class="absolute left-4 top-1/2 -translate-y-1/2 material-icons-round text-slate-400 group-focus-within:text-primary transition-colors">search</span>
@@ -369,7 +393,7 @@ $expenses_result = $conn->query($query);
                         </div>
 
                         <!-- Table -->
-                        <div class="overflow-x-auto">
+                        <div class="overflow-x-auto rounded-t-xl">
                             <table class="w-full text-left text-sm border-collapse">
                                 <thead>
                                     <tr
@@ -471,13 +495,30 @@ $expenses_result = $conn->query($query);
                                 <div
                                     class="flex items-center gap-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                                     <span class="whitespace-nowrap">Tampilkan</span>
-                                    <div class="relative">
-                                        <select onchange="window.location.href='?limit='+this.value+'&page=1'"
-                                            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs py-1.5 pl-3 pr-8 focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-slate-900 dark:text-white cursor-pointer transition-all h-8">
+                                    <div class="custom-select-wrapper relative"
+                                        data-onchange="window.location.href='?limit=%val%&page=1'">
+                                        <select class="hidden">
                                             <option value="5" <?= $limit == 5 ? 'selected' : '' ?>>5</option>
                                             <option value="10" <?= $limit == 10 ? 'selected' : '' ?>>10</option>
                                             <option value="20" <?= $limit == 20 ? 'selected' : '' ?>>20</option>
                                         </select>
+                                        <button type="button"
+                                            class="custom-select-trigger flex items-center justify-between w-20 rounded-lg border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 px-3 py-1.5 text-xs text-slate-900 dark:text-white transition-all text-left">
+                                            <span class="selected-label"><?= $limit ?></span>
+                                            <span
+                                                class="material-icons-round text-slate-400 text-sm selected-icon transition-transform">expand_more</span>
+                                        </button>
+                                        <div
+                                            class="custom-select-options hidden absolute z-[110] w-20 bottom-full mb-2 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
+                                            <div class="p-1">
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-xs <?= $limit == 5 ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                                    data-value="5">5</div>
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-xs <?= $limit == 10 ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                                    data-value="10">10</div>
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-xs <?= $limit == 20 ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                                    data-value="20">20</div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <span class="hidden sm:inline opacity-30">|</span>
                                     <span class="hidden sm:inline whitespace-nowrap">HLM <?= $page ?> DARI

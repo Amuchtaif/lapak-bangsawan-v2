@@ -174,7 +174,7 @@ $new_prod_percentage = ($total_products > 0) ? round(($new_prod_count / $total_p
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
                     <div
-                        class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group md:col-span-1 lg:col-span-1">
+                        class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                         <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                             <span class="material-icons-round text-6xl text-primary">payments</span>
                         </div>
@@ -183,14 +183,8 @@ $new_prod_percentage = ($total_products > 0) ? round(($new_prod_count / $total_p
                             <span class="text-3xl font-bold text-slate-900 dark:text-white">Rp
                                 <?php echo number_format($revenue, 0, ',', '.'); ?></span>
                         </div>
-                        <div class="mt-4 flex items-center text-sm">
-                            <!-- <span class="text-green-500 font-medium flex items-center">
-                                <span class="material-icons-round text-sm">trending_up</span>
-                                12.5%
-                            </span>
-                            <span class="text-slate-400 ml-2">vs last month</span> -->
-                        </div>
                     </div>
+
                     <div
                         class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                         <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">

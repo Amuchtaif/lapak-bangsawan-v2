@@ -27,13 +27,16 @@ $order = "ORDER BY (products.stock > 0) DESC, products.id DESC"; // Default
 if (isset($_GET['sort'])) {
     switch ($_GET['sort']) {
         case 'price_asc':
-            $order = "ORDER BY (products.stock > 0) DESC, price ASC";
+            $order = "ORDER BY products.price ASC";
             break;
         case 'price_desc':
-            $order = "ORDER BY (products.stock > 0) DESC, price DESC";
+            $order = "ORDER BY products.price DESC";
             break;
         case 'name_asc':
-            $order = "ORDER BY (products.stock > 0) DESC, name ASC";
+            $order = "ORDER BY products.name ASC";
+            break;
+        case '':
+            $order = "ORDER BY (products.stock > 0) DESC, products.id DESC";
             break;
     }
 }
@@ -178,32 +181,94 @@ $best_sellers = $conn->query($best_seller_query);
                     <div class="flex items-center gap-3 md:hidden">
                         <label class="text-sm font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap"
                             for="category">Kategori:</label>
-                        <select onchange="window.location.href = this.value"
-                            class="appearance-none cursor-pointer block w-full pl-4 pr-10 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22%2364748b%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m19.5%208.25-7.5%207.5-7.5-7.5%22%2F%3E%3C%2Fsvg%3E')] bg-[right_0.75rem_center] bg-[length:1.25rem_1.25rem] bg-no-repeat shadow-sm transition-all hover:border-primary/50">
-                            <option value="market.php" class="py-2 bg-white dark:bg-card-dark">Semua Kategori</option>
-                            <?php foreach ($categories as $cat): ?>
-                                <option value="?category=<?php echo $cat['slug']; ?>" <?php echo (isset($_GET['category']) && $_GET['category'] == $cat['slug']) ? 'selected' : ''; ?> class="py-2 bg-white
-                                dark:bg-card-dark">
-                                    <?php echo htmlspecialchars($cat['name']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <div class="custom-select-wrapper relative md:hidden flex-1"
+                            data-onchange="window.location.href = updateQueryStringParameter('category', '%val%')">
+                            <select class="hidden">
+                                <option value="">Semua Kategori</option>
+                                <?php foreach ($categories as $cat): ?>
+                                    <option value="<?php echo $cat['slug']; ?>" <?php echo (isset($_GET['category']) && $_GET['category'] == $cat['slug']) ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($cat['name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="button"
+                                class="custom-select-trigger w-full flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-card-dark px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all text-left">
+                                <span class="selected-label">
+                                    <?php
+                                    $current_cat = 'Semua Kategori';
+                                    if (isset($_GET['category'])) {
+                                        foreach ($categories as $cat) {
+                                            if ($cat['slug'] == $_GET['category']) {
+                                                $current_cat = $cat['name'];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    echo htmlspecialchars($current_cat);
+                                    ?>
+                                </span>
+                                <span
+                                    class="material-symbols-outlined text-slate-400 selected-icon transition-transform">expand_more</span>
+                            </button>
+                            <div
+                                class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
+                                <div class="max-h-60 overflow-y-auto p-2 dropdown-options-scroll">
+                                    <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?= !isset($_GET['category']) ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                        data-value="">Semua Kategori</div>
+                                    <?php foreach ($categories as $cat): ?>
+                                        <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?= (isset($_GET['category']) && $_GET['category'] == $cat['slug']) ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                            data-value="<?php echo $cat['slug']; ?>">
+                                            <?php echo htmlspecialchars($cat['name']); ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="flex items-center gap-3">
                         <label class="text-sm font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap"
                             for="sort">Urutkan:</label>
-                        <select
-                            onchange="window.location.search = updateQueryStringParameter(window.location.search, 'sort', this.value)"
-                            class="appearance-none cursor-pointer block w-full pl-4 pr-10 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22%2364748b%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m19.5%208.25-7.5%207.5-7.5-7.5%22%2F%3E%3C%2Fsvg%3E')] bg-[right_0.75rem_center] bg-[length:1.25rem_1.25rem] bg-no-repeat shadow-sm transition-all hover:border-primary/50"
-                            id="sort">
-                            <option value="" class="py-2 bg-white dark:bg-card-dark">Rekomendasi</option>
-                            <option value="price_asc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'price_asc') ? 'selected' : ''; ?> class="py-2 bg-white dark:bg-card-dark">Harga: Rendah ke Tinggi
-                            </option>
-                            <option value="price_desc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'price_desc') ? 'selected' : ''; ?> class="py-2 bg-white dark:bg-card-dark">Harga: Tinggi ke Rendah
-                            </option>
-                            <option value="name_asc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'name_asc') ? 'selected' : ''; ?> class="py-2 bg-white dark:bg-card-dark">Nama: A-Z</option>
-                        </select>
+                        <div class="custom-select-wrapper relative flex-1 sm:w-60"
+                            data-onchange="window.location.href = updateQueryStringParameter('sort', '%val%')">
+                            <select class="hidden">
+                                <option value="">Rekomendasi</option>
+                                <option value="price_asc">Harga: Rendah ke Tinggi</option>
+                                <option value="price_desc">Harga: Tinggi ke Rendah</option>
+                                <option value="name_asc">Nama: A-Z</option>
+                            </select>
+                            <button type="button"
+                                class="custom-select-trigger w-full flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-card-dark px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all text-left">
+                                <span class="selected-label">
+                                    <?php
+                                    $sort = $_GET['sort'] ?? '';
+                                    if ($sort == 'price_asc')
+                                        echo 'Harga: Rendah ke Tinggi';
+                                    else if ($sort == 'price_desc')
+                                        echo 'Harga: Tinggi ke Rendah';
+                                    else if ($sort == 'name_asc')
+                                        echo 'Nama: A-Z';
+                                    else
+                                        echo 'Rekomendasi';
+                                    ?>
+                                </span>
+                                <span
+                                    class="material-symbols-outlined text-slate-400 selected-icon transition-transform">expand_more</span>
+                            </button>
+                            <div
+                                class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
+                                <div class="max-h-60 overflow-y-auto p-2 dropdown-options-scroll">
+                                    <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?= $sort == '' ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                        data-value="">Rekomendasi</div>
+                                    <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?= $sort == 'price_asc' ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                        data-value="price_asc">Harga: Rendah ke Tinggi</div>
+                                    <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?= $sort == 'price_desc' ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                        data-value="price_desc">Harga: Tinggi ke Rendah</div>
+                                    <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?= $sort == 'name_asc' ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                        data-value="name_asc">Nama: A-Z</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <p class="text-slate-500 dark:text-slate-400 font-medium">Menampilkan <span
@@ -212,7 +277,7 @@ $best_sellers = $conn->query($best_seller_query);
             </div>
 
             <!-- Best Seller Section -->
-            <?php if (!isset($_GET['search']) && !isset($_GET['category']) && mysqli_num_rows($best_sellers) > 0): ?>
+            <?php if (!isset($_GET['search']) && !isset($_GET['category']) && !isset($_GET['sort']) && mysqli_num_rows($best_sellers) > 0): ?>
                 <div class="mb-8">
                     <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                         <span class="material-symbols-outlined text-amber-500">trophy</span>
@@ -469,15 +534,18 @@ $best_sellers = $conn->query($best_seller_query);
 
     <script>
         // Update Query String helpers
-        function updateQueryStringParameter(uri, key, value) {
-            var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
-            var separator = uri.indexOf('?') !== -1 ? "&" : "?";
-            if (uri.match(re)) {
-                return uri.replace(re, '$1' + key + "=" + value + '$2');
+        function updateQueryStringParameter(key, value) {
+            const url = new URL(window.location.href);
+            if (value) {
+                url.searchParams.set(key, value);
+            } else {
+                url.searchParams.delete(key);
             }
-            else {
-                return uri + separator + key + "=" + value;
+            // Reset to page 1 if any filter changes
+            if (url.searchParams.has('page')) {
+                url.searchParams.set('page', '1');
             }
+            return url.toString();
         }
 
         // Product Logic

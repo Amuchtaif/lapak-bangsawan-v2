@@ -170,7 +170,7 @@ if (isset($_GET['edit_id'])) {
 
                 <!-- Input Card -->
                 <div
-                    class="bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden p-6 md:p-8">
+                    class="bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-visible p-6 md:p-8">
                     <div class="flex items-center gap-3 mb-6">
                         <div class="p-2 bg-blue-100 dark:bg-blue-900/30 text-primary rounded-lg">
                             <span class="material-icons-round">add_circle</span>
@@ -190,15 +190,22 @@ if (isset($_GET['edit_id'])) {
                             <label
                                 class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Kategori
                                 Produk</label>
-                            <select name="category_name" required
-                                class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-primary/10 transition-all">
-                                <option value="" disabled selected>Pilih Kategori</option>
-                                <?php foreach ($available_categories as $cat): ?>
-                                    <option value="<?= $cat ?>" <?= ($edit_rule && $edit_rule['category_name'] == $cat) ? 'selected' : '' ?>>
-                                        <?= $cat ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <div class="custom-select-wrapper relative">
+                                <input type="hidden" name="category_name" value="<?= $edit_rule ? $edit_rule['category_name'] : '' ?>" required>
+                                <button type="button" class="custom-select-trigger w-full flex items-center justify-between bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-primary/10 transition-all text-left">
+                                    <span class="selected-label"><?= $edit_rule ? $edit_rule['category_name'] : 'Pilih Kategori' ?></span>
+                                    <span class="material-icons-round text-slate-400 selected-icon transition-transform">expand_more</span>
+                                </button>
+                                <div class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
+                                    <div class="max-h-60 overflow-y-auto p-2 dropdown-options-scroll">
+                                        <?php foreach ($available_categories as $cat): ?>
+                                            <div class="custom-option px-4 py-3 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?= ($edit_rule && $edit_rule['category_name'] == $cat) ? 'bg-primary/10 text-primary font-bold' : '' ?>" data-value="<?= $cat ?>">
+                                                <?= $cat ?>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="md:col-span-3">

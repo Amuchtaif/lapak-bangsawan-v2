@@ -80,3 +80,120 @@
         }
     });
 </script>
+
+<!-- Custom Select Component Logic -->
+<style>
+    .custom-select-active .selected-icon {
+        transform: rotate(180deg);
+    }
+
+    .custom-select-options {
+        z-index: 1000;
+        max-width: calc(100vw - 2rem);
+    }
+
+    .selected-label,
+    .custom-option {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        initCustomSelects();
+    });
+
+    function initCustomSelects() {
+        // Toggle dropdown
+        document.addEventListener('click', function (e) {
+            const trigger = e.target.closest('.custom-select-trigger');
+            if (trigger) {
+                const wrapper = trigger.closest('.custom-select-wrapper');
+                const options = wrapper.querySelector('.custom-select-options');
+
+                // Close other dropdowns
+                document.querySelectorAll('.custom-select-wrapper').forEach(w => {
+                    if (w !== wrapper) {
+                        w.classList.remove('custom-select-active');
+                        w.querySelector('.custom-select-options').classList.add('hidden', 'opacity-0', 'translate-y-2');
+                    }
+                });
+
+                // Toggle this one
+                const isActive = wrapper.classList.toggle('custom-select-active');
+                if (isActive) {
+                    options.classList.remove('hidden');
+                    setTimeout(() => {
+                        options.classList.remove('opacity-0', 'translate-y-2');
+                    }, 10);
+                } else {
+                    options.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => {
+                        options.classList.add('hidden');
+                    }, 200);
+                }
+                return;
+            }
+
+            // Close when clicking outside
+            if (!e.target.closest('.custom-select-wrapper')) {
+                document.querySelectorAll('.custom-select-wrapper').forEach(w => {
+                    w.classList.remove('custom-select-active');
+                    const options = w.querySelector('.custom-select-options');
+                    options.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => {
+                        options.classList.add('hidden');
+                    }, 200);
+                });
+            }
+        });
+
+        // Handle option selection
+        document.addEventListener('click', function (e) {
+            const option = e.target.closest('.custom-option');
+            if (option) {
+                const wrapper = option.closest('.custom-select-wrapper');
+                const val = option.dataset.value;
+                const label = option.innerText;
+                const input = wrapper.querySelector('input[type="hidden"]') || wrapper.querySelector('select');
+                const labelDisplay = wrapper.querySelector('.selected-label');
+
+                // Update UI
+                if (labelDisplay) labelDisplay.innerText = label;
+
+                // Update Value
+                if (input) {
+                    input.value = val;
+                    // Trigger change event if it's a hidden select
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                // Close dropdown
+                wrapper.classList.remove('custom-select-active');
+                const options = wrapper.querySelector('.custom-select-options');
+                options.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => {
+                    options.classList.add('hidden');
+                }, 200);
+
+                // Re-style options
+                wrapper.querySelectorAll('.custom-option').forEach(opt => {
+                    opt.classList.remove('bg-primary/10', 'text-primary', 'font-bold');
+                });
+                option.classList.add('bg-primary/10', 'text-primary', 'font-bold');
+
+                // Extra: Handle custom onchange logic (like in market.php or products.php filters)
+                if (wrapper.dataset.onchange) {
+                    const actionString = wrapper.dataset.onchange.replace(/%val%/g, val);
+                    try {
+                        const actionFn = new Function('val', 'this.val = val; ' + actionString);
+                        actionFn.call(wrapper, val);
+                    } catch (err) {
+                        console.error('Error executing custom onchange:', err);
+                    }
+                }
+            }
+        });
+    }
+</script>

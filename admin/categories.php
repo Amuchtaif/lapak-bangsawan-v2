@@ -228,12 +228,12 @@ $result = $conn->query("SELECT * FROM categories ORDER BY id DESC LIMIT $start, 
                         </a>
                     </div>
                     <div
-                        class="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                        <div class="overflow-x-auto">
+                        class="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-visible">
+                        <div class="overflow-x-auto rounded-t-xl">
                             <table
                                 class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-sm text-slate-500 dark:text-slate-400">
                                 <thead
-                                    class="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase font-semibold text-slate-500">
+                                    class="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase font-semibold text-slate-500 rounded-t-xl">
                                     <tr>
                                         <th class="px-6 py-4">
                                             Nama</th>
@@ -284,12 +284,31 @@ $result = $conn->query("SELECT * FROM categories ORDER BY id DESC LIMIT $start, 
                             class="border-t border-slate-200 dark:border-slate-800 pt-4 px-6 pb-4 flex flex-col sm:flex-row justify-between items-center gap-4">
                             <div class="flex items-center gap-2 text-sm text-slate-500">
                                 <span>Tampilkan</span>
-                                <select onchange="window.location.href='?limit='+this.value+'&page=1'"
-                                    class="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded text-xs py-2 px-6 focus:ring-primary focus:border-primary">
-                                    <option value="5" <?php echo $limit == 5 ? 'selected' : ''; ?>>5</option>
-                                    <option value="10" <?php echo $limit == 10 ? 'selected' : ''; ?>>10</option>
-                                    <option value="20" <?php echo $limit == 20 ? 'selected' : ''; ?>>20</option>
-                                </select>
+                                <div class="custom-select-wrapper relative"
+                                    data-onchange="window.location.href='?limit=%val%&page=1'">
+                                    <select class="hidden">
+                                        <option value="5" <?php echo $limit == 5 ? 'selected' : ''; ?>>5</option>
+                                        <option value="10" <?php echo $limit == 10 ? 'selected' : ''; ?>>10</option>
+                                        <option value="20" <?php echo $limit == 20 ? 'selected' : ''; ?>>20</option>
+                                    </select>
+                                    <button type="button"
+                                        class="custom-select-trigger flex items-center justify-between w-20 rounded-lg border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 transition-all text-left">
+                                        <span class="selected-label"><?php echo $limit; ?></span>
+                                        <span
+                                            class="material-icons-round text-slate-400 text-sm selected-icon transition-transform">expand_more</span>
+                                    </button>
+                                    <div
+                                        class="custom-select-options hidden absolute z-[110] w-20 bottom-full mb-2 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
+                                        <div class="p-1">
+                                            <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-xs <?= $limit == 5 ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                                data-value="5">5</div>
+                                            <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-xs <?= $limit == 10 ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                                data-value="10">10</div>
+                                            <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-xs <?= $limit == 20 ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                                data-value="20">20</div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <span>entri</span>
                                 <span class="ml-2 hidden sm:inline"> | Menampilkan <?php echo $start + 1; ?> sampai
                                     <?php echo min($start + $limit, $total_categories); ?> dari
