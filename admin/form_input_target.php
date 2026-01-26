@@ -92,7 +92,7 @@ $result = $conn->query($sql);
         <?php $page_title = "Input Target Harian"; include ROOT_PATH . "includes/admin/header.php"; ?>
         
         <div class="flex-1 overflow-y-auto scroll-smooth relative">
-            <div class="max-w-5xl mx-auto p-6 md:p-8 pb-20"> <!-- Moved padding here -->
+            <div class="w-full p-6 md:p-8 pb-20"> <!-- Full width -->
                 
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
                     <div>

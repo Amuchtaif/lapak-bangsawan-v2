@@ -7,6 +7,23 @@ if (isset($_GET['ajax'])) {
     ob_start();
 }
 
+// Preserve filters/pagination in URLs
+$preservable_keys = ['category_id', 'stock_status', 'search', 'sort', 'limit', 'page'];
+$filter_params = [];
+foreach ($preservable_keys as $key) {
+    if (isset($_GET[$key]) && $_GET[$key] !== '') {
+        $filter_params[$key] = $_GET[$key];
+    }
+}
+$query_string = !empty($filter_params) ? http_build_query($filter_params) : '';
+$filtered_redirect = "products.php" . ($query_string ? '?' . $query_string : '');
+
+// Base query for pagination (filters without page/limit)
+$base_filter_params = $filter_params;
+unset($base_filter_params['page']);
+unset($base_filter_params['limit']);
+$base_query = !empty($base_filter_params) ? http_build_query($base_filter_params) : '';
+
 
 // Delete
 if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id'])) {
@@ -18,7 +35,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
         $_SESSION['status_msg'] = "Failed to delete product.";
         $_SESSION['status_type'] = "error";
     }
-    header("Location: products.php");
+    header("Location: $filtered_redirect");
     exit();
 }
 
@@ -51,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($conn->query($sql)) {
                 $_SESSION['status_msg'] = "Product added successfully.";
                 $_SESSION['status_type'] = "success";
-                header("Location: products.php");
+                header("Location: $filtered_redirect");
                 exit();
             } else {
                 $error = "Error: " . $conn->error;
@@ -65,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($conn->query($sql)) {
                 $_SESSION['status_msg'] = "Product updated successfully.";
                 $_SESSION['status_type'] = "success";
-                header("Location: products.php");
+                header("Location: $filtered_redirect");
                 exit();
             } else {
                 $error = "Error: " . $conn->error;
@@ -342,11 +359,34 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                         must be an integer.</p>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Unit
-                                        (kg/pcs/box)</label>
-                                    <input type="text" name="unit" required placeholder="kg"
-                                        value="<?php echo $edit_row['unit'] ?? 'kg'; ?>"
-                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-primary focus:border-primary">
+                                    <label
+                                        class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Unit</label>
+                                    <div class="custom-select-wrapper relative">
+                                        <select name="unit" required class="hidden">
+                                            <option value="kg" <?php echo (isset($edit_row) && $edit_row['unit'] == 'kg') || !isset($edit_row) ? 'selected' : ''; ?>>kg</option>
+                                            <option value="pcs" <?php echo (isset($edit_row) && $edit_row['unit'] == 'pcs') ? 'selected' : ''; ?>>pcs</option>
+                                            <option value="box" <?php echo (isset($edit_row) && $edit_row['unit'] == 'box') ? 'selected' : ''; ?>>box</option>
+                                        </select>
+                                        <button type="button"
+                                            class="custom-select-trigger w-full flex items-center justify-between rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2.5 text-sm focus:ring-primary focus:border-primary transition-all text-left">
+                                            <span class="selected-label truncate">
+                                                <?php echo $edit_row['unit'] ?? 'kg'; ?>
+                                            </span>
+                                            <span
+                                                class="material-icons-round text-slate-400 selected-icon transition-transform">expand_more</span>
+                                        </button>
+                                        <div
+                                            class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
+                                            <div class="max-h-60 overflow-y-auto p-2 dropdown-options-scroll">
+                                                <div class="custom-option px-4 py-2.5 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo (!isset($edit_row) || $edit_row['unit'] == 'kg') ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
+                                                    data-value="kg">kg</div>
+                                                <div class="custom-option px-4 py-2.5 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo (isset($edit_row) && $edit_row['unit'] == 'pcs') ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
+                                                    data-value="pcs">pcs</div>
+                                                <div class="custom-option px-4 py-2.5 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo (isset($edit_row) && $edit_row['unit'] == 'box') ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
+                                                    data-value="box">box</div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -373,7 +413,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                 <button type="submit"
                                     class="bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-blue-600 transition-colors font-medium">Simpan
                                     Produk</button>
-                                <a href="products.php"
+                                <a href="<?php echo $filtered_redirect; ?>"
                                     class="bg-slate-100 text-slate-700 px-6 py-2.5 rounded-lg hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-colors font-medium">Batal</a>
                             </div>
                         </form>
@@ -387,7 +427,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Kelola inventaris dan stok produk
                                 Anda.</p>
                         </div>
-                        <a href="?action=add"
+                        <a href="?action=add<?php echo $query_string ? '&' . $query_string : ''; ?>"
                             class="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-600 shadow-sm shadow-blue-500/30">
                             <span class="material-icons-round text-sm">add</span>
                             <span>Tambah Produk</span>
@@ -571,8 +611,10 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
 
                             <div class="flex items-end">
                                 <a href="products.php"
-                                    class="text-xs text-slate-500 hover:text-primary transition-colors underline mb-2">Reset
-                                    Filter</a>
+                                    class="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-all shadow-sm">
+                                    <span class="material-icons-round text-sm">restart_alt</span>
+                                    <span>Reset Filter</span>
+                                </a>
                             </div>
                         </form>
                     </div>
@@ -639,12 +681,12 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                                 </td>
                                                 <td class="px-6 py-4 text-right">
                                                     <div class="flex items-center justify-end gap-2">
-                                                        <a href="?action=edit&id=<?php echo $row['id']; ?>"
+                                                        <a href="?action=edit&id=<?php echo $row['id'] . ($query_string ? '&' . $query_string : ''); ?>"
                                                             class="text-slate-400 hover:text-primary transition-colors p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800">
                                                             <span class="material-icons-round text-xl">edit</span>
                                                         </a>
                                                         <a href="#"
-                                                            onclick="confirmDelete('?action=delete&id=<?php echo $row['id']; ?>')"
+                                                            onclick="confirmDelete('?action=delete&id=<?php echo $row['id'] . ($query_string ? '&' . $query_string : ''); ?>')"
                                                             class="text-slate-400 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20">
                                                             <span class="material-icons-round text-xl">delete</span>
                                                         </a>
@@ -667,7 +709,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                 <div class="flex items-center gap-2 text-sm text-slate-500">
                                     <span>Tampilkan</span>
                                     <select
-                                        onchange="const url = '?limit='+this.value+'&page=1<?php echo isset($_GET['filter']) ? '&filter=' . htmlspecialchars($_GET['filter']) : ''; ?><?php echo isset($_GET['search']) ? '&search=' . htmlspecialchars($_GET['search']) : ''; ?>'; if(typeof loadProducts === 'function'){ loadProducts(url); } else { window.location.href=url; }"
+                                        onchange="const url = '?limit='+this.value+'&page=1<?php echo $base_query ? '&' . $base_query : ''; ?>'; if(typeof loadProducts === 'function'){ loadProducts(url); } else { window.location.href=url; }"
                                         class="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded text-xs py-2 px-6 focus:ring-primary focus:border-primary">
                                         <option value="5" <?php echo $limit == 5 ? 'selected' : ''; ?>>5</option>
                                         <option value="10" <?php echo $limit == 10 ? 'selected' : ''; ?>>10</option>
@@ -682,7 +724,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
 
                                 <div class="flex gap-2">
                                     <?php if ($page > 1): ?>
-                                        <a href="?page=<?php echo $page - 1; ?>&limit=<?php echo $limit; ?><?php echo isset($_GET['filter']) ? '&filter=' . htmlspecialchars($_GET['filter']) : ''; ?><?php echo isset($_GET['search']) ? '&search=' . htmlspecialchars($_GET['search']) : ''; ?>"
+                                        <a href="?page=<?php echo $page - 1; ?>&limit=<?php echo $limit; ?><?php echo $base_query ? '&' . $base_query : ''; ?>"
                                             class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Sebelumnya</a>
                                     <?php else: ?>
                                         <button disabled
@@ -690,12 +732,12 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                     <?php endif; ?>
 
                                     <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                                        <a href="?page=<?php echo $i; ?>&limit=<?php echo $limit; ?><?php echo isset($_GET['filter']) ? '&filter=' . htmlspecialchars($_GET['filter']) : ''; ?><?php echo isset($_GET['search']) ? '&search=' . htmlspecialchars($_GET['search']) : ''; ?>"
+                                        <a href="?page=<?php echo $i; ?>&limit=<?php echo $limit; ?><?php echo $base_query ? '&' . $base_query : ''; ?>"
                                             class="px-3 py-1 text-xs border <?php echo $i == $page ? 'border-primary bg-primary text-white' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'; ?> rounded transition-colors"><?php echo $i; ?></a>
                                     <?php endfor; ?>
 
                                     <?php if ($page < $total_pages): ?>
-                                        <a href="?page=<?php echo $page + 1; ?>&limit=<?php echo $limit; ?><?php echo isset($_GET['filter']) ? '&filter=' . htmlspecialchars($_GET['filter']) : ''; ?><?php echo isset($_GET['search']) ? '&search=' . htmlspecialchars($_GET['search']) : ''; ?>"
+                                        <a href="?page=<?php echo $page + 1; ?>&limit=<?php echo $limit; ?><?php echo $base_query ? '&' . $base_query : ''; ?>"
                                             class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Selanjutnya</a>
                                     <?php else: ?>
                                         <button disabled

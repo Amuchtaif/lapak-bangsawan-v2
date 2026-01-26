@@ -207,9 +207,7 @@ $result = $conn->query($query);
                     </div>
                 </div>
             </div>
-        </div>
-
-        <?php include ROOT_PATH . "includes/admin/footer.php"; ?>
+            <?php include ROOT_PATH . "includes/admin/footer.php"; ?>
         </div>
     </main>
 
