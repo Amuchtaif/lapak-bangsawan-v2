@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
         $_SESSION['status_msg'] = "Failed to update order status.";
         $_SESSION['status_type'] = "error";
     }
-    header("Location: orders.php?action=view&id=$order_id");
+    header("Location: orders?action=view&id=$order_id");
     exit();
 }
 
@@ -31,7 +31,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
         $_SESSION['status_msg'] = "Failed to delete order.";
         $_SESSION['status_type'] = "error";
     }
-    header("Location: orders.php");
+    header("Location: orders");
     exit();
 }
 
@@ -115,7 +115,7 @@ $orders_result = $conn->query($orders_query);
         <?php $page_title = "Pesanan";
         include ROOT_PATH . "includes/admin/header.php"; ?>
         <div class="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth flex flex-col">
-            <div class="max-w-7xl mx-auto w-full flex flex-col gap-6 flex-grow">
+            <div class="max-w-full mx-auto w-full flex flex-col gap-6 flex-grow">
 
                 <?php if (isset($_GET['action']) && $_GET['action'] == 'view' && isset($_GET['id'])):
                     $oid = intval($_GET['id']);
@@ -183,6 +183,18 @@ $orders_result = $conn->query($orders_query);
                             <div
                                 class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                                 <h3 class="font-bold text-slate-900 dark:text-white mb-4">Info Pengiriman</h3>
+                                <p class="text-xs text-slate-500 uppercase font-bold mb-1">Kurir Pilihan</p>
+                                <p class="text-sm text-slate-900 dark:text-white mb-3">
+                                    <?php
+                                    if (!empty($order_data['courier_company'])) {
+                                        echo strtoupper($order_data['courier_company']) . " (" . ($order_data['courier_type'] ?? 'REG') . ")";
+                                    } else {
+                                        echo "Internal / Pickup";
+                                    }
+                                    ?>
+                                </p>
+
+                                <p class="text-xs text-slate-500 uppercase font-bold mb-1">Alamat Tujuan</p>
                                 <p class="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-line mb-4">
                                     <?php echo htmlspecialchars($order_data['customer_address']); ?>
                                 </p>
@@ -205,6 +217,50 @@ $orders_result = $conn->query($orders_query);
                                         ?>
                                     </p>
                                 </div>
+                            </div>
+                            <!-- Biteship Fulfillment -->
+                            <div
+                                class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-primary/30 dark:border-primary/20 shadow-sm relative overflow-hidden">
+                                <div class="absolute top-0 right-0 p-2 opacity-10">
+                                    <span class="material-symbols-outlined text-4xl text-primary">local_shipping</span>
+                                </div>
+                                <h3 class="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary text-xl">fulfillment_delivery</span>
+                                    Fulfillment Logistics
+                                </h3>
+
+                                <?php if (empty($order_data['tracking_id'])): ?>
+                                    <div id="fulfillment-pending">
+                                        <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                                            Order ini siap diproses untuk pengiriman via kurir pilihan. Klik tombol di bawah
+                                            untuk Booking Kurir & Pickup Paket.
+                                        </p>
+                                        <button onclick="processShipping(<?php echo $order_data['id']; ?>)"
+                                            id="btn-process-shipping"
+                                            class="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/30 flex justify-center items-center gap-2">
+                                            <span class="material-icons-round text-lg">local_shipping</span>
+                                            Request Pickup
+                                            <span id="shipping-spinner"
+                                                class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                                        </button>
+                                        <p class="text-[10px] text-slate-400 mt-3 text-center italic">*Data akan dikirim ke API
+                                            Biteship</p>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="text-center py-2">
+                                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Nomor
+                                            Resi / Waybill</p>
+                                        <h4 class="text-2xl font-black text-primary mb-4">
+                                            <?php echo $order_data['tracking_id']; ?>
+                                        </h4>
+                                        <a href="https://biteship.com/id/tracking/<?php echo $order_data['tracking_id']; ?>"
+                                            target="_blank"
+                                            class="inline-flex items-center gap-2 px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-sm font-bold transition-all">
+                                            <span class="material-icons-round text-sm">track_changes</span>
+                                            Lacak Paket
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                             <!-- Order Status Update -->
                             <div
@@ -465,6 +521,45 @@ $orders_result = $conn->query($orders_query);
             <?php include ROOT_PATH . "includes/admin/footer.php"; ?>
         </div>
     </main>
+    <script>
+        function processShipping(orderId) {
+            const btn = document.getElementById('btn-process-shipping');
+            const spinner = document.getElementById('shipping-spinner');
+
+            if (!confirm('Apakah Anda yakin ingin memproses Booking Kurir & Pickup untuk pesanan ini?')) return;
+
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+            spinner.classList.remove('hidden');
+
+            const formData = new FormData();
+            formData.append('order_id', orderId);
+
+            fetch('shipping_api/process_shipping.php', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Berhasil! Nomor Resi: ' + data.tracking_id);
+                        location.reload();
+                    } else {
+                        alert('Gagal memproses pengiriman: ' + data.message);
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                        spinner.classList.add('hidden');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Terjadi kesalahan jaringan.');
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                    spinner.classList.add('hidden');
+                });
+        }
+    </script>
 </body>
 
 </html>

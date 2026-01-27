@@ -12,7 +12,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
         $_SESSION['status_msg'] = "Gagal menghapus pelanggan: " . $conn->error;
         $_SESSION['status_type'] = "error";
     }
-    header("Location: customers.php");
+    header("Location: customers");
     exit();
 }
 
@@ -75,7 +75,7 @@ $result = $conn->query($query);
 
         <!-- Content -->
         <div class="flex-1 overflow-auto p-6">
-            <div class="max-w-7xl mx-auto">
+            <div class="max-w-full mx-auto">
                 <?php if (isset($_SESSION['status_msg'])): ?>
                     <div
                         class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">

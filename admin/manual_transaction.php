@@ -10,12 +10,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
     $conn->begin_transaction();
     try {
         // 1. Handle Customer
-        $customer_id = 0;
-        $customer_name = "";
-        $customer_phone = "";
-        $customer_address = "";
+        $customer_id = NULL;
+        $customer_name = "Walk-in Guest";
+        $customer_phone = "-";
+        $customer_address = "-";
 
-        if ($_POST['customer_type'] === 'existing') {
+        $customer_type = $_POST['customer_type'] ?? 'walk-in';
+
+        if ($customer_type === 'existing') {
             $customer_id = intval($_POST['existing_customer_id']);
             $cust_q = $conn->query("SELECT name, phone, address FROM customers WHERE id=$customer_id");
             if ($cust_q->num_rows == 0)
@@ -24,19 +26,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
             $customer_name = $cust_data['name'];
             $customer_phone = $cust_data['phone'];
             $customer_address = $cust_data['address'];
-        } else {
+        } elseif ($customer_type === 'new') {
             $customer_name = mysqli_real_escape_string($conn, $_POST['new_customer_name']);
             $customer_phone = mysqli_real_escape_string($conn, $_POST['new_customer_phone']);
             $customer_address = mysqli_real_escape_string($conn, $_POST['new_customer_address']);
 
-            // Basic Validation
             if (empty($customer_name) || empty($customer_phone))
                 throw new Exception("Nama dan Telepon pelanggan wajib diisi.");
 
-            // Check if phone exists (optional, but good to avoid dupes)
             $check_phone = $conn->query("SELECT id FROM customers WHERE phone='$customer_phone'");
             if ($check_phone->num_rows > 0) {
-                // Option: Use existing or throw error. Let's use existing to be smart.
                 $customer_id = $check_phone->fetch_assoc()['id'];
             } else {
                 $stmt_cust = $conn->prepare("INSERT INTO customers (name, phone, address, email) VALUES (?, ?, ?, '')");
@@ -45,12 +44,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
                     throw new Exception("Gagal membuat data pelanggan baru.");
                 $customer_id = $conn->insert_id;
             }
+        } else {
+            // Walk-in
+            $customer_name = !empty($_POST['walkin_name']) ? mysqli_real_escape_string($conn, $_POST['walkin_name']) : "Walk-in Guest";
         }
 
         // 2. Process Items & Calculate Total
         $items = $_POST['items']; // Array of pointers
-        $total_amount = 0;
+        $subtotal_gross = 0;
         $order_items_data = [];
+        $category_weights = [];
 
         foreach ($items as $idx => $item_raw) {
             $p_id = intval($_POST["product_id"][$idx]);
@@ -59,7 +62,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
             if ($p_id == 0 || $qty <= 0)
                 continue;
 
-            $prod_q = $conn->query("SELECT name, price, stock FROM products WHERE id=$p_id FOR UPDATE");
+            $prod_q = $conn->query("SELECT p.name, p.price, p.buy_price, p.stock, c.name as category_name 
+                                    FROM products p 
+                                    LEFT JOIN categories c ON p.category_id = c.id 
+                                    WHERE p.id=$p_id FOR UPDATE");
             if ($prod_q->num_rows == 0)
                 throw new Exception("Produk ID $p_id tidak ditemukan.");
             $prod_data = $prod_q->fetch_assoc();
@@ -68,40 +74,73 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
                 throw new Exception("Stok untuk {$prod_data['name']} tidak mencukupi (Sisa: {$prod_data['stock']}).");
             }
 
-            $subtotal = $prod_data['price'] * $qty;
-            $total_amount += $subtotal;
+            $line_subtotal = $prod_data['price'] * $qty;
+            $subtotal_gross += $line_subtotal;
+
+            $cat_name = $prod_data['category_name'] ?? 'Uncategorized';
+            if (!isset($category_weights[$cat_name]))
+                $category_weights[$cat_name] = 0;
+            $category_weights[$cat_name] += $qty;
 
             $order_items_data[] = [
                 'product_id' => $p_id,
                 'name' => $prod_data['name'],
                 'price' => $prod_data['price'],
+                'buy_price' => $prod_data['buy_price'],
                 'weight' => $qty,
-                'subtotal' => $subtotal
+                'subtotal' => $line_subtotal
             ];
         }
 
         if (empty($order_items_data))
             throw new Exception("Tidak ada item yang dipilih.");
 
-        // 3. Create Order
+        // 3. Calculate Discounts
+        $system_discount = 0;
+        $rules_res = $conn->query("SELECT * FROM wholesale_rules WHERE is_active = 1 ORDER BY min_weight_kg DESC");
+        $rules = [];
+        while ($r = $rules_res->fetch_assoc())
+            $rules[$r['category_name']][] = $r;
+
+        foreach ($category_weights as $cat => $weight) {
+            if (isset($rules[$cat])) {
+                foreach ($rules[$cat] as $rule) {
+                    if ($weight >= $rule['min_weight_kg']) {
+                        $system_discount += ($weight * $rule['discount_per_kg']);
+                        break;
+                    }
+                }
+            }
+        }
+
+        $manual_discount = floatval(preg_replace('/[^0-9]/', '', $_POST['manual_discount'] ?? '0'));
+        $total_amount = $subtotal_gross - $system_discount - $manual_discount;
+
+        // 4. Create Order
         $max_id = $conn->query("SELECT MAX(id) as m FROM orders")->fetch_assoc()['m'];
         $new_id = $max_id ? $max_id + 1 : 1;
+
+        // Generate Professional Order Number
+        $date_prefix = date('Ymd');
+        $random_suffix = strtoupper(substr(md5(uniqid()), 0, 4));
+        $order_number = "LB-$date_prefix-$random_suffix";
+
         $status = 'completed';
-        $payment_method = 'cod'; // Default for manual
+        $payment_method = 'cod';
         $notes = isset($_POST['order_notes']) ? mysqli_real_escape_string($conn, $_POST['order_notes']) : "Transaksi Manual (Admin)";
         $transaction_time = !empty($_POST['transaction_time']) ? $_POST['transaction_time'] : date('Y-m-d H:i:s');
 
-        $stmt_order = $conn->prepare("INSERT INTO orders (id, customer_name, customer_phone, customer_address, total_amount, status, payment_method, order_notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt_order->bind_param("isssds s ss", $new_id, $customer_name, $customer_phone, $customer_address, $total_amount, $status, $payment_method, $notes, $transaction_time);
+        $stmt_order = $conn->prepare("INSERT INTO orders (id, order_number, customer_id, customer_name, customer_phone, customer_address, total_amount, manual_discount, status, payment_method, order_notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt_order->bind_param("isssisddssss", $new_id, $order_number, $customer_id, $customer_name, $customer_phone, $customer_address, $total_amount, $manual_discount, $status, $payment_method, $notes, $transaction_time);
 
         if (!$stmt_order->execute())
             throw new Exception("Gagal membuat pesanan: " . $conn->error);
 
-        // 4. Insert Items & Updates Stock
-        $stmt_item = $conn->prepare("INSERT INTO order_items (order_id, product_name, weight, price_per_kg, subtotal) VALUES (?, ?, ?, ?, ?)");
+        // 5. Insert Items & Updates Stock
+        $stmt_item = $conn->prepare("INSERT INTO order_items (order_id, product_name, weight, price_per_kg, buy_price, subtotal) VALUES (?, ?, ?, ?, ?, ?)");
 
         foreach ($order_items_data as $item) {
-            $stmt_item->bind_param("isddd", $new_id, $item['name'], $item['weight'], $item['price'], $item['subtotal']);
+            $stmt_item->bind_param("isdddd", $new_id, $item['name'], $item['weight'], $item['price'], $item['buy_price'], $item['subtotal']);
             if (!$stmt_item->execute())
                 throw new Exception("Gagal menyimpan item.");
 
@@ -119,13 +158,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
 
 // Fetch Customers
 $customers = $conn->query("SELECT id, name, phone FROM customers ORDER BY name ASC");
-// Fetch Products (Include stock info in data attr)
-$products = $conn->query("SELECT id, name, stock, price FROM products WHERE stock > 0 ORDER BY name ASC");
+// Fetch Products
+$products = $conn->query("SELECT p.id, p.name, p.stock, p.price, p.short_code, c.name as category_name 
+                          FROM products p 
+                          LEFT JOIN categories c ON p.category_id = c.id 
+                          WHERE p.stock > 0 ORDER BY p.name ASC");
 $prod_arr = [];
 while ($p = $products->fetch_assoc()) {
     $prod_arr[] = $p;
 }
+
+// Fetch Active Wholesale Rules for frontend calc
+$rules_res = $conn->query("SELECT * FROM wholesale_rules WHERE is_active = 1 ORDER BY category_name ASC, min_weight_kg DESC");
+$wholesale_rules = [];
+while ($r = $rules_res->fetch_assoc()) {
+    $wholesale_rules[$r['category_name']][] = [
+        'min_weight' => floatval($r['min_weight_kg']),
+        'discount_per_kg' => floatval($r['discount_per_kg'])
+    ];
+}
+
+// Generate Auto Walk-in Name
+$today = date('Y-m-d');
+$walkin_count_q = $conn->query("SELECT COUNT(*) as count FROM orders WHERE customer_id IS NULL AND DATE(created_at) = '$today'");
+$walkin_count = $walkin_count_q->fetch_assoc()['count'] + 1;
+$auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
 ?>
+<script>
+    const allProducts = <?php echo json_encode($prod_arr); ?>;
+    const wholesaleRules = <?php echo json_encode($wholesale_rules); ?>;
+</script>
 <!DOCTYPE html>
 <html class="light" lang="id">
 
@@ -227,7 +289,7 @@ while ($p = $products->fetch_assoc()) {
         include ROOT_PATH . "includes/admin/header.php"; ?>
 
         <div class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth flex flex-col">
-            <div class="max-w-7xl mx-auto flex flex-col gap-6 w-full flex-grow">
+            <div class="max-w-full mx-auto flex flex-col gap-6 w-full flex-grow">
 
                 <div class="flex items-center gap-4 mb-2 md:mb-4">
                     <a href="orders.php"
@@ -273,22 +335,35 @@ while ($p = $products->fetch_assoc()) {
                                 Data Pelanggan
                             </h2>
 
-                            <div class="flex gap-4 mb-6 border-b border-slate-100 dark:border-slate-700 pb-4">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="customer_type" value="existing" checked
-                                        onchange="toggleCustomerType()" class="text-primary focus:ring-primary">
-                                    <span class="font-medium">Pelanggan Lama</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="customer_type" value="new" onchange="toggleCustomerType()"
-                                        class="text-primary focus:ring-primary">
-                                    <span class="font-medium">Pelanggan Baru</span>
-                                </label>
+                            <div class="flex border-b border-slate-200 dark:border-slate-700 mb-6">
+                                <button type="button" onclick="setCustomerType('walk-in')" id="tab-walk-in"
+                                    class="customer-tab px-6 py-3 text-sm font-medium border-b-2 border-primary text-primary transition-all">
+                                    Pelanggan Umum
+                                </button>
+                                <button type="button" onclick="setCustomerType('existing')" id="tab-existing"
+                                    class="customer-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-all">
+                                    Member Terdaftar
+                                </button>
+                                <button type="button" onclick="setCustomerType('new')" id="tab-new"
+                                    class="customer-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-all">
+                                    Pelanggan Baru
+                                </button>
+                                <input type="hidden" name="customer_type" id="customer_type_input" value="walk-in">
+                            </div>
+
+                            <!-- Walk-in Customer Form -->
+                            <div id="walk-in_customer_form" class="customer-form">
+                                <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Nama di
+                                    Nota (Otomatis)</label>
+                                <input type="text" name="walkin_name" value="<?= $auto_walkin_name ?>" readonly
+                                    class="w-full rounded-lg border-slate-200 bg-slate-100 dark:bg-slate-800 dark:border-slate-700 text-slate-500 cursor-not-allowed text-sm">
+                                <p class="mt-2 text-xs text-slate-400 italic">* Nama dihasilkan otomatis.</p>
                             </div>
 
                             <!-- Existing Customer Form -->
-                            <div id="existing_customer_form">
-                                <label class="block text-sm font-medium mb-2">Cari Pelanggan</label>
+                            <div id="existing_customer_form" class="customer-form hidden">
+                                <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Cari
+                                    Pelanggan</label>
                                 <select name="existing_customer_id" id="existing_customer_select"
                                     class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary">
                                     <option value="">-- Pilih Pelanggan --</option>
@@ -303,19 +378,26 @@ while ($p = $products->fetch_assoc()) {
                             </div>
 
                             <!-- New Customer Form -->
-                            <div id="new_customer_form" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div id="new_customer_form"
+                                class="customer-form hidden grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="col-span-2 md:col-span-1">
-                                    <label class="block text-sm font-medium mb-2">Nama Lengkap</label>
+                                    <label
+                                        class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Nama
+                                        Lengkap</label>
                                     <input type="text" name="new_customer_name"
                                         class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary">
                                 </div>
                                 <div class="col-span-2 md:col-span-1">
-                                    <label class="block text-sm font-medium mb-2">Nomor Telepon</label>
+                                    <label
+                                        class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Nomor
+                                        Telepon</label>
                                     <input type="text" name="new_customer_phone"
                                         class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary">
                                 </div>
                                 <div class="col-span-2">
-                                    <label class="block text-sm font-medium mb-2">Alamat Lengkap</label>
+                                    <label
+                                        class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Alamat
+                                        Lengkap</label>
                                     <textarea name="new_customer_address" rows="2"
                                         class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary"></textarea>
                                 </div>
@@ -337,18 +419,23 @@ while ($p = $products->fetch_assoc()) {
                                 </button>
                             </div>
 
-                            <!-- Header Row (Desktop Only) -->
-                            <div
-                                class="hidden md:grid md:grid-cols-12 gap-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg text-xs font-bold uppercase text-slate-500 mb-2 sticky top-0 z-10">
-                                <div class="col-span-5">Produk</div>
-                                <div class="col-span-2">Harga/Kg</div>
-                                <div class="col-span-2">Berat (Kg)</div>
-                                <div class="col-span-2 text-right">Subtotal</div>
-                                <div class="col-span-1 text-center"></div>
-                            </div>
-
-                            <div id="items_container" class="space-y-4 md:space-y-2 min-h-[100px]">
-                                <!-- Rows will be injected here -->
+                            <!-- Standard HTML Table for Items -->
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-separate border-spacing-y-2">
+                                    <thead>
+                                        <tr class="text-xs font-bold uppercase text-slate-500">
+                                            <th class="text-left px-3 py-2 w-24">Kode</th>
+                                            <th class="text-left px-3 py-2">Nama Produk</th>
+                                            <th class="text-left px-3 py-2 w-32 text-right">Harga</th>
+                                            <th class="text-center px-3 py-2 w-20">Qty</th>
+                                            <th class="text-right px-3 py-2 w-32">Subtotal</th>
+                                            <th class="w-10"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="items_container">
+                                        <!-- Rows will be injected here -->
+                                    </tbody>
+                                </table>
                             </div>
 
                             <div id="empty_state" class="text-center py-8 text-slate-400 text-sm">
@@ -388,17 +475,48 @@ while ($p = $products->fetch_assoc()) {
                                 class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary text-sm transition-all"></textarea>
                         </div>
 
+                        <!-- Manual Discount Card -->
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                            <h2
+                                class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 uppercase tracking-wider">
+                                <span class="material-icons-round text-primary text-sm">loyalty</span>
+                                Diskon & Potongan Tambahan
+                            </h2>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase">Diskon Manual
+                                    (Rupiah)</label>
+                                <div class="relative flex items-center group">
+                                    <span
+                                        class="absolute left-3 text-sm font-bold text-slate-400 group-focus-within:text-primary transition-colors">Rp</span>
+                                    <input type="text" name="manual_discount" id="manual_discount_input" placeholder="0"
+                                        oninput="recalcTotal()"
+                                        class="currency-input w-full pl-10 pr-4 py-2 rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-sm font-bold focus:ring-primary focus:border-primary transition-all">
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Summary Card -->
                         <div
                             class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 sticky top-6">
                             <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-6">Ringkasan</h2>
 
-                            <div class="flex justify-between items-center mb-4 text-sm">
-                                <span>Total Item</span>
-                                <span id="summary_count" class="font-medium">0</span>
+                            <div class="flex justify-between items-center mb-2 text-sm">
+                                <span>Harga Normal</span>
+                                <span id="summary_subtotal" class="font-medium text-slate-700">Rp 0</span>
+                            </div>
+
+                            <div class="flex justify-between items-center mb-2 text-sm text-green-600">
+                                <span>Diskon Sistem</span>
+                                <span id="summary_system_discount" class="font-medium">-Rp 0</span>
                             </div>
 
                             <div class="border-t border-slate-100 dark:border-slate-800 my-4"></div>
+
+                            <div id="summary_display_text"
+                                class="text-xs text-slate-500 mb-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+                                <!-- Price breakdown label -->
+                            </div>
 
                             <div class="flex justify-between items-end mb-8">
                                 <span class="text-slate-500 font-bold">Total Bayar</span>
@@ -421,57 +539,56 @@ while ($p = $products->fetch_assoc()) {
     <!-- Template for Item Row -->
     <template id="item_template">
         <!-- Checkbox wrapper for Tom Select issue -->
-        <div
-            class="item-row grid grid-cols-1 md:grid-cols-12 gap-4 items-start md:items-center bg-slate-50/50 dark:bg-slate-800/20 p-4 md:p-2 rounded-lg border border-slate-100 dark:border-slate-800/50">
+        <tr class="item-row bg-slate-50/50 dark:bg-slate-800/20 group">
+            <!-- Short Code -->
+            <td class="px-2 py-2 align-middle">
+                <input type="text" placeholder="Kode"
+                    class="short-code-input w-full rounded-md border-slate-200 bg-slate-50 dark:bg-slate-900 text-sm py-2 px-2 font-mono uppercase focus:ring-primary focus:border-primary"
+                    onkeydown="if(event.key === 'Enter'){ event.preventDefault(); lookupShortCode(this); }">
+            </td>
 
             <!-- Product Select -->
-            <div class="col-span-1 md:col-span-5 w-full">
-                <label class="block md:hidden text-xs font-bold text-slate-500 uppercase mb-1">Produk</label>
-                <div class="">
-                    <select name="product_id[]"
-                        class="product-select w-full rounded-md border-slate-200 bg-slate-50 dark:bg-slate-900 text-sm py-2"
-                        onchange="updateRow(this)">
-                        <option value="" data-price="0">-- Pilih Produk --</option>
-                        <?php foreach ($prod_arr as $p): ?>
-                            <option value="<?php echo $p['id']; ?>" data-price="<?php echo $p['price']; ?>"
-                                data-stock="<?php echo $p['stock']; ?>">
-                                <?php echo htmlspecialchars($p['name']); ?> (Stok: <?php echo $p['stock']; ?>)
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+            <td class="px-2 py-2 align-middle">
+                <select name="product_id[]"
+                    class="product-select w-full rounded-md border-slate-200 bg-slate-50 dark:bg-slate-900 text-sm py-2">
+                    <option value="" data-price="0">-- Pilih Produk --</option>
+                    <?php foreach ($prod_arr as $p): ?>
+                        <option value="<?php echo $p['id']; ?>" data-price="<?php echo $p['price']; ?>"
+                            data-stock="<?php echo $p['stock']; ?>"
+                            data-category="<?php echo htmlspecialchars($p['category_name']); ?>"
+                            data-code="<?php echo htmlspecialchars($p['short_code']); ?>">
+                            <?php echo htmlspecialchars($p['name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
                 <input type="hidden" name="items[]" value="1">
-            </div>
+            </td>
 
             <!-- Price Display -->
-            <div class="col-span-1 md:col-span-2 flex justify-between md:block items-center">
-                <label class="block md:hidden text-xs font-bold text-slate-500 uppercase">Harga/Kg</label>
-                <span class="font-medium price-display text-sm">Rp 0</span>
-            </div>
+            <td class="px-2 py-2 align-middle text-right">
+                <span class="font-medium price-display text-sm text-slate-500">Rp 0</span>
+            </td>
 
             <!-- Quantity Input -->
-            <div class="col-span-1 md:col-span-2 flex justify-between md:block items-center">
-                <label class="block md:hidden text-xs font-bold text-slate-500 uppercase">Berat (Kg)</label>
+            <td class="px-2 py-2 align-middle text-center">
                 <input type="number" name="qty[]" step="0.5" value="1" min="0.5"
-                    class="w-full md:w-20 rounded-md border-slate-200 bg-slate-50 dark:bg-slate-900 text-sm py-2 text-center"
+                    class="w-20 inline-block rounded-md border-slate-200 bg-white dark:bg-slate-900 text-sm py-2 text-center focus:ring-primary focus:border-primary"
                     oninput="updateRow(this)">
-            </div>
+            </td>
 
             <!-- Subtotal -->
-            <div class="col-span-1 md:col-span-2 flex justify-between md:block items-center md:text-right">
-                <label class="block md:hidden text-xs font-bold text-slate-500 uppercase">Subtotal</label>
-                <span class="font-medium subtotal-display text-sm">Rp 0</span>
-            </div>
+            <td class="px-2 py-2 align-middle text-right">
+                <span class="font-bold subtotal-display text-sm text-primary">Rp 0</span>
+            </td>
 
             <!-- Delete Button -->
-            <div class="col-span-1 md:col-span-1 text-right md:text-center mt-2 md:mt-0">
+            <td class="px-2 py-2 align-middle text-center">
                 <button type="button" onclick="removeRow(this)"
-                    class="w-full md:w-auto text-red-500 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 p-2 rounded-lg md:rounded flex items-center justify-center gap-2">
-                    <span class="md:hidden text-sm font-medium">Hapus Item</span>
-                    <span class="material-icons-round text-base">close</span>
+                    class="text-slate-400 hover:text-red-500 transition-colors p-1">
+                    <span class="material-icons-round text-lg">cancel</span>
                 </button>
-            </div>
-        </div>
+            </td>
+        </tr>
     </template>
 
     <script>
@@ -492,23 +609,36 @@ while ($p = $products->fetch_assoc()) {
             }
         }
 
-        function toggleCustomerType() {
-            const type = document.querySelector('input[name="customer_type"]:checked').value;
-            const existingForm = document.getElementById('existing_customer_form');
-            const newForm = document.getElementById('new_customer_form');
+        function setCustomerType(type) {
+            // Update UI Tabs
+            document.querySelectorAll('.customer-tab').forEach(tab => {
+                tab.classList.remove('border-primary', 'text-primary');
+                tab.classList.add('border-transparent', 'text-slate-500');
+            });
+            const activeTab = document.getElementById('tab-' + type);
+            activeTab.classList.remove('border-transparent', 'text-slate-500');
+            activeTab.classList.add('border-primary', 'text-primary');
 
+            // Show appropriate form
+            document.querySelectorAll('.customer-form').forEach(form => form.classList.add('hidden'));
+            document.getElementById(type + '_customer_form').classList.remove('hidden');
+
+            // Update hidden input
+            document.getElementById('customer_type_input').value = type;
+
+            // Handle validation requirements
             if (type === 'existing') {
-                existingForm.classList.remove('hidden');
-                newForm.classList.add('hidden');
                 document.querySelector('select[name="existing_customer_id"]').setAttribute('required', 'required');
                 document.querySelector('input[name="new_customer_name"]').removeAttribute('required');
                 document.querySelector('input[name="new_customer_phone"]').removeAttribute('required');
-            } else {
-                existingForm.classList.add('hidden');
-                newForm.classList.remove('hidden');
+            } else if (type === 'new') {
                 document.querySelector('select[name="existing_customer_id"]').removeAttribute('required');
                 document.querySelector('input[name="new_customer_name"]').setAttribute('required', 'required');
                 document.querySelector('input[name="new_customer_phone"]').setAttribute('required', 'required');
+            } else {
+                document.querySelector('select[name="existing_customer_id"]').removeAttribute('required');
+                document.querySelector('input[name="new_customer_name"]').removeAttribute('required');
+                document.querySelector('input[name="new_customer_phone"]').removeAttribute('required');
             }
         }
 
@@ -516,16 +646,15 @@ while ($p = $products->fetch_assoc()) {
             const container = document.getElementById('items_container');
             const template = document.getElementById('item_template');
 
-            // Clone
             const clone = template.content.cloneNode(true);
-            const row = clone.querySelector('.item-row'); // Now it's a div, not a tr
+            const row = clone.querySelector('.item-row');
 
             container.appendChild(row);
             document.getElementById('empty_state').classList.add('hidden');
 
             // Init Tom Select
             const newSelect = row.querySelector('.product-select');
-            new TomSelect(newSelect, {
+            const ts = new TomSelect(newSelect, {
                 create: false,
                 dropdownParent: 'body',
                 sortField: {
@@ -534,16 +663,39 @@ while ($p = $products->fetch_assoc()) {
                 },
                 placeholder: "Cari produk...",
                 onChange: function (value) {
+                    const option = newSelect.querySelector(`option[value="${value}"]`);
+                    if (option) {
+                        const code = option.getAttribute('data-code');
+                        row.querySelector('.short-code-input').value = code || '';
+                    }
                     updateRow(newSelect);
                 }
             });
+            newSelect.tomselect = ts;
 
             recalcTotal();
         }
 
+        function lookupShortCode(input) {
+            const code = input.value.trim().toUpperCase();
+            if (!code) return;
+
+            const row = input.closest('.item-row');
+            const select = row.querySelector('.product-select');
+
+            // Find option with this code
+            const option = Array.from(select.options).find(opt => opt.getAttribute('data-code') === code);
+
+            if (option) {
+                select.tomselect.setValue(option.value);
+            } else {
+                alert('Kode produk tidak ditemukan');
+                input.value = '';
+            }
+        }
+
         function removeRow(btn) {
-            const row = btn.closest('.item-row'); // Updated selector
-            // Destroy Tom Select
+            const row = btn.closest('.item-row');
             const select = row.querySelector('.product-select');
             if (select.tomselect) {
                 select.tomselect.destroy();
@@ -556,16 +708,16 @@ while ($p = $products->fetch_assoc()) {
         }
 
         function updateRow(element) {
-            let row = element.closest('.item-row'); // Updated selector
+            let row = element.closest('.item-row');
             let select = row.querySelector('select');
             const qtyInput = row.querySelector('input[type="number"]');
 
             const selectedOpt = select.options[select.selectedIndex];
-
-            if (!selectedOpt) return;
+            if (!selectedOpt || !selectedOpt.value) return;
 
             const price = parseFloat(selectedOpt.getAttribute('data-price')) || 0;
             const qty = parseFloat(qtyInput.value) || 0;
+            const category = selectedOpt.getAttribute('data-category');
 
             const subtotal = price * qty;
 
@@ -579,32 +731,96 @@ while ($p = $products->fetch_assoc()) {
             row.querySelector('.price-display').innerText = formatter.format(price);
             row.querySelector('.subtotal-display').innerText = formatter.format(subtotal);
             row.querySelector('.subtotal-display').setAttribute('data-val', subtotal);
+            row.querySelector('.subtotal-display').setAttribute('data-weight', qty);
+            row.querySelector('.subtotal-display').setAttribute('data-category', category);
 
             recalcTotal();
         }
 
+        function formatRupiah(angka) {
+            var number_string = angka.replace(/[^0-9]/g, "").toString(),
+                sisa = number_string.length % 3,
+                rupiah = number_string.substr(0, sisa),
+                ribuan = number_string.substr(sisa).match(/\d{3}/gi);
+
+            if (ribuan) {
+                var separator = sisa ? "." : "";
+                rupiah += separator + ribuan.join(".");
+            }
+            return rupiah;
+        }
+
+        document.querySelectorAll('.currency-input').forEach(input => {
+            const update = () => {
+                let raw = input.value.replace(/[^0-9]/g, '');
+                if (raw) {
+                    let cursorSource = input.selectionStart;
+                    let oldLen = input.value.length;
+                    input.value = formatRupiah(raw);
+                    let newLen = input.value.length;
+                    input.setSelectionRange(cursorSource + (newLen - oldLen), cursorSource + (newLen - oldLen));
+                }
+            };
+            input.addEventListener('input', update);
+        });
+
         function recalcTotal() {
-            let total = 0;
+            let subtotal = 0;
             let count = 0;
+            let categoryWeights = {};
 
             document.querySelectorAll('.subtotal-display').forEach(el => {
-                total += parseFloat(el.getAttribute('data-val')) || 0;
-                count++;
+                const val = parseFloat(el.getAttribute('data-val')) || 0;
+                const weight = parseFloat(el.getAttribute('data-weight')) || 0;
+                const cat = el.getAttribute('data-category');
+
+                if (val > 0) {
+                    subtotal += val;
+                    count++;
+                    if (cat) {
+                        categoryWeights[cat] = (categoryWeights[cat] || 0) + weight;
+                    }
+                }
             });
+
+            // Calculate System Wholesale Discount
+            let systemDiscount = 0;
+            for (let cat in categoryWeights) {
+                if (wholesaleRules[cat]) {
+                    const weight = categoryWeights[cat];
+                    for (let rule of wholesaleRules[cat]) {
+                        if (weight >= rule.min_weight) {
+                            systemDiscount += (weight * rule.discount_per_kg);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            const manualDiscountInput = document.getElementById('manual_discount_input');
+            const manualDiscount = parseFloat(manualDiscountInput.value) || 0;
+            const finalTotal = subtotal - systemDiscount - manualDiscount;
 
             const formatter = new Intl.NumberFormat('id-ID', {
                 style: 'currency',
                 currency: 'IDR',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
+                minimumFractionDigits: 0, maximumFractionDigits: 0
             });
 
-            document.getElementById('summary_total').innerText = formatter.format(total);
-            document.getElementById('summary_count').innerText = count;
+            document.getElementById('summary_subtotal').innerText = formatter.format(subtotal);
+            document.getElementById('summary_system_discount').innerText = '-' + formatter.format(systemDiscount);
+            document.getElementById('summary_total').innerText = formatter.format(finalTotal);
+
+            // Detailed summary text
+            const summaryText = `Harga Normal: ${formatter.format(subtotal)}, ` +
+                `Diskon Sistem: ${formatter.format(systemDiscount)}, ` +
+                `Diskon Manual: ${formatter.format(manualDiscount)} (Input Admin), ` +
+                `Total: ${formatter.format(finalTotal)}`;
+            document.getElementById('summary_display_text').innerText = summaryText;
         }
 
         // Init
-        toggleCustomerType();
+        setCustomerType('walk-in');
         initCustomerSelect();
         addItem(); 
     </script>

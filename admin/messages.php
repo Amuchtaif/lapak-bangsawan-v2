@@ -12,7 +12,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
         $_SESSION['status_msg'] = "Gagal menghapus pesan.";
         $_SESSION['status_type'] = "error";
     }
-    header("Location: messages.php");
+    header("Location: messages");
     exit();
 }
 
@@ -74,19 +74,24 @@ $result = $conn->query("SELECT * FROM messages ORDER BY created_at DESC LIMIT $s
         include ROOT_PATH . "includes/admin/header.php"; ?>
 
         <div class="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth">
-            <div class="max-w-7xl mx-auto flex flex-col gap-6">
-                <!-- Notifications -->
+            <div class="max-w-full mx-auto flex flex-col gap-6">
+                <!-- Notification Area -->
                 <?php if (isset($_SESSION['status_msg'])): ?>
                     <div
-                        class="auto-close-alert p-4 rounded-lg <?php echo $_SESSION['status_type'] == 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'; ?> flex items-center gap-3 transition-opacity duration-500">
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-2 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
                         <span
-                            class="material-icons-round"><?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?></span>
-                        <p><?php echo $_SESSION['status_msg']; ?></p>
+                            class="material-icons-round <?php echo $_SESSION['status_type'] == 'success' ? 'text-green-500' : 'text-red-500'; ?>">
+                            <?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?>
+                        </span>
+                        <div>
+                            <h3 class="font-medium text-slate-900 dark:text-white">
+                                <?php echo $_SESSION['status_type'] == 'success' ? 'Berhasil' : 'Gagal'; ?>
+                            </h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $_SESSION['status_msg']; ?></p>
+                        </div>
                     </div>
-                    <?php
-                    unset($_SESSION['status_msg']);
-                    unset($_SESSION['status_type']);
-                    ?>
+                    <?php unset($_SESSION['status_msg']);
+                    unset($_SESSION['status_type']); ?>
                 <?php endif; ?>
 
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">

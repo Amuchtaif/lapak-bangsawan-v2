@@ -42,16 +42,7 @@ $order_token = bin2hex(random_bytes(16));
 <body
     class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased flex flex-col min-h-screen">
 
-    <header class="bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800 py-4">
-        <div class="max-w-[1400px] mx-auto px-4 flex justify-between items-center">
-            <a href="<?= BASE_URL ?>public/home" class="flex items-center gap-2 font-bold text-xl">
-                <div class="size-10 text-primary">
-                    <img src="<?= BASE_URL ?>assets/images/logo.jpeg" alt="Logo">
-                </div>
-            </a>
-            <a href="<?= BASE_URL ?>public/cart" class="text-sm font-medium hover:text-primary">Kembali ke Keranjang</a>
-        </div>
-    </header>
+    <?php include ROOT_PATH . "includes/public_header.php"; ?>
 
     <main class="flex-grow w-full max-w-4xl lg:max-w-7xl mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold mb-6">Pembayaran</h1>
@@ -94,11 +85,38 @@ $order_token = bin2hex(random_bytes(16));
                                 </p>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                Alamat Pengiriman</label>
-                            <textarea name="address" required rows="3"
-                                class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all p-3"></textarea>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                    Alamat Lengkap</label>
+                                <textarea name="address" required rows="2" placeholder="Nama Jalan, No. Rumah, RT/RW"
+                                    class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all p-3"></textarea>
+                            </div>
+
+                            <div class="relative" id="area-search-container">
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                    Kota / Kecamatan</label>
+                                <input type="text" id="area-search-input" required autocomplete="off"
+                                    placeholder="Ketik minimal 3 karakter untuk mencari..."
+                                    class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">
+                                <input type="hidden" name="destination_area_id" id="destination-area-id">
+                                <input type="hidden" name="destination_area_text" id="destination-area-text">
+
+                                <!-- Search Results -->
+                                <div id="area-results"
+                                    class="hidden absolute z-50 w-full mt-1 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-800 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Shipping Rates Container -->
+                        <div id="shipping-rates-section"
+                            class="hidden space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">
+                                Pilih Kurir Pengiriman</label>
+                            <div id="shipping-rates-list" class="grid grid-cols-1 gap-3">
+                                <!-- Rates will be injected here -->
+                            </div>
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
@@ -181,7 +199,7 @@ $order_token = bin2hex(random_bytes(16));
                         </div>
                         <div class="flex justify-between text-slate-600 dark:text-slate-400">
                             <span>Biaya Pengiriman</span>
-                            <span class="font-medium text-green-600">Gratis</span>
+                            <span id="order-shipping" class="font-medium">Rp 0</span>
                         </div>
                         <div class="border-t border-slate-200 dark:border-slate-600 my-2"></div>
                         <div class="flex justify-between items-end">
@@ -256,6 +274,7 @@ $order_token = bin2hex(random_bytes(16));
             .then(data => {
                 if (data.total !== undefined) {
                     totalEl.innerText = data.total_formatted;
+                    baseTotal = data.total; // Correctly initialize baseTotal here
 
                     // Show discounts if any
                     let discountHtml = '';
@@ -295,9 +314,26 @@ $order_token = bin2hex(random_bytes(16));
         // Initialize
         togglePaymentInfo();
 
+        let baseTotal = 0;
+        let shippingCost = 0;
+
         // Handle Submit
         document.getElementById('checkout-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Validate Area and Courier
+            const areaId = document.getElementById('destination-area-id').value;
+            const courier = document.querySelector('input[name="courier_company"]:checked');
+
+            if (!areaId) {
+                alert('Silakan pilih Kota/Kecamatan yang valid dari daftar pencarian.');
+                return;
+            }
+
+            if (!courier) {
+                alert('Silakan pilih kurir pengiriman.');
+                return;
+            }
 
             // UI Protections
             const submitBtn = document.getElementById('submit-btn');
@@ -314,13 +350,17 @@ $order_token = bin2hex(random_bytes(16));
                 name: formData.get('name'),
                 email: formData.get('email'),
                 phone: formData.get('phone'),
-                phone: formData.get('phone'),
-                address: formData.get('address'),
-                order_notes: formData.get('order_notes'), // Capture Notes
-                payment_method: formData.get('payment_method'), // Captured
-                order_token: formData.get('order_token'), // Send Token
+                address: formData.get('address') + ' (' + formData.get('destination_area_text') + ')',
+                destination_area_id: formData.get('destination_area_id'),
+                courier_company: formData.get('courier_company'),
+                courier_type: formData.get('courier_type'),
+                courier_price: parseFloat(formData.get('courier_price')),
+                order_notes: formData.get('order_notes'),
+                payment_method: formData.get('payment_method'),
+                order_token: formData.get('order_token'),
                 items: cart,
-                total: total
+                total: baseTotal + shippingCost,
+                shipping_cost: shippingCost
             };
 
             try {
@@ -352,6 +392,139 @@ $order_token = bin2hex(random_bytes(16));
                 btnSpinner.classList.add('hidden');
             }
         });
+
+        // --- Biteship Logic ---
+
+        const areaSearchInput = document.getElementById('area-search-input');
+        const areaResults = document.getElementById('area-results');
+        let searchTimeout;
+
+        areaSearchInput.addEventListener('input', () => {
+            const query = areaSearchInput.value.trim();
+            clearTimeout(searchTimeout);
+
+            if (query.length < 3) {
+                areaResults.classList.add('hidden');
+                return;
+            }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(`api/search_area.php?q=${encodeURIComponent(query)}`);
+                    const data = await res.json();
+
+                    if (data.success && data.areas.length > 0) {
+                        areaResults.innerHTML = data.areas.map(area => `
+                            <div class="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-sm border-b border-slate-100 dark:border-slate-800 last:border-0"
+                                onclick="selectArea('${area.id}', '${area.name}')">
+                                ${area.name}
+                            </div>
+                        `).join('');
+                        areaResults.classList.remove('hidden');
+                    } else {
+                        areaResults.innerHTML = '<div class="p-4 text-center text-slate-500 text-sm">Tidak ditemukan.</div>';
+                        areaResults.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    console.error('Search error:', err);
+                }
+            }, 500);
+        });
+
+        window.selectArea = (id, name) => {
+            document.getElementById('destination-area-id').value = id;
+            document.getElementById('destination-area-text').value = name;
+            areaSearchInput.value = name;
+            areaResults.classList.add('hidden');
+            checkRates(id);
+        };
+
+        async function checkRates(areaId) {
+            const ratesSection = document.getElementById('shipping-rates-section');
+            const ratesList = document.getElementById('shipping-rates-list');
+
+            ratesSection.classList.remove('hidden');
+            ratesList.innerHTML = `
+                <div class="col-span-full py-8 flex flex-col items-center justify-center text-slate-500">
+                    <span class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-3"></span>
+                    <p class="text-sm">Mencari kurir tersedia...</p>
+                </div>
+            `;
+
+            try {
+                const res = await fetch('api/check_rates.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ area_id: areaId, items: cart })
+                });
+                const data = await res.json();
+
+                if (data.success && data.rates.length > 0) {
+                    ratesList.innerHTML = data.rates.map(rate => `
+                        <label class="cursor-pointer relative rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-all has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:ring-1 has-[:checked]:ring-primary">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="courier_company_type" value="${rate.courier_code}|${rate.courier_service_code}|${rate.price}"
+                                    class="text-primary focus:ring-primary size-5" 
+                                    onchange="selectCourier('${rate.courier_code}', '${rate.courier_service_code}', ${rate.price})">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-slate-900 dark:text-white uppercase">${rate.courier_name} - ${rate.courier_service_name}</span>
+                                    <span class="text-[10px] text-slate-500">Estimasi: ${rate.duration}</span>
+                                </div>
+                            </div>
+                            <span class="font-bold text-slate-900 dark:text-white">Rp ${new Intl.NumberFormat('id-ID').format(rate.price)}</span>
+                            
+                            <!-- Hidden inputs for form submission -->
+                            <input type="radio" name="courier_company" value="${rate.courier_code}" class="hidden" id="c-${rate.courier_code}-${rate.courier_service_code}">
+                            <input type="radio" name="courier_type" value="${rate.courier_service_code}" class="hidden" id="t-${rate.courier_code}-${rate.courier_service_code}">
+                            <input type="radio" name="courier_price" value="${rate.price}" class="hidden" id="p-${rate.courier_code}-${rate.courier_service_code}">
+                        </label>
+                    `).join('');
+                } else {
+                    ratesList.innerHTML = `
+                        <div class="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 p-4 rounded-lg text-red-600 text-sm italic">
+                            Maaf, tidak ada kurir yang tersedia untuk area ini atau barang terlalu berat.
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error('Rates error:', err);
+                ratesList.innerHTML = '<p class="text-sm text-red-500">Gagal memuat kurir. Silakan coba lagi.</p>';
+            }
+        }
+
+        window.selectCourier = (code, service, price) => {
+            shippingCost = price;
+
+            // Link the complex radio to the simple ones for form sub
+            document.querySelectorAll('input[name="courier_company"]').forEach(i => i.checked = false);
+            document.querySelectorAll('input[name="courier_type"]').forEach(i => i.checked = false);
+            document.querySelectorAll('input[name="courier_price"]').forEach(i => i.checked = false);
+
+            document.getElementById(`c-${code}-${service}`).checked = true;
+            document.getElementById(`t-${code}-${service}`).checked = true;
+            document.getElementById(`p-${code}-${service}`).checked = true;
+
+            updateTotalDisplay();
+        };
+
+        function updateTotalDisplay() {
+            const shippingEl = document.getElementById('order-shipping');
+            shippingEl.innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(shippingCost);
+            shippingEl.classList.remove('text-green-600');
+
+            const finalTotal = baseTotal + shippingCost;
+            totalEl.innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(finalTotal);
+        }
+
+        // Close search when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!document.getElementById('area-search-container').contains(e.target)) {
+                areaResults.classList.add('hidden');
+            }
+        });
+
+        // Initialize
+        togglePaymentInfo();
     </script>
 </body>
 

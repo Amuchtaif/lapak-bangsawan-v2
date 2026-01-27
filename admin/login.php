@@ -14,7 +14,7 @@ if (isset($_POST['username'])) {
         if (password_verify($password, $user['password'])) {
             $_SESSION['username'] = $username;
             $_SESSION['user_id'] = $user['id'];
-            header("Location: dashboard.php");
+            header("Location: dashboard");
             exit();
         } else {
             $error = "Incorrect Password.";
@@ -146,7 +146,8 @@ if (isset($_POST['username'])) {
             <div
                 class="mb-10 flex flex-col items-center justify-center gap-4 lg:hidden relative z-10 animate-fade-in-up">
                 <div class="flex items-center gap-3 px-6 py-3">
-                    <div class="flex h-20 w-20 items-center justify-center rounded-full bg-white p-1 shadow-lg shadow-primary/20 ring-4 ring-white/20">
+                    <div
+                        class="flex h-20 w-20 items-center justify-center rounded-full bg-white p-1 shadow-lg shadow-primary/20 ring-4 ring-white/20">
                         <img src="../assets/images/logo.jpeg" alt="Logo"
                             class="w-full h-full object-cover rounded-full">
                     </div>

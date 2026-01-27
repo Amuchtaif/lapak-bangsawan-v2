@@ -1,0 +1,11 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Simple Clean URL logic
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ $1.php [NC,L]
+
+    # Protect key directories
+    RewriteRule ^(includes|config|maintenance|database) - [F,L]
+</IfModule>

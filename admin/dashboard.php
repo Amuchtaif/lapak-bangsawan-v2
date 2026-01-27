@@ -153,7 +153,7 @@ $new_prod_percentage = ($total_products > 0) ? round(($new_prod_count / $total_p
         <?php $page_title = "Dashboard";
         include ROOT_PATH . "includes/admin/header.php"; ?>
         <div class="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth">
-            <div class="max-w-7xl mx-auto">
+            <div class="max-w-full mx-auto">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
                         <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
@@ -165,7 +165,7 @@ $new_prod_percentage = ($total_products > 0) ? round(($new_prod_count / $total_p
                             class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm">
                             Download Report
                         </button> -->
-                        <a href="products.php?action=add"
+                        <a href="products?action=add"
                             class="px-4 py-2 bg-primary hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors shadow-sm shadow-blue-500/30 flex items-center gap-2">
                             <span class="material-icons-round text-sm">add</span>
                             Tambah Produk
@@ -214,8 +214,8 @@ $new_prod_percentage = ($total_products > 0) ? round(($new_prod_count / $total_p
                                 class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Aktif</span>
                         </div>
                         <div class="mt-4 flex items-center text-sm">
-                            <a href="customers.php"
-                                class="text-blue-500 font-medium hover:underline cursor-pointer">Lihat detail</a>
+                            <a href="customers" class="text-blue-500 font-medium hover:underline cursor-pointer">Lihat
+                                detail</a>
                         </div>
                     </div>
                     <div
@@ -254,8 +254,7 @@ $new_prod_percentage = ($total_products > 0) ? round(($new_prod_count / $total_p
                             <?php endif; ?>
                         </div>
                         <div class="mt-4 flex items-center text-sm">
-                            <a href="products.php"
-                                class="text-amber-500 font-medium hover:underline cursor-pointer">Lihat
+                            <a href="products" class="text-amber-500 font-medium hover:underline cursor-pointer">Lihat
                                 detail</a>
                             <span class="text-slate-400 ml-2">(1-5 items)</span>
                         </div>
@@ -279,7 +278,7 @@ $new_prod_percentage = ($total_products > 0) ? round(($new_prod_count / $total_p
                             <?php endif; ?>
                         </div>
                         <div class="mt-4 flex items-center text-sm">
-                            <a href="products.php" class="text-red-500 font-medium hover:underline cursor-pointer">Lihat
+                            <a href="products" class="text-red-500 font-medium hover:underline cursor-pointer">Lihat
                                 detail</a>
                         </div>
                     </div>
@@ -372,8 +371,8 @@ $new_prod_percentage = ($total_products > 0) ? round(($new_prod_count / $total_p
                             <select onchange="if(this.value) window.open(this.value, '_blank')"
                                 class="px-6 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:ring-primary focus:border-primary">
                                 <option value="">Export</option>
-                                <option value="export_dashboard.php?type=excel">Excel (CSV)</option>
-                                <option value="export_dashboard.php?type=pdf">Print / PDF</option>
+                                <option value="export_dashboard?type=excel">Excel (CSV)</option>
+                                <option value="export_dashboard?type=pdf">Print / PDF</option>
                             </select>
                         </div>
                     </div>

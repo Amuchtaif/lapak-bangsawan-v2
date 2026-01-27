@@ -44,28 +44,9 @@
 <body
     class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased flex flex-col min-h-screen">
 
-    <header
-        class="sticky top-0 z-50 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div class="max-w-[1400px] mx-auto px-4 md:px-8 py-3">
-            <div class="flex items-center justify-between gap-4 md:gap-8">
-                <a href="<?= BASE_URL ?>public/home" class="flex items-center gap-3 min-w-fit">
-                    <div class="size-12 text-primary">
-                        <img src="<?= BASE_URL ?>assets/images/logo.jpeg" alt="Logo">
-                    </div>
-                    <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white hidden sm:block">Lapak
-                        Bangsawan</h1>
-                </a>
+    <?php include ROOT_PATH . "includes/public_header.php"; ?>
 
-                <div class="flex items-center gap-2 sm:gap-4 ml-auto">
-                    <a href="<?= BASE_URL ?>public/market"
-                        class="text-sm font-medium hover:text-primary transition-colors">Lanjut
-                        Belanja</a>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-grow w-full max-w-[1400px] mx-auto px-4 md:px-8 py-6 md:py-8">
+    <main class="flex-grow w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-12 md:pt-20 pb-12">
         <h3 class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-8">Keranjang Belanja</h3>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8" id="cart-container">
@@ -101,7 +82,8 @@
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-slate-500 dark:text-slate-400">Estimasi Pengiriman</span>
-                            <span class="font-medium text-slate-900 dark:text-white" id="summary-shipping">Gratis</span>
+                            <span class="font-medium text-slate-900 dark:text-white" id="summary-shipping">Akan
+                                dihitung</span>
                         </div>
                         <div
                             class="border-t border-slate-200 dark:border-slate-700 pt-3 flex justify-between items-end">
@@ -119,7 +101,7 @@
         </div>
     </main>
 
-    <?php include ROOT_PATH . "includes/admin/footer.php"; ?>
+    <?php include ROOT_PATH . "includes/public_footer.php"; ?>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {

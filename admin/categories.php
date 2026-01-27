@@ -13,7 +13,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
         $_SESSION['status_msg'] = "Failed to delete category.";
         $_SESSION['status_type'] = "error";
     }
-    header("Location: categories.php");
+    header("Location: categories");
     exit();
 }
 
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($conn->query($sql)) {
                 $_SESSION['status_msg'] = "Category added successfully.";
                 $_SESSION['status_type'] = "success";
-                header("Location: categories.php");
+                header("Location: categories");
                 exit();
             } else {
                 $error = "Error: " . $conn->error;
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($conn->query($sql)) {
                 $_SESSION['status_msg'] = "Category updated successfully.";
                 $_SESSION['status_type'] = "success";
-                header("Location: categories.php");
+                header("Location: categories");
                 exit();
             } else {
                 $error = "Error: " . $conn->error;
@@ -131,7 +131,7 @@ $result = $conn->query("SELECT * FROM categories ORDER BY id DESC LIMIT $start, 
         <?php $page_title = "Kategori";
         include ROOT_PATH . "includes/admin/header.php"; ?>
         <div class="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth">
-            <div class="max-w-7xl mx-auto flex flex-col gap-6 w-full h-full">
+            <div class="max-w-full mx-auto flex flex-col gap-6 w-full h-full">
                 <!-- Page Content -->
                 <!-- Notification Area -->
                 <?php if (isset($_SESSION['status_msg'])): ?>
@@ -183,7 +183,7 @@ $result = $conn->query("SELECT * FROM categories ORDER BY id DESC LIMIT $start, 
                     ?>
                     <!-- Form View -->
                     <div
-                        class="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6 max-w-2xl">
+                        class="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6 max-w-full">
                         <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">
                             <?php echo isset($edit_row) ? 'Ubah Kategori' : 'Tambah Kategori Baru'; ?>
                         </h2>

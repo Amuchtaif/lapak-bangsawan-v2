@@ -1,5 +1,18 @@
-<footer class="mt-6 mb-4 border-t border-slate-200 dark:border-slate-800 pt-4 text-center text-xs text-slate-400">
-    <p>&copy; <?php echo date('Y'); ?> Lapak Bangsawan E-commerce. Hak cipta dilindungi.</p>
+<footer class="mt-12 py-8 border-t border-slate-200 dark:border-slate-800/50">
+    <div
+        class="flex flex-col md:flex-row items-center justify-between gap-4 opacity-70 hover:opacity-100 transition-opacity duration-500">
+        <div class="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+            &copy; <?= date('Y') ?> <span class="text-slate-700 dark:text-slate-200">Lapak Bangsawan</span>. All Rights
+            Reserved.
+        </div>
+
+        <div class="flex items-center gap-4">
+            <span class="text-[9px] font-medium text-slate-400 italic">Created with <span class="text-red-400">❤</span>
+                by Abu Aufar</span>
+            <div class="h-3 w-px bg-slate-200 dark:bg-slate-700"></div>
+            <span class="font-mono text-[9px] text-slate-300 dark:text-slate-700 uppercase">v2.4.2</span>
+        </div>
+    </div>
 </footer>
 <?php include("modals.php"); ?>
 <script>

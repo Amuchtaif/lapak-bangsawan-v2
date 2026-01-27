@@ -136,7 +136,7 @@ if (isset($_GET['edit_id'])) {
         include ROOT_PATH . "includes/admin/header.php"; ?>
 
         <div class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth flex flex-col gap-8">
-            <div class="max-w-7xl mx-auto w-full space-y-8">
+            <div class="max-w-full mx-auto w-full space-y-8">
 
                 <!-- Notification Area -->
                 <?php if (isset($_SESSION['status_msg'])): ?>
@@ -223,13 +223,12 @@ if (isset($_GET['edit_id'])) {
                         <div class="md:col-span-3">
                             <label
                                 class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Potongan Harga (Rp/Unit)</label>
-                            <div class="relative">
-                                <span
-                                    class="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
+                            <div class="relative flex items-center group">
+                                <span class="absolute left-4 text-sm font-bold text-slate-400 group-focus-within:text-primary transition-colors">Rp</span>
                                 <input type="text" id="discount-input" name="discount_per_kg"
                                     value="<?= $edit_rule ? number_format($edit_rule['discount_per_kg'], 0, ',', '.') : '' ?>"
                                     placeholder="500" required
-                                    class="w-full pl-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-4 focus:ring-primary/10 transition-all">
+                                    class="currency-input w-full pl-11 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-4 focus:ring-primary/10 transition-all">
                             </div>
                         </div>
 
@@ -343,17 +342,33 @@ if (isset($_GET['edit_id'])) {
 
 
     <script>
-        // Currency Formatting
+        function formatRupiah(angka) {
+            var number_string = angka.replace(/[^0-9]/g, "").toString(),
+                sisa = number_string.length % 3,
+                rupiah = number_string.substr(0, sisa),
+                ribuan = number_string.substr(sisa).match(/\d{3}/gi);
+
+            if (ribuan) {
+                var separator = sisa ? "." : "";
+                rupiah += separator + ribuan.join(".");
+            }
+            return rupiah;
+        }
+
         const discountInput = document.getElementById('discount-input');
         if (discountInput) {
-            discountInput.addEventListener('input', function (e) {
-                let val = this.value.replace(/\D/g, '');
-                if (val === '') {
-                    this.value = '';
-                    return;
+            const update = () => {
+                let raw = discountInput.value.replace(/[^0-9]/g, '');
+                if (raw) {
+                    let cursorSource = discountInput.selectionStart;
+                    let oldLen = discountInput.value.length;
+                    discountInput.value = formatRupiah(raw);
+                    let newLen = discountInput.value.length;
+                    discountInput.setSelectionRange(cursorSource + (newLen - oldLen), cursorSource + (newLen - oldLen));
                 }
-                this.value = new Intl.NumberFormat('id-ID').format(val);
-            });
+            };
+            discountInput.addEventListener('input', update);
+            if (discountInput.value) update();
         }
 
 

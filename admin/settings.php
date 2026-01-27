@@ -84,20 +84,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         include ROOT_PATH . "includes/admin/header.php"; ?>
 
         <div class="flex-1 overflow-auto p-6">
-            <div class="w-full max-w-4xl mx-auto">
+            <div class="w-full max-w-full mx-auto">
                 <?php if ($success_msg): ?>
                     <div
-                        class="auto-close-alert bg-green-100 text-green-700 p-4 rounded-lg mb-6 flex items-center gap-2 transition-opacity duration-500">
-                        <span class="material-icons-round">check_circle</span>
-                        <?php echo $success_msg; ?>
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        <span class="material-icons-round text-green-500">check_circle</span>
+                        <div>
+                            <h3 class="font-medium text-slate-900 dark:text-white">Berhasil</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $success_msg; ?></p>
+                        </div>
                     </div>
                 <?php endif; ?>
 
                 <?php if ($error_msg): ?>
                     <div
-                        class="auto-close-alert bg-red-100 text-red-700 p-4 rounded-lg mb-6 flex items-center gap-2 transition-opacity duration-500">
-                        <span class="material-icons-round">error</span>
-                        <?php echo $error_msg; ?>
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        <span class="material-icons-round text-red-500">error</span>
+                        <div>
+                            <h3 class="font-medium text-slate-900 dark:text-white">Gagal</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $error_msg; ?></p>
+                        </div>
                     </div>
                 <?php endif; ?>
 

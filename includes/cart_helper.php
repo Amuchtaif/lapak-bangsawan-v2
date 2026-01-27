@@ -57,4 +57,53 @@ function calculateCartTotal($items)
         'total' => $total
     ];
 }
+
+/**
+ * Get total weight of cart items in Grams
+ * Standardized for Logistics API
+ */
+function getCartTotalWeight($items)
+{
+    global $conn;
+    $totalWeight = 0;
+
+    foreach ($items as $item) {
+        $productId = intval($item['product_id'] ?? 0);
+        $qty = floatval($item['weight'] ?? 0);
+        $unit = $item['unit'] ?? 'kg';
+
+        if ($productId > 0) {
+            // Fetch latest weight from DB for accuracy
+            $stmt = $conn->prepare("SELECT weight, unit FROM products WHERE id = ?");
+            $stmt->bind_param("i", $productId);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            if ($row = $res->fetch_assoc()) {
+                $itemWeight = intval($row['weight']);
+                $itemUnit = $row['unit'];
+            } else {
+                $itemWeight = 1000;
+                $itemUnit = $unit;
+            }
+        } else {
+            $itemWeight = 1000;
+            $itemUnit = $unit;
+        }
+
+        // Safety Net
+        if ($itemWeight <= 0)
+            $itemWeight = 1000;
+
+        // Calculation Logic:
+        // 1. If unit is 'kg', weight = qty * 1000g
+        // 2. If unit is 'pcs'/'box'/etc, weight = qty * item_weight_from_db
+        if ($unit === 'kg') {
+            $totalWeight += ($qty * 1000);
+        } else {
+            $totalWeight += ($qty * $itemWeight);
+        }
+    }
+
+    return (int) $totalWeight;
+}
 ?>

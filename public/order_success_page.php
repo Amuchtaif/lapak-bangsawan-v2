@@ -64,42 +64,7 @@
 <body
     class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white min-h-screen flex flex-col">
     <!-- Top Navigation -->
-    <header class="sticky top-0 z-50 bg-white dark:bg-[#1a202c] border-b border-slate-200 dark:border-slate-800">
-        <div class="max-w-[1280px] mx-auto px-4 md:px-10 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-8">
-                <a class="flex items-center gap-3 text-slate-900 dark:text-white group" href="#">
-                    <div class="size-8 text-primary">
-                        <span class="material-symbols-outlined !text-[32px]">storefront</span>
-                    </div>
-                    <h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Lapak Bangsawan</h2>
-                </a>
-                <nav class="hidden md:flex items-center gap-6">
-                    <a class="text-slate-900 dark:text-slate-200 text-sm font-medium hover:text-primary transition-colors"
-                        href="#">Shop</a>
-                    <a class="text-slate-900 dark:text-slate-200 text-sm font-medium hover:text-primary transition-colors"
-                        href="#">About</a>
-                    <a class="text-slate-900 dark:text-slate-200 text-sm font-medium hover:text-primary transition-colors"
-                        href="#">Contact</a>
-                </nav>
-            </div>
-            <div class="flex items-center gap-4">
-                <button
-                    class="hidden md:flex items-center justify-center rounded-lg size-10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                    <span class="material-symbols-outlined">search</span>
-                </button>
-                <button
-                    class="flex items-center justify-center rounded-lg size-10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
-                    <span class="material-symbols-outlined">shopping_cart</span>
-                    <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full"></span>
-                </button>
-                <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden ml-2">
-                    <div class="w-full h-full bg-cover bg-center" data-alt="User profile picture"
-                        style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAPB0cddWx-kaC0_OplE1ldhABkXq9b5BPj0Tz4CUovVGYkizo5TYrDrBk8E8o5O-rAqUpdgZtQGidoBMDkbLqslH6MPhO7VFm08DNevk9uKUHSdJN9tDjUGCxDlyZr31rK090fPecY-7-6nVWgT30iBuhHx1iuRrBmYkWbrQUpmbKqjuF6WW0DaV1Kc83O6L-BaG6AQ3M8pEORToUHrh9LR2wDtqXyWOScjU2sc5L5Pi0Zoxez8yxtwJL_yrHLIH_7vmqAQbMMyfc');">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
+    <?php include ROOT_PATH . "includes/public_header.php"; ?>
     <!-- Main Content -->
     <main class="flex-1 w-full max-w-[960px] mx-auto px-4 md:px-6 py-10 md:py-16 flex flex-col items-center">
         <!-- Success Animation/Hero -->
@@ -131,11 +96,11 @@
                         <span class="material-symbols-outlined text-lg">receipt</span>
                         Download Invoice
                     </button>
-                    <button
+                    <a href="<?= BASE_URL ?>public/track"
                         class="no-print px-4 py-2 text-sm font-medium text-primary bg-primary/10 border border-transparent rounded-lg hover:bg-primary/20 transition-colors flex items-center gap-2">
                         <span class="material-symbols-outlined text-lg">local_shipping</span>
                         Track Order
-                    </button>
+                    </a>
                 </div>
             </div>
             <!-- Items Table -->

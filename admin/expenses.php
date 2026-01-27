@@ -176,7 +176,7 @@ $expenses_result = $conn->query($query);
         include ROOT_PATH . "includes/admin/header.php"; ?>
 
         <div class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
-            <div class="max-w-7xl mx-auto space-y-8">
+            <div class="max-w-full mx-auto space-y-8">
 
                 <!-- Notification Area -->
                 <?php if (isset($_SESSION['status_msg'])): ?>
@@ -272,13 +272,12 @@ $expenses_result = $conn->query($query);
                             <div class="mb-5">
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nominal
                                     Biaya</label>
-                                <div class="relative">
+                                <div class="relative flex items-center group">
                                     <span
-                                        class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">Rp</span>
+                                        class="absolute left-4 text-sm font-bold text-slate-400 group-focus-within:text-primary transition-colors">Rp</span>
                                     <input type="text" id="amount-input" name="amount" required placeholder="0"
-                                        class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl text-lg font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/50 transition-all">
+                                        class="currency-input w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl text-lg font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/50 transition-all">
                                 </div>
-                                <p class="text-[10px] text-slate-400 mt-1.5">Masukkan angka saja tanpa titik atau koma.</p>
                             </div>
                             <div class="mb-6">
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Upload
@@ -562,17 +561,32 @@ $expenses_result = $conn->query($query);
     </main>
 
     <script>
-        // Currency Formatting
+        function formatRupiah(angka) {
+            var number_string = angka.replace(/[^0-9]/g, "").toString(),
+                sisa = number_string.length % 3,
+                rupiah = number_string.substr(0, sisa),
+                ribuan = number_string.substr(sisa).match(/\d{3}/gi);
+
+            if (ribuan) {
+                var separator = sisa ? "." : "";
+                rupiah += separator + ribuan.join(".");
+            }
+            return rupiah;
+        }
+
         const amountInput = document.getElementById('amount-input');
         if (amountInput) {
-            amountInput.addEventListener('input', function (e) {
-                let val = this.value.replace(/\D/g, '');
-                if (val === '') {
-                    this.value = '';
-                    return;
+            const update = () => {
+                let raw = amountInput.value.replace(/[^0-9]/g, '');
+                if (raw) {
+                    let cursorSource = amountInput.selectionStart;
+                    let oldLen = amountInput.value.length;
+                    amountInput.value = formatRupiah(raw);
+                    let newLen = amountInput.value.length;
+                    amountInput.setSelectionRange(cursorSource + (newLen - oldLen), cursorSource + (newLen - oldLen));
                 }
-                this.value = new Intl.NumberFormat('id-ID').format(val);
-            });
+            };
+            amountInput.addEventListener('input', update);
         }
 
         // File Selection Feedback & Drag/Drop

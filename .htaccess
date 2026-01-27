@@ -1,18 +1,16 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /lapak-bangsawan/
-    
-    # Disable MultiViews to prevent conflicts
-    Options -Indexes -MultiViews
 
-    # Protect key directories from direct access
-    RewriteRule ^(includes|config|maintenance|database) - [F,L]
+    Options -MultiViews
 
-    # Rewrite Rule for Clean URLs (remove .php)
-    # 1. Ignore existing directories
-    RewriteCond %{REQUEST_FILENAME} !-d
-    # 2. Check if .php file exists for the requested URI
-    RewriteCond %{DOCUMENT_ROOT}/lapak-bangsawan/$1.php -f
-    # 3. Rewrite to the .php file
+    # Skip real files and folders
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Clean URL logic
+    # Try current directory + .php
+    RewriteCond %{REQUEST_FILENAME}.php -f
     RewriteRule ^(.*)$ $1.php [L,QSA]
 </IfModule>

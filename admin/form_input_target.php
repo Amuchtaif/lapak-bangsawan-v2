@@ -92,7 +92,7 @@ $result = $conn->query($sql);
         <?php $page_title = "Input Target Harian"; include ROOT_PATH . "includes/admin/header.php"; ?>
         
         <div class="flex-1 overflow-y-auto scroll-smooth relative">
-            <div class="w-full p-6 md:p-8 pb-20"> <!-- Full width -->
+            <div class="w-full p-6 md:p-8 pb-32"> <!-- Increased bottom padding to avoid button overlap -->
                 
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
                     <div>
@@ -107,23 +107,27 @@ $result = $conn->query($sql);
                 </div>
 
                 <!-- Alerts -->
+                <!-- Notification Area -->
                 <?php if ($success_msg): ?>
-                <div id="success-alert" class="auto-close-alert mb-6 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 flex items-center gap-3 transition-opacity duration-500">
-                    <span class="material-icons-round">check_circle</span>
-                    <?php echo $success_msg; ?>
-                </div>
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        <span class="material-icons-round text-green-500">check_circle</span>
+                        <div>
+                            <h3 class="font-medium text-slate-900 dark:text-white">Berhasil</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $success_msg; ?></p>
+                        </div>
+                    </div>
                 <?php endif; ?>
+
                 <?php if ($error_msg): ?>
-                <div id="error-alert" class="auto-close-alert mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 flex items-center gap-3 transition-opacity duration-500">
-                    <span class="material-icons-round">error</span>
-                    <?php echo $error_msg; ?>
-                </div>
-                <?php endif; ?>
-                <?php if ($error_msg): ?>
-                <div class="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 flex items-center gap-3">
-                    <span class="material-icons-round">error</span>
-                    <?php echo $error_msg; ?>
-                </div>
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        <span class="material-icons-round text-red-500">error</span>
+                        <div>
+                            <h3 class="font-medium text-slate-900 dark:text-white">Gagal</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $error_msg; ?></p>
+                        </div>
+                    </div>
                 <?php endif; ?>
 
                 <!-- Filter & Actions Card -->
@@ -248,6 +252,7 @@ $result = $conn->query($sql);
 
                 </form>
 
+                <?php include ROOT_PATH . "includes/admin/footer.php"; ?>
             </div>
         </div>
     </main>

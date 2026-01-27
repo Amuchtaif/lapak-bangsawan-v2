@@ -132,7 +132,7 @@ $efficiency = ($summary['total_target_weight'] > 0)
         include ROOT_PATH . "includes/admin/header.php"; ?>
 
         <div class="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth">
-            <div class="max-w-7xl mx-auto">
+            <div class="max-w-full mx-auto">
 
                 <!-- Filter Header -->
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -361,6 +361,7 @@ $efficiency = ($summary['total_target_weight'] > 0)
                     </div>
                 </div>
 
+                <?php include ROOT_PATH . "includes/admin/footer.php"; ?>
             </div>
         </div>
     </main>

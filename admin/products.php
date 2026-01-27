@@ -16,7 +16,7 @@ foreach ($preservable_keys as $key) {
     }
 }
 $query_string = !empty($filter_params) ? http_build_query($filter_params) : '';
-$filtered_redirect = "products.php" . ($query_string ? '?' . $query_string : '');
+$filtered_redirect = "products" . ($query_string ? '?' . $query_string : '');
 
 // Base query for pagination (filters without page/limit)
 $base_filter_params = $filter_params;
@@ -47,11 +47,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $name = mysqli_real_escape_string($conn, $_POST['name']);
         $slug = mysqli_real_escape_string($conn, strtolower(str_replace(' ', '-', $name)));
         $category_id = intval($_POST['category_id']);
-        $price = floatval($_POST['price']);
+        $price = floatval(preg_replace('/[^0-9]/', '', $_POST['price']));
+        $buy_price = floatval(preg_replace('/[^0-9]/', '', $_POST['buy_price']));
         $stock = floatval($_POST['stock']);
         $unit = mysqli_real_escape_string($conn, $_POST['unit'] ?? 'kg');
         $description = mysqli_real_escape_string($conn, $_POST['description']);
 
+        $short_code = mysqli_real_escape_string($conn, $_POST['short_code']);
         $image_path = '';
         if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
             $target_dir = "../assets/uploads/products/";
@@ -64,7 +66,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         if (isset($_POST['add_product'])) {
-            $sql = "INSERT INTO products (category_id, name, slug, description, price, stock, unit, image) VALUES ($category_id, '$name', '$slug', '$description', $price, $stock, '$unit', '$image_path')";
+            $weight = intval($_POST['weight'] ?? 1000);
+            if ($weight <= 0)
+                $weight = 1000;
+
+            $sql = "INSERT INTO products (category_id, short_code, name, slug, description, price, buy_price, stock, unit, image, weight) VALUES ($category_id, '$short_code', '$name', '$slug', '$description', $price, $buy_price, $stock, '$unit', '$image_path', $weight)";
             if ($conn->query($sql)) {
                 $_SESSION['status_msg'] = "Product added successfully.";
                 $_SESSION['status_type'] = "success";
@@ -75,7 +81,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         } elseif (isset($_POST['update_product'])) {
             $id = intval($_POST['id']);
-            $sql = "UPDATE products SET category_id=$category_id, name='$name', slug='$slug', description='$description', price=$price, stock=$stock, unit='$unit'";
+            $weight = intval($_POST['weight'] ?? 1000);
+            if ($weight <= 0)
+                $weight = 1000;
+
+            $sql = "UPDATE products SET category_id=$category_id, short_code='$short_code', name='$name', slug='$slug', description='$description', price=$price, buy_price=$buy_price, stock=$stock, unit='$unit', weight=$weight";
             if ($image_path)
                 $sql .= ", image='$image_path'";
             $sql .= " WHERE id=$id";
@@ -223,7 +233,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
         <?php $page_title = "Produk";
         include ROOT_PATH . "includes/admin/header.php"; ?>
         <div class="flex-1 lg:overflow-y-auto p-4 md:p-8 scroll-smooth">
-            <div class="max-w-7xl mx-auto flex flex-col gap-6">
+            <div class="max-w-full mx-auto flex flex-col gap-6">
                 <!-- Page Content -->
                 <!-- Notification Area -->
                 <?php if (isset($_SESSION['status_msg'])): ?>
@@ -275,7 +285,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                     ?>
                     <!-- Form View -->
                     <div
-                        class="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6 max-w-4xl overflow-visible">
+                        class="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 p-6 max-w-full overflow-visible">
                         <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">
                             <?php echo isset($edit_row) ? 'Ubah Produk' : 'Tambah Produk Baru'; ?>
                         </h2>
@@ -288,6 +298,13 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                             <?php endif; ?>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Short
+                                        Code (Unique)</label>
+                                    <input type="text" name="short_code"
+                                        value="<?php echo $edit_row['short_code'] ?? ''; ?>"
+                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-primary focus:border-primary">
+                                </div>
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Nama
                                         Produk</label>
@@ -342,12 +359,32 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Harga
-                                        (per Kg/Unit)</label>
-                                    <input type="number" step="0.01" name="price" id="price-input" required
-                                        value="<?php echo $edit_row['price'] ?? ''; ?>"
-                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-primary focus:border-primary">
-                                    <p id="price-display" class="text-sm font-bold text-primary mt-1"></p>
+                                    <div class="grid grid-cols-2 gap-4 mt-2">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Harga
+                                                Beli</label>
+                                            <div class="relative flex items-center group">
+                                                <span
+                                                    class="absolute left-4 text-sm font-bold text-slate-400 group-focus-within:text-primary transition-colors">Rp</span>
+                                                <input type="text" name="buy_price" id="buy-price-input"
+                                                    value="<?php echo isset($edit_row['buy_price']) ? number_format($edit_row['buy_price'], 0, ',', '.') : ''; ?>"
+                                                    required
+                                                    class="currency-input w-full pl-11 rounded-xl border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold transition-all">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Harga
+                                                Jual</label>
+                                            <div class="relative flex items-center group">
+                                                <span
+                                                    class="absolute left-4 text-sm font-bold text-slate-400 group-focus-within:text-primary transition-colors">Rp</span>
+                                                <input type="text" name="price" id="price-input"
+                                                    value="<?php echo isset($edit_row['price']) ? number_format($edit_row['price'], 0, ',', '.') : ''; ?>"
+                                                    required
+                                                    class="currency-input w-full pl-11 rounded-xl border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold transition-all">
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div>
                                     <label
@@ -387,6 +424,15 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Berat
+                                        Produk (Gram)</label>
+                                    <input type="number" name="weight" required
+                                        value="<?php echo $edit_row['weight'] ?? '1000'; ?>"
+                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-primary focus:border-primary">
+                                    <p class="text-xs text-slate-500 mt-1">Wajib diisi dalam satuan Gram. Contoh: 1kg = 1000
+                                    </p>
                                 </div>
                             </div>
 
@@ -634,6 +680,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                         <tr>
                                             <th class="px-6 py-4">No</th>
                                             <th class="px-6 py-4">Gambar</th>
+                                            <th class="px-6 py-4">Short Code</th>
                                             <th class="px-6 py-4">Nama Produk</th>
                                             <th class="px-6 py-4">Kategori</th>
                                             <th class="px-6 py-4">Harga/Unit</th>
@@ -659,14 +706,22 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                                         <?php endif; ?>
                                                     </div>
                                                 </td>
+                                                <td class="px-6 py-4 font-mono text-xs text-primary font-bold">
+                                                    <?php echo htmlspecialchars($row['short_code'] ?? '-'); ?>
+                                                </td>
                                                 <td class="px-6 py-4 font-medium text-slate-900 dark:text-white">
                                                     <?php echo htmlspecialchars($row['name']); ?>
                                                 </td>
                                                 <td class="px-6 py-4"><?php echo htmlspecialchars($row['category_name']); ?>
                                                 </td>
-                                                <td class="px-6 py-4 text-xs">Rp
-                                                    <?php echo number_format($row['price'], 0, ',', '.'); ?> /
-                                                    <?php echo $row['unit']; ?>
+                                                <td class="px-6 py-4">
+                                                    <div class="text-xs font-bold text-slate-900 dark:text-white">Rp
+                                                        <?php echo number_format($row['price'], 0, ',', '.'); ?> /
+                                                        <?php echo $row['unit']; ?>
+                                                    </div>
+                                                    <div class="text-[10px] text-slate-400 italic">Modal: Rp
+                                                        <?php echo number_format($row['buy_price'], 0, ',', '.'); ?>
+                                                    </div>
                                                 </td>
                                                 <td class="px-6 py-4 <?php
                                                 if ($row['stock'] == 0) {
@@ -761,26 +816,41 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
             const catSelect = document.querySelector('select[name="category_id"]');
             const stockInput = document.getElementById('stock-input');
             const stockHint = document.getElementById('stock-hint');
-            const priceInput = document.getElementById('price-input');
-            const priceDisplay = document.getElementById('price-display');
+            // Currency Input Logic
+            const currencyInputs = document.querySelectorAll('.currency-input');
 
-            // Currency Formatter
-            const formatter = new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            });
+            function formatRupiah(angka) {
+                var number_string = angka.replace(/[^0-9]/g, "").toString(),
+                    sisa = number_string.length % 3,
+                    rupiah = number_string.substr(0, sisa),
+                    ribuan = number_string.substr(sisa).match(/\d{3}/gi);
 
-            function updatePriceDisplay() {
-                if (!priceInput || !priceDisplay) return;
-                const value = parseFloat(priceInput.value);
-                if (!isNaN(value)) {
-                    priceDisplay.textContent = formatter.format(value);
-                } else {
-                    priceDisplay.textContent = '';
+                if (ribuan) {
+                    var separator = sisa ? "." : "";
+                    rupiah += separator + ribuan.join(".");
                 }
+                return rupiah;
             }
+
+            currencyInputs.forEach(input => {
+                const update = () => {
+                    let raw = input.value.replace(/[^0-9]/g, '');
+                    if (raw) {
+                        let cursorSource = input.selectionStart;
+                        let oldLen = input.value.length;
+
+                        input.value = formatRupiah(raw);
+
+                        // Fix cursor position after formatting
+                        let newLen = input.value.length;
+                        input.setSelectionRange(cursorSource + (newLen - oldLen), cursorSource + (newLen - oldLen));
+                    }
+                };
+
+                input.addEventListener('input', update);
+                // Run on load for edit form
+                if (input.value) update();
+            });
 
             function checkFrozen() {
                 if (!catSelect || !stockInput) return;
@@ -790,14 +860,6 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                 if (catName === 'Frozen Food') {
                     stockInput.setAttribute('step', '1');
                     stockHint.classList.remove('hidden');
-
-                    // Force integer if user tries current value
-                    if (stockInput.value && !Number.isInteger(parseFloat(stockInput.value))) {
-                        // Optional: Round it or just warn.
-                        // Let browser validation handle submit block due to step=1, 
-                        // but we can also manually round if we want to be nice.
-                        // stockInput.value = Math.floor(stockInput.value);
-                    }
                 } else {
                     stockInput.setAttribute('step', '0.01');
                     stockHint.classList.add('hidden');
@@ -806,14 +868,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
 
             if (catSelect) {
                 catSelect.addEventListener('change', checkFrozen);
-                // Run on load
                 checkFrozen();
-            }
-
-            if (priceInput) {
-                priceInput.addEventListener('input', updatePriceDisplay);
-                // Run on load for edit form
-                updatePriceDisplay();
             }
 
             // AJAX Pagination Logic
@@ -855,8 +910,11 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
             if (listContainer) {
                 listContainer.addEventListener('click', function (e) {
                     const link = e.target.closest('a');
-                    // Only intercept pagination links (not action buttons like edit/delete)
-                    if (link && link.href && (link.href.includes('page=') || link.href.includes('limit=')) && !link.onclick) {
+                    const h = link.getAttribute('href');
+                    const isPagination = h && (h.includes('page=') || h.includes('limit='));
+                    const isAction = h && (h.includes('action='));
+
+                    if (link && link.href && isPagination && !isAction && !link.onclick) {
                         e.preventDefault();
                         loadProducts(link.href);
                     }

@@ -47,99 +47,9 @@ require_once dirname(__DIR__) . "/config/init.php";
     class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased flex flex-col min-h-screen">
 
     <!-- Navigation -->
-    <div class="w-full bg-white dark:bg-[#1a202c] border-b border-[#f0f1f5] dark:border-[#2d3748] sticky top-0 z-50">
-        <div class="px-4 md:px-10 lg:px-40 flex justify-center">
-            <div class="flex flex-col w-full max-w-[1200px]">
-                <header class="flex items-center justify-between whitespace-nowrap py-3 gap-4">
-                    <div class="flex items-center gap-4 lg:gap-8 flex-1">
-                        <a class="flex items-center gap-3 text-[#111318] dark:text-white" href="<?= BASE_URL ?>public/home">
-                            <div class="size-12 text-primary">
-                                <img src="<?= BASE_URL ?>assets/images/logo.jpeg" alt="Logo">
-                            </div>
-                            <h2
-                                class="text-[#111318] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] hidden sm:block">
-                                Lapak Bangsawan</h2>
-                        </a>
-                    </div>
-                    <div class="flex items-center justify-end gap-4 lg:gap-8">
-                        <nav class="hidden lg:flex items-center gap-6">
-                            <a class="text-[#111318] dark:text-white text-sm font-medium hover:text-primary transition-colors"
-                                href="<?= BASE_URL ?>public/home">Beranda</a>
-                            <a class="text-[#111318] dark:text-white text-sm font-medium hover:text-primary transition-colors"
-                                href="<?= BASE_URL ?>public/market">Belanja</a>
-                            <a class="text-[#111318] dark:text-white text-sm font-medium text-primary transition-colors"
-                                href="<?= BASE_URL ?>public/about">Tentang Kami</a>
-                        </nav>
-                        <div class="flex gap-2">
-                            <button id="mobile-menu-btn"
-                                class="lg:hidden flex items-center justify-center rounded-lg h-10 w-10 bg-[#f0f1f5] dark:bg-[#2d3748] text-[#111318] dark:text-white hover:bg-primary/10 hover:text-primary transition-colors z-50 relative">
-                                <span class="material-symbols-outlined">menu</span>
-                            </button>
-                        </div>
-                    </div>
-                </header>
-                <!-- Mobile Menu Overlay -->
-                <div id="mobile-menu-overlay"
-                    class="fixed inset-0 bg-black/50 z-40 hidden opacity-0 transition-opacity duration-300"></div>
+    <?php include ROOT_PATH . "includes/public_header.php"; ?>
 
-                <!-- Mobile Menu Sidebar -->
-                <div id="mobile-menu"
-                    class="fixed inset-y-0 right-0 z-50 w-64 bg-white dark:bg-[#1a202c] shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col p-6 lg:hidden">
-                    <div class="flex items-center justify-between mb-8">
-                        <h2 class="text-lg font-bold text-[#111318] dark:text-white">Menu</h2>
-                        <button id="close-menu-btn" class="text-[#606e8a] dark:text-[#a0aec0] hover:text-primary">
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
-                    </div>
-                    <nav class="flex flex-col gap-4">
-                        <a class="text-[#111318] dark:text-white text-base font-medium hover:text-primary transition-colors py-2 border-b border-gray-100 dark:border-gray-800"
-                            href="<?= BASE_URL ?>public/home">Beranda</a>
-                        <a class="text-[#111318] dark:text-white text-base font-medium hover:text-primary transition-colors py-2 border-b border-gray-100 dark:border-gray-800"
-                            href="<?= BASE_URL ?>public/market">Belanja</a>
-                        <a class="text-[#111318] dark:text-white text-base font-medium text-primary transition-colors py-2 border-b border-gray-100 dark:border-gray-800"
-                            href="<?= BASE_URL ?>public/about">Tentang Kami</a>
-                    </nav>
-                </div>
-
-                <script>
-                    document.addEventListener('DOMContentLoaded', () => {
-                        const btn = document.getElementById('mobile-menu-btn');
-                        const closeBtn = document.getElementById('close-menu-btn');
-                        const menu = document.getElementById('mobile-menu');
-                        const overlay = document.getElementById('mobile-menu-overlay');
-                        const body = document.body;
-
-                        function toggleMenu() {
-                            const isHidden = menu.classList.contains('translate-x-full');
-
-                            if (isHidden) {
-                                // Open menu
-                                menu.classList.remove('translate-x-full');
-                                overlay.classList.remove('hidden');
-                                // Small delay to allow display:block to apply before opacity transition
-                                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-                                body.classList.add('overflow-hidden');
-                            } else {
-                                // Close menu
-                                menu.classList.add('translate-x-full');
-                                overlay.classList.add('opacity-0');
-                                setTimeout(() => {
-                                    overlay.classList.add('hidden');
-                                }, 300);
-                                body.classList.remove('overflow-hidden');
-                            }
-                        }
-
-                        btn.addEventListener('click', toggleMenu);
-                        closeBtn.addEventListener('click', toggleMenu);
-                        overlay.addEventListener('click', toggleMenu);
-                    });
-                </script>
-            </div>
-        </div>
-    </div>
-
-    <main class="flex-grow w-full max-w-[1200px] mx-auto px-4 md:px-10 lg:px-40 py-12">
+    <main class="flex-grow w-full max-w-[1200px] mx-auto px-4 md:px-10 lg:px-40 pt-12 md:pt-24 pb-12">
         <div class="flex flex-col lg:flex-row gap-12 items-center mb-20">
             <div class="flex-1 space-y-6">
                 <span class="text-primary font-bold tracking-wider uppercase text-sm">Cerita Kami</span>
@@ -401,16 +311,18 @@ require_once dirname(__DIR__) . "/config/init.php";
         </div>
     </main>
 
-    <?php include ROOT_PATH . "includes/admin/footer.php"; ?>
+    <?php include ROOT_PATH . "includes/public_footer.php"; ?>
 
     <script>
         function updateCartBadge() {
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            const badge = document.getElementById('cart-badge');
-            if (cart.length > 0) {
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
+            const badge = document.getElementById('cart-badge-header');
+            if (badge) {
+                if (cart.length > 0) {
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
             }
         }
         updateCartBadge();
