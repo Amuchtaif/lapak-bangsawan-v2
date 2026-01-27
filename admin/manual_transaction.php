@@ -292,7 +292,7 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
             <div class="max-w-full mx-auto flex flex-col gap-6 w-full flex-grow">
 
                 <div class="flex items-center gap-4 mb-2 md:mb-4">
-                    <a href="orders.php"
+                    <a href="orders"
                         class="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors">
                         <span class="material-icons-round">arrow_back</span> Kembali
                     </a>

@@ -153,18 +153,18 @@ $orders_result = $conn->query($orders_query);
                                 #<?php echo str_pad($order_data['id'], 5, '0', STR_PAD_LEFT); ?></h2>
                             <div class="flex gap-2">
                                 <button
-                                    onclick="confirmDelete('orders.php?action=delete&id=<?php echo $order_data['id']; ?>')"
+                                    onclick="confirmDelete('orders?action=delete&id=<?php echo $order_data['id']; ?>')"
                                     class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-bold transition-colors flex items-center gap-2">
                                     <span class="material-icons-round text-sm">delete</span> Hapus
                                 </button>
-                                <a href="orders.php"
+                                <a href="orders"
                                     class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-bold transition-colors flex items-center gap-2">
                                     <span class="material-icons-round text-sm">arrow_back</span>
                                     Kembali
                                 </a>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             <!-- Customer Info -->
                             <div
                                 class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -219,16 +219,17 @@ $orders_result = $conn->query($orders_query);
                                 </div>
                             </div>
                             <!-- Biteship Fulfillment -->
+                            <?php if ($order_data['status'] !== 'completed'): ?>
                             <div
                                 class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-primary/30 dark:border-primary/20 shadow-sm relative overflow-hidden">
                                 <div class="absolute top-0 right-0 p-2 opacity-10">
                                     <span class="material-symbols-outlined text-4xl text-primary">local_shipping</span>
                                 </div>
                                 <h3 class="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-primary text-xl">fulfillment_delivery</span>
+                                    <span class="material-icons-round text-primary text-xl">local_shipping</span>
                                     Fulfillment Logistics
                                 </h3>
-
+                                
                                 <?php if (empty($order_data['tracking_id'])): ?>
                                     <div id="fulfillment-pending">
                                         <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
@@ -262,19 +263,38 @@ $orders_result = $conn->query($orders_query);
                                     </div>
                                 <?php endif; ?>
                             </div>
+                            <?php endif; ?>
                             <!-- Order Status Update -->
                             <div
-                                class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                                class="<?php echo $order_data['status'] === 'completed' ? 'md:col-span-2' : ''; ?> bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                                 <h3 class="font-bold text-slate-900 dark:text-white mb-4">Status Pesanan</h3>
                                 <form method="POST">
                                     <input type="hidden" name="order_id" value="<?php echo $order_data['id']; ?>">
                                     <input type="hidden" name="update_status" value="1">
-                                    <select name="status"
-                                        class="w-full rounded-lg border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 text-slate-700 dark:text-slate-300 mb-4 px-3 py-2 text-sm focus:ring-primary focus:border-primary">
-                                        <option value="pending" <?php echo $order_data['status'] == 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                        <option value="completed" <?php echo $order_data['status'] == 'completed' ? 'selected' : ''; ?>>Completed</option>
-                                        <option value="cancelled" <?php echo $order_data['status'] == 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
-                                    </select>
+                                    <div class="custom-select-wrapper relative mb-4">
+                                        <select name="status" class="hidden">
+                                            <option value="pending" <?php echo $order_data['status'] == 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                            <option value="completed" <?php echo $order_data['status'] == 'completed' ? 'selected' : ''; ?>>Completed</option>
+                                            <option value="cancelled" <?php echo $order_data['status'] == 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                                        </select>
+                                        <button type="button" class="custom-select-trigger w-full flex items-center justify-between rounded-lg border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 text-sm focus:ring-primary focus:border-primary transition-all text-left shadow-sm">
+                                            <span class="selected-label">
+                                                <?php 
+                                                    if($order_data['status'] == 'completed') echo 'Completed';
+                                                    else if($order_data['status'] == 'cancelled') echo 'Cancelled';
+                                                    else echo 'Pending';
+                                                ?>
+                                            </span>
+                                            <span class="material-icons-round text-slate-400 selected-icon transition-transform">expand_more</span>
+                                        </button>
+                                        <div class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
+                                            <div class="p-1">
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'pending' ? 'bg-primary/10 text-primary font-bold' : ''; ?>" data-value="pending">Pending</div>
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'completed' ? 'bg-primary/10 text-primary font-bold' : ''; ?>" data-value="completed">Completed</div>
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'cancelled' ? 'bg-primary/10 text-primary font-bold' : ''; ?>" data-value="cancelled">Cancelled</div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <button type="submit"
                                         class="w-full bg-primary text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors shadow-sm">Perbarui
                                         Status</button>
@@ -344,7 +364,7 @@ $orders_result = $conn->query($orders_query);
                             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Kelola pesanan, lacak berat, dan
                                 proses pengiriman.</p>
                         </div>
-                        <a href="manual_transaction.php"
+                        <a href="manual_transaction"
                             class="px-4 py-2 bg-primary hover:bg-blue-600 text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2 shadow-lg shadow-blue-500/30">
                             <span class="material-icons-round text-sm">add</span> Tambah Pesanan Manual
                         </a>
@@ -436,13 +456,13 @@ $orders_result = $conn->query($orders_query);
                                                 </td>
                                                 <td class="px-6 py-4 text-right">
                                                     <div class="flex flex-col sm:flex-row gap-2 justify-end">
-                                                        <a href="orders.php?action=view&id=<?php echo $order['id']; ?>"
+                                                        <a href="orders?action=view&id=<?php echo $order['id']; ?>"
                                                             class="inline-flex items-center justify-center rounded-lg size-8 text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm"
                                                             title="Detail Pesanan">
                                                             <span class="material-icons-round text-lg">visibility</span>
                                                         </a>
                                                         <button
-                                                            onclick="confirmDelete('orders.php?action=delete&id=<?php echo $order['id']; ?>')"
+                                                            onclick="confirmDelete('orders?action=delete&id=<?php echo $order['id']; ?>')"
                                                             class="inline-flex items-center justify-center rounded-lg size-8 text-xs font-medium bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors shadow-sm"
                                                             title="Hapus Pesanan">
                                                             <span class="material-icons-round text-lg">delete</span>

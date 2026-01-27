@@ -2,8 +2,24 @@
 require("auth_session.php");
 require_once dirname(__DIR__) . "/config/init.php";
 
-// Set Date (Default to Today)
-$date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
+// Set Week (Default to Today's Week)
+// Format YYYY-Www (ISO-8601 week date)
+$week_param = isset($_GET['week']) ? $_GET['week'] : date('Y-\WW');
+
+// Parse Week to get Monday and Sunday
+$dto = new DateTime();
+// Set ISO week
+$parts = explode('-W', $week_param);
+$year = isset($parts[0]) ? (int)$parts[0] : (int)date('Y');
+$week = isset($parts[1]) ? (int)$parts[1] : (int)date('W');
+// Force to Monday of that week
+$dto->setISODate($year, $week, 1); 
+$monday_date = $dto->format('Y-m-d');
+// Calculate Sunday (6 days later)
+$dto->modify('+6 days');
+$sunday_date = $dto->format('Y-m-d');
+
+$selected_date = $monday_date;
 
 // --- 1. Complex SQL Query ---
 $sql = "
@@ -15,21 +31,22 @@ SELECT
     p.stock as current_stock,
     c.name as category_name,
     c.id as category_id,
-    COALESCE(dst.target_qty_kg, 0) as target_qty,
+    COALESCE(wst.target_qty_kg, 0) as target_qty,
     COALESCE(sales.sold_qty, 0) as realized_qty
 FROM products p
 LEFT JOIN categories c ON p.category_id = c.id
-LEFT JOIN daily_sales_targets dst ON p.id = dst.product_id AND dst.target_date = '$date'
+LEFT JOIN weekly_sales_targets wst ON p.id = wst.product_id AND wst.start_date = '$selected_date'
 LEFT JOIN (
     SELECT 
         product_name, 
         SUM(weight) as sold_qty 
     FROM order_items oi
     JOIN orders o ON oi.order_id = o.id
-    WHERE DATE(o.created_at) = '$date' AND o.status = 'completed'
+    WHERE DATE(o.created_at) BETWEEN '$monday_date' AND '$sunday_date' 
+      AND o.status = 'completed'
     GROUP BY product_name
 ) sales ON p.name = sales.product_name
-ORDER BY dst.target_qty_kg DESC, p.name ASC
+ORDER BY wst.target_qty_kg DESC, p.name ASC
 ";
 
 $result = $conn->query($sql);
@@ -95,7 +112,7 @@ $efficiency = ($summary['total_target_weight'] > 0)
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Laporan Stok - Admin Lapak Bangsawan</title>
+    <title>Laporan Stok Mingguan - Admin Lapak Bangsawan</title>
     <link rel="icon" href="<?= BASE_URL ?>assets/images/favicon-laba.png" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
@@ -128,7 +145,7 @@ $efficiency = ($summary['total_target_weight'] > 0)
     <?php include ROOT_PATH . "includes/admin/sidebar.php"; ?>
 
     <main class="flex-1 flex flex-col h-full relative overflow-hidden">
-        <?php $page_title = "Laporan Stok & Realisasi";
+        <?php $page_title = "Laporan Stok & Realisasi Mingguan";
         include ROOT_PATH . "includes/admin/header.php"; ?>
 
         <div class="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth">
@@ -137,16 +154,19 @@ $efficiency = ($summary['total_target_weight'] > 0)
                 <!-- Filter Header -->
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
-                        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Laporan Nilai Stok</h1>
+                        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Laporan Nilai Stok Mingguan</h1>
                         <p class="text-slate-500 dark:text-slate-400 mt-1">Ringkasan nilai aset stok dan realisasi
-                            penjualan harian.</p>
+                            penjualan mingguan.</p>
+                        <p class="text-xs text-primary mt-1 font-bold">
+                            Periode: <?php echo date('d M Y', strtotime($monday_date)); ?> s/d <?php echo date('d M Y', strtotime($sunday_date)); ?>
+                        </p>
                     </div>
                     <div class="flex items-center gap-3">
                         <form action="" method="GET" class="flex items-center gap-2">
                             <div class="relative">
                                 <span
-                                    class="absolute left-3 top-1/2 -translate-y-1/2 material-icons-round text-slate-400 text-sm">calendar_today</span>
-                                <input type="date" name="date" value="<?php echo $date; ?>"
+                                    class="absolute left-3 top-1/2 -translate-y-1/2 material-icons-round text-slate-400 text-sm">date_range</span>
+                                <input type="week" name="week" value="<?php echo $week_param; ?>"
                                     class="pl-9 pr-4 py-2 text-sm bg-white dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary shadow-sm text-slate-700 dark:text-white"
                                     onchange="this.form.submit()">
                             </div>
@@ -211,7 +231,7 @@ $efficiency = ($summary['total_target_weight'] > 0)
                         <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                             <span class="material-icons-round text-6xl text-purple-500">scale</span>
                         </div>
-                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Target Berat Harian</p>
+                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Target Berat Mingguan</p>
                         <div class="mt-2 flex items-baseline gap-2">
                             <span
                                 class="text-2xl font-bold text-slate-900 dark:text-white"><?php echo number_format($summary['total_target_weight'], 1, ',', '.'); ?></span>
@@ -239,7 +259,7 @@ $efficiency = ($summary['total_target_weight'] > 0)
                             <span class="text-sm text-slate-500 font-medium">kg</span>
                         </div>
                         <div class="mt-4 flex items-center text-sm">
-                            <span class="text-slate-400 font-medium">Realisasi Hari Ini</span>
+                            <span class="text-slate-400 font-medium">Realisasi Pekan Ini</span>
                         </div>
                     </div>
 

@@ -31,16 +31,16 @@
                     <div class="flex flex-col gap-3 text-sm text-[#606e8a] dark:text-[#a0aec0]">
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-[20px]">mail</span>
-                            <span>lapakbangsawan@gmail.com</span>
+                            <span><?= get_setting('contact_email', 'lapakbangsawan@gmail.com') ?></span>
                         </div>
-                        <a href="https://wa.me/62859110022099"
+                        <a href="https://wa.me/<?= get_setting('contact_wa', '62859110022099') ?>"
                             class="flex items-center gap-3 hover:text-primary transition-colors">
                             <span class="material-symbols-outlined text-[20px]">chat</span>
-                            <span>+62 859 110 022 099</span>
+                            <span>+<?= get_setting('contact_wa', '62859110022099') ?></span>
                         </a>
                         <div class="flex items-start gap-3">
                             <span class="material-symbols-outlined text-[20px] mt-0.5">location_on</span>
-                            <span>Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat</span>
+                            <span><?= get_setting('contact_address', 'Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat') ?></span>
                         </div>
                     </div>
                 </div>
@@ -61,7 +61,7 @@
                         </svg>
                     </a>
                     <a class="text-[#606e8a] dark:text-[#a0aec0] hover:text-primary transition-colors" target="_blank"
-                        href="https://instagram.com/lapakbangsawan">
+                        href="<?= get_setting('social_instagram', 'https://instagram.com/lapakbangsawan') ?>">
                         <!-- Instagram -->
                         <svg class="size-6 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path

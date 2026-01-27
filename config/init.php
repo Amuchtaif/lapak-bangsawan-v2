@@ -22,6 +22,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // 4. Database Connection
 require_once ROOT_PATH . 'config/database.php';
+require_once ROOT_PATH . 'helpers/AppHelper.php'; // Load Settings Helper
 require_once ROOT_PATH . 'includes/cart_helper.php';
 // Note: database.php creates $conn. It is now available globally if we include init.php.
 

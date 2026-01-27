@@ -2,20 +2,36 @@
 require("auth_session.php");
 require_once dirname(__DIR__) . "/config/init.php";
 
-// Set Date (Default to Today)
-$date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
-$today = date('Y-m-d');
+// Set Week (Default to Today's Week)
+// Format YYYY-Www (ISO-8601 week date)
+$week_param = isset($_GET['week']) ? $_GET['week'] : date('Y-\nWW');
+
+// Parse Week to get Monday and Sunday
+$dto = new DateTime();
+// Set ISO week
+$parts = explode('-W', $week_param);
+$year = isset($parts[0]) ? (int)$parts[0] : (int)date('Y');
+$week = isset($parts[1]) ? (int)$parts[1] : (int)date('W');
+// Force to Monday of that week
+$dto->setISODate($year, $week, 1); 
+$monday_date = $dto->format('Y-m-d');
+// Calculate Sunday (6 days later)
+$dto->modify('+6 days');
+$sunday_date = $dto->format('Y-m-d');
+
+// Use monday_date as the key for database storage
+$selected_date = $monday_date;
 
 // Handle Form Submission
 $success_msg = "";
 $error_msg = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['targets'])) {
-    $target_date = $_POST['target_date'];
+    $target_date = $_POST['target_date']; // This should be $monday_date
     $targets = $_POST['targets']; // Array [product_id => target_qty]
 
-    // Prepare statement for ON DUPLICATE KEY UPDATE
-    $stmt = $conn->prepare("INSERT INTO daily_sales_targets (product_id, target_date, target_qty_kg) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE target_qty_kg = VALUES(target_qty_kg)");
+    // Prepare statement for ON DUPLICATE KEY UPDATE in weekly_sales_targets  
+    $stmt = $conn->prepare("INSERT INTO weekly_sales_targets (product_id, start_date, target_qty_kg) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE target_qty_kg = VALUES(target_qty_kg)");
     
     $updated_count = 0;
     foreach ($targets as $p_id => $qty) {
@@ -29,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['targets'])) {
     }
     
     if ($updated_count > 0) {
-        $success_msg = "Berhasil menyimpan target untuk $updated_count produk.";
+        $success_msg = "Berhasil menyimpan target mingguan untuk $updated_count produk.";
     } else {
         $error_msg = "Tidak ada data yang disimpan atau terjadi kesalahan.";
     }
@@ -44,10 +60,10 @@ SELECT
     p.price as product_price,
     p.stock as current_stock,
     c.name as category_name,
-    dst.target_qty_kg as existing_target
+    wst.target_qty_kg as existing_target
 FROM products p
 LEFT JOIN categories c ON p.category_id = c.id
-LEFT JOIN daily_sales_targets dst ON p.id = dst.product_id AND dst.target_date = '$date'
+LEFT JOIN weekly_sales_targets wst ON p.id = wst.product_id AND wst.start_date = '$selected_date'
 
 ORDER BY p.stock DESC, p.name ASC
 ";
@@ -59,7 +75,7 @@ $result = $conn->query($sql);
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Input Target Harian - Admin Lapak Bangsawan</title>
+    <title>Input Target Mingguan - Admin Lapak Bangsawan</title>
     <link rel="icon" href="<?= BASE_URL ?>assets/images/favicon-laba.png" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -89,18 +105,21 @@ $result = $conn->query($sql);
     <?php include ROOT_PATH . "includes/admin/sidebar.php"; ?>
     
     <main class="flex-1 flex flex-col h-full relative overflow-hidden">
-        <?php $page_title = "Input Target Harian"; include ROOT_PATH . "includes/admin/header.php"; ?>
+        <?php $page_title = "Input Target Mingguan"; include ROOT_PATH . "includes/admin/header.php"; ?>
         
         <div class="flex-1 overflow-y-auto scroll-smooth relative">
             <div class="w-full p-6 md:p-8 pb-32"> <!-- Increased bottom padding to avoid button overlap -->
                 
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
                     <div>
-                        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Bulk Input Target Harian</h1>
-                        <p class="text-slate-500 dark:text-slate-400 mt-1">Kelola target penjualan harian berdasarkan stok gudang aktual.</p>
+                        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Bulk Input Target Mingguan</h1>
+                        <p class="text-slate-500 dark:text-slate-400 mt-1">Kelola target penjualan mingguan.</p>
+                        <p class="text-xs text-primary mt-1 font-medium bg-primary/10 inline-block px-2 py-1 rounded">
+                            Periode: <?php echo date('d M Y', strtotime($monday_date)); ?> - <?php echo date('d M Y', strtotime($sunday_date)); ?>
+                        </p>
                     </div>
                      <!-- Link to View History/Report -->
-                     <a href="report_stock.php?date=<?php echo $date; ?>" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm flex items-center gap-2">
+                     <a href="report_stock?week=<?php echo $week_param; ?>" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm flex items-center gap-2">
                         <span class="material-icons-round text-sm">history</span>
                         View Report
                     </a>
@@ -134,10 +153,10 @@ $result = $conn->query($sql);
                 <div class="bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur-md p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-md mb-6 sticky top-0 z-30">
                     <form id="dateForm" action="" method="GET" class="flex flex-col md:flex-row gap-4 items-end md:items-center justify-between">
                         <div class="w-full md:w-auto">
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pilih Tanggal Target</label>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pilih Minggu</label>
                             <div class="relative">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons-round text-slate-400 text-sm">calendar_today</span>
-                                <input type="date" name="date" value="<?php echo $date; ?>" 
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons-round text-slate-400 text-sm">date_range</span>
+                                <input type="week" name="week" value="<?php echo $week_param; ?>" 
                                     class="pl-9 pr-4 py-2 w-full md:w-64 text-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary shadow-sm text-slate-700 dark:text-white"
                                     onchange="document.getElementById('dateForm').submit()">
                             </div>
@@ -157,7 +176,7 @@ $result = $conn->query($sql);
 
                 <!-- Bulk Input Form -->
                 <form action="" method="POST" id="bulkForm">
-                    <input type="hidden" name="target_date" value="<?php echo $date; ?>">
+                    <input type="hidden" name="target_date" value="<?php echo $selected_date; ?>">
                     
                     <div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                         <div class="overflow-x-auto">
@@ -167,7 +186,7 @@ $result = $conn->query($sql);
                                         <th class="px-6 py-4 w-12">No</th>
                                         <th class="px-6 py-4 w-1/3">Info Produk</th>
                                         <th class="px-6 py-4 w-1/6">Stok Gudang (Kg)</th>
-                                        <th class="px-6 py-4 w-1/4">Target Penjualan (Kg)</th>
+                                        <th class="px-6 py-4 w-1/4">Target Mingguan (Kg)</th>
                                         <th class="px-6 py-4 w-1/4">Estimasi Pendapatan</th>
                                     </tr>
                                 </thead>
@@ -246,7 +265,7 @@ $result = $conn->query($sql);
                     <div class="fixed bottom-6 right-6 z-30">
                         <button type="submit" class="group flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all transform hover:-translate-y-1 font-semibold text-base">
                             <span class="material-icons-round">save</span>
-                            Simpan Semua Target
+                            Simpan Target Mingguan
                         </button>
                     </div>
 
@@ -277,7 +296,7 @@ $result = $conn->query($sql);
                             </h3>
                             <div class="mt-2">
                                 <p class="text-sm text-slate-500 dark:text-slate-400">
-                                    Tindakan ini akan mengisi kolom "Target Penjualan" <b>secara otomatis</b> sesuai dengan jumlah Stok Gudang saat ini. Data sebelumnya pada form akan tertimpa.
+                                    Tindakan ini akan mengisi kolom "Target Mingguan" <b>secara otomatis</b> sesuai dengan jumlah Stok Gudang saat ini. Data sebelumnya pada form akan tertimpa.
                                 </p>
                             </div>
                         </div>
@@ -366,3 +385,4 @@ $result = $conn->query($sql);
     </script>
 </body>
 </html>
+

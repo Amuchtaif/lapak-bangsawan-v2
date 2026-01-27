@@ -656,7 +656,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                             </div>
 
                             <div class="flex items-end">
-                                <a href="products.php"
+                                <a href="products"
                                     class="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-all shadow-sm">
                                     <span class="material-icons-round text-sm">restart_alt</span>
                                     <span>Reset Filter</span>
