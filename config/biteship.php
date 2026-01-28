@@ -8,3 +8,5 @@ define('BITESHIP_BASE_URL', 'https://api.biteship.com/v1');
 
 // You can also add default origin area ID if you have it
 define('BITESHIP_ORIGIN_AREA_ID', 'IDNP9IDNC105IDND171IDZ45171'); // Example ID for a specific area
+define('BITESHIP_ORIGIN_LAT', -6.744815286779071); // Origin Latitude for Instant Courier
+define('BITESHIP_ORIGIN_LNG', 108.53552144352373); // Origin Longitude for Instant Courier

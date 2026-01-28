@@ -29,16 +29,40 @@ class BiteshipService
     /**
      * Check Shipping Rates
      */
-    public function checkRates($destinationAreaId, $weight, $items = [], $originAreaId = BITESHIP_ORIGIN_AREA_ID)
+    public function checkRates($destinationAreaId, $weight, $items = [], $originAreaId = BITESHIP_ORIGIN_AREA_ID, $couriers = 'jne,jnt,sicepat,gojek,grab,anteraja,borzo,lalamove', $originLat = null, $originLng = null, $destLat = null, $destLng = null, $extraParams = [])
     {
         $url = $this->baseUrl . "/rates/couriers";
         $data = [
             'origin_area_id' => $originAreaId,
             'destination_area_id' => $destinationAreaId,
-            'couriers' => 'jne,jnt,sicepat,gojek,grab,anteraja', // Common couriers
+            'couriers' => $couriers,
             'items' => $items,
             'weight' => $weight // in grams
         ];
+
+        // Add coordinates in both formats to ensure compatibility with different Biteship versions
+        if ($originLat && $originLng) {
+            $data['origin_latitude'] = (float) $originLat;
+            $data['origin_longitude'] = (float) $originLng;
+            $data['origin_coordinate'] = [
+                'latitude' => (float) $originLat,
+                'longitude' => (float) $originLng
+            ];
+        }
+
+        if ($destLat && $destLng) {
+            $data['destination_latitude'] = (float) $destLat;
+            $data['destination_longitude'] = (float) $destLng;
+            $data['destination_coordinate'] = [
+                'latitude' => (float) $destLat,
+                'longitude' => (float) $destLng
+            ];
+        }
+
+        // Add extra params (contact info often required for instant)
+        if (!empty($extraParams)) {
+            $data = array_merge($data, $extraParams);
+        }
 
         return $this->request('POST', $url, $data);
     }
@@ -113,5 +137,31 @@ class BiteshipService
                 'raw' => $decoded
             ];
         }
+    }
+
+    /**
+     * Get Coordinates from Area Name (Using Nominatim/OSM as fallback)
+     */
+    public function getCoordinatesFromArea($areaName)
+    {
+        $url = "https://nominatim.openstreetmap.org/search?q=" . urlencode($areaName) . "&format=json&limit=1";
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'LapakBangsawan/1.0 (contact@lapakbangsawan.com)'); // Required by OSM
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        $res = curl_exec($ch);
+        curl_close($ch);
+
+        $data = json_decode($res, true);
+        if (!empty($data) && isset($data[0]['lat'], $data[0]['lon'])) {
+            return [
+                'latitude' => (float) $data[0]['lat'],
+                'longitude' => (float) $data[0]['lon']
+            ];
+        }
+
+        return null;
     }
 }

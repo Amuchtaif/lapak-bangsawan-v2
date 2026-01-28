@@ -17,17 +17,62 @@ $totalWeight = getCartTotalWeight($items); // Use the helper function we created
 $biteshipItems = [];
 
 foreach ($items as $item) {
+    $qty = floatval($item['weight'] ?? 1);
+    $unit = $item['unit'] ?? 'kg';
+    $itemWeightInGrams = ($unit === 'kg') ? ($qty * 1000) : ($qty * ($item['item_weight'] ?? 1000));
+
     $biteshipItems[] = [
         'name' => $item['name'],
-        'quantity' => (int) ($item['weight'] ?? 1),
+        'description' => $item['name'] . ' (' . $qty . ' ' . $unit . ')',
         'value' => (int) $item['price'],
-        'weight' => 1000 // Simplified: Biteship often expects weight per item in grams. 
-        // Our getCartTotalWeight handles the logic, but for individual items we could be more specific.
+        'quantity' => 1, // Treat total weight as 1 quantity for simpler Biteship logic
+        'weight' => (int) $itemWeightInGrams,
+        'category' => 'food'
     ];
 }
 
+$couriers = $input['couriers'] ?? 'jne,jnt,sicepat,gojek,grab,anteraja,borzo,lalamove';
+$dest_lat = $input['dest_lat'] ?? null;
+$dest_lng = $input['dest_lng'] ?? null;
+
+// Ensure they are numeric or null
+$dest_lat = (is_numeric($dest_lat)) ? (float) $dest_lat : null;
+$dest_lng = (is_numeric($dest_lng)) ? (float) $dest_lng : null;
+
 $biteship = new BiteshipService();
-$result = $biteship->checkRates($area_id, $totalWeight, $biteshipItems);
+
+// Fallback: If coordinates missing, try geocoding the area text
+if (!$dest_lat || !$dest_lng) {
+    $areaText = $input['area_text'] ?? $input['area_name'] ?? '';
+    if (!empty($areaText)) {
+        $coords = $biteship->getCoordinatesFromArea($areaText);
+        if ($coords) {
+            $dest_lat = $coords['latitude'];
+            $dest_lng = $coords['longitude'];
+        }
+    }
+}
+
+$extraParams = [
+    'origin_contact_name' => 'Lapak Bangsawan',
+    'origin_contact_phone' => '08123456789',
+    'destination_contact_name' => $input['name'] ?? 'Customer',
+    'destination_contact_phone' => $input['phone'] ?? '08123456789',
+];
+
+$biteship = new BiteshipService();
+$result = $biteship->checkRates(
+    $area_id,
+    $totalWeight,
+    $biteshipItems,
+    BITESHIP_ORIGIN_AREA_ID,
+    $couriers,
+    BITESHIP_ORIGIN_LAT,
+    BITESHIP_ORIGIN_LNG,
+    $dest_lat,
+    $dest_lng,
+    $extraParams
+);
 
 if ($result['success']) {
     echo json_encode([

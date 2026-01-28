@@ -1,0 +1,73 @@
+Array
+(
+    [success] => 1
+    [data] => Array
+        (
+            [success] => 1
+            [areas] => Array
+                (
+                    [0] => Array
+                        (
+                            [id] => IDNP9IDNC105IDND163IDZ45115
+                            [name] => Pekalipan, Cirebon, Jawa Barat. 45115
+                            [country_name] => Indonesia
+                            [country_code] => ID
+                            [administrative_division_level_1_name] => Jawa Barat
+                            [administrative_division_level_1_type] => province
+                            [administrative_division_level_2_name] => Cirebon
+                            [administrative_division_level_2_type] => city
+                            [administrative_division_level_3_name] => Pekalipan
+                            [administrative_division_level_3_type] => district
+                            [postal_code] => 45115
+                        )
+
+                    [1] => Array
+                        (
+                            [id] => IDNP9IDNC105IDND163IDZ45116
+                            [name] => Pekalipan, Cirebon, Jawa Barat. 45116
+                            [country_name] => Indonesia
+                            [country_code] => ID
+                            [administrative_division_level_1_name] => Jawa Barat
+                            [administrative_division_level_1_type] => province
+                            [administrative_division_level_2_name] => Cirebon
+                            [administrative_division_level_2_type] => city
+                            [administrative_division_level_3_name] => Pekalipan
+                            [administrative_division_level_3_type] => district
+                            [postal_code] => 45116
+                        )
+
+                    [2] => Array
+                        (
+                            [id] => IDNP9IDNC105IDND163IDZ45117
+                            [name] => Pekalipan, Cirebon, Jawa Barat. 45117
+                            [country_name] => Indonesia
+                            [country_code] => ID
+                            [administrative_division_level_1_name] => Jawa Barat
+                            [administrative_division_level_1_type] => province
+                            [administrative_division_level_2_name] => Cirebon
+                            [administrative_division_level_2_type] => city
+                            [administrative_division_level_3_name] => Pekalipan
+                            [administrative_division_level_3_type] => district
+                            [postal_code] => 45117
+                        )
+
+                    [3] => Array
+                        (
+                            [id] => IDNP9IDNC105IDND163IDZ45118
+                            [name] => Pekalipan, Cirebon, Jawa Barat. 45118
+                            [country_name] => Indonesia
+                            [country_code] => ID
+                            [administrative_division_level_1_name] => Jawa Barat
+                            [administrative_division_level_1_type] => province
+                            [administrative_division_level_2_name] => Cirebon
+                            [administrative_division_level_2_type] => city
+                            [administrative_division_level_3_name] => Pekalipan
+                            [administrative_division_level_3_type] => district
+                            [postal_code] => 45118
+                        )
+
+                )
+
+        )
+
+)

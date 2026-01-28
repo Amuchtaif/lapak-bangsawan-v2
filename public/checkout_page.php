@@ -101,6 +101,8 @@ $order_token = bin2hex(random_bytes(16));
                                     class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">
                                 <input type="hidden" name="destination_area_id" id="destination-area-id">
                                 <input type="hidden" name="destination_area_text" id="destination-area-text">
+                                <input type="hidden" name="dest_lat" id="dest-lat">
+                                <input type="hidden" name="dest_lng" id="dest-lng">
 
                                 <!-- Search Results -->
                                 <div id="area-results"
@@ -414,12 +416,16 @@ $order_token = bin2hex(random_bytes(16));
                     const data = await res.json();
 
                     if (data.success && data.areas.length > 0) {
-                        areaResults.innerHTML = data.areas.map(area => `
-                            <div class="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-sm border-b border-slate-100 dark:border-slate-800 last:border-0"
-                                onclick="selectArea('${area.id}', '${area.name}')">
-                                ${area.name}
-                            </div>
-                        `).join('');
+                        areaResults.innerHTML = data.areas.map(area => {
+                            const lat = area.latitude || '';
+                            const lng = area.longitude || '';
+                            return `
+                                <div class="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-sm border-b border-slate-100 dark:border-slate-800 last:border-0"
+                                    onclick="selectArea('${area.id}', '${area.name}', '${lat}', '${lng}')">
+                                    ${area.name}
+                                </div>
+                            `;
+                        }).join('');
                         areaResults.classList.remove('hidden');
                     } else {
                         areaResults.innerHTML = '<div class="p-4 text-center text-slate-500 text-sm">Tidak ditemukan.</div>';
@@ -431,17 +437,21 @@ $order_token = bin2hex(random_bytes(16));
             }, 500);
         });
 
-        window.selectArea = (id, name) => {
+        window.selectArea = (id, name, lat, lng) => {
             document.getElementById('destination-area-id').value = id;
             document.getElementById('destination-area-text').value = name;
+            document.getElementById('dest-lat').value = (lat && lat !== 'null' && lat !== 'undefined') ? lat : '';
+            document.getElementById('dest-lng').value = (lng && lng !== 'null' && lng !== 'undefined') ? lng : '';
             areaSearchInput.value = name;
             areaResults.classList.add('hidden');
-            checkRates(id);
+            checkRates(id, lat, lng);
         };
 
-        async function checkRates(areaId) {
+        async function checkRates(areaId, lat, lng) {
             const ratesSection = document.getElementById('shipping-rates-section');
             const ratesList = document.getElementById('shipping-rates-list');
+            const destLat = (lat && lat !== 'null' && lat !== 'undefined') ? lat : document.getElementById('dest-lat').value;
+            const destLng = (lng && lng !== 'null' && lng !== 'undefined') ? lng : document.getElementById('dest-lng').value;
 
             ratesSection.classList.remove('hidden');
             ratesList.innerHTML = `
@@ -455,7 +465,14 @@ $order_token = bin2hex(random_bytes(16));
                 const res = await fetch('api/check_rates.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ area_id: areaId, items: cart })
+                    body: JSON.stringify({
+                        area_id: areaId,
+                        area_text: document.getElementById('destination-area-text').value,
+                        items: cart,
+                        couriers: 'jne,jnt,sicepat,gojek,grab,anteraja,borzo,lalamove',
+                        dest_lat: destLat,
+                        dest_lng: destLng
+                    })
                 });
                 const data = await res.json();
 
