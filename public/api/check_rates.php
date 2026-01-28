@@ -32,7 +32,7 @@ $result = $biteship->checkRates($area_id, $totalWeight, $biteshipItems);
 if ($result['success']) {
     echo json_encode([
         'success' => true,
-        'rates' => $result['data']['couriers'],
+        'pricing' => $result['data']['pricing'] ?? [],
         'total_weight' => $totalWeight
     ]);
 } else {

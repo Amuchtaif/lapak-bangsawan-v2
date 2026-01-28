@@ -41,8 +41,7 @@ $current_page = basename($_SERVER['PHP_SELF'], ".php");
                         <div class="flex flex-col">
                             <span
                                 class="text-sm font-bold transition-colors <?= $is_active ? 'text-primary' : 'text-slate-700 dark:text-slate-300 group-hover:text-primary' ?>"><?= $item['label'] ?></span>
-                            <span
-                                class="text-[9px] font-medium text-slate-400 uppercase tracking-tighter"><?= $item['desc'] ?></span>
+                            <span class="text-[9px] font-medium text-slate-400 tracking-tighter"><?= $item['desc'] ?></span>
                         </div>
                     </a>
                 <?php endforeach; ?>
@@ -61,14 +60,6 @@ $current_page = basename($_SERVER['PHP_SELF'], ".php");
                     class="lg:hidden p-2 text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
                     <span class="material-symbols-outlined !text-[32px]">menu</span>
                 </button>
-
-                <div class="hidden sm:block h-8 w-px bg-slate-200 dark:bg-white/10 mx-2"></div>
-
-                <a href="<?= BASE_URL ?>admin/login"
-                    class="hidden sm:flex items-center gap-2 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-xs hover:opacity-90 transition-all active:scale-95">
-                    <span class="material-symbols-outlined !text-[18px]">account_circle</span>
-                    Admin
-                </a>
             </div>
         </div>
     </div>
@@ -109,13 +100,6 @@ $current_page = basename($_SERVER['PHP_SELF'], ".php");
             </a>
         <?php endforeach; ?>
     </nav>
-    <div class="mt-auto p-6 border-t border-slate-100 dark:border-white/5 bg-white dark:bg-[#1a202c]">
-        <a href="<?= BASE_URL ?>admin/login"
-            class="w-full flex items-center justify-center gap-3 p-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-bold transition-all hover:opacity-90 active:scale-[0.98]">
-            <span class="material-symbols-outlined">account_circle</span>
-            Login Admin
-        </a>
-    </div>
 </div>
 
 <script>

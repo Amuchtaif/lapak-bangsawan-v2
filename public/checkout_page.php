@@ -323,7 +323,7 @@ $order_token = bin2hex(random_bytes(16));
 
             // Validate Area and Courier
             const areaId = document.getElementById('destination-area-id').value;
-            const courier = document.querySelector('input[name="courier_company"]:checked');
+            const courier = document.querySelector('input[name="courier_option"]:checked');
 
             if (!areaId) {
                 alert('Silakan pilih Kota/Kecamatan yang valid dari daftar pencarian.');
@@ -459,13 +459,13 @@ $order_token = bin2hex(random_bytes(16));
                 });
                 const data = await res.json();
 
-                if (data.success && data.rates.length > 0) {
-                    ratesList.innerHTML = data.rates.map(rate => `
+                if (data.success && data.pricing && data.pricing.length > 0) {
+                    ratesList.innerHTML = data.pricing.map(rate => `
                         <label class="cursor-pointer relative rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-all has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:ring-1 has-[:checked]:ring-primary">
                             <div class="flex items-center gap-3">
-                                <input type="radio" name="courier_company_type" value="${rate.courier_code}|${rate.courier_service_code}|${rate.price}"
+                                <input type="radio" name="courier_option" value="${rate.company}|${rate.courier_service_name}|${rate.price}"
                                     class="text-primary focus:ring-primary size-5" 
-                                    onchange="selectCourier('${rate.courier_code}', '${rate.courier_service_code}', ${rate.price})">
+                                    onchange="updateTotal(${rate.price}, '${rate.courier_name}')">
                                 <div class="flex flex-col">
                                     <span class="font-bold text-slate-900 dark:text-white uppercase">${rate.courier_name} - ${rate.courier_service_name}</span>
                                     <span class="text-[10px] text-slate-500">Estimasi: ${rate.duration}</span>
@@ -473,16 +473,16 @@ $order_token = bin2hex(random_bytes(16));
                             </div>
                             <span class="font-bold text-slate-900 dark:text-white">Rp ${new Intl.NumberFormat('id-ID').format(rate.price)}</span>
                             
-                            <!-- Hidden inputs for form submission -->
-                            <input type="radio" name="courier_company" value="${rate.courier_code}" class="hidden" id="c-${rate.courier_code}-${rate.courier_service_code}">
-                            <input type="radio" name="courier_type" value="${rate.courier_service_code}" class="hidden" id="t-${rate.courier_code}-${rate.courier_service_code}">
-                            <input type="radio" name="courier_price" value="${rate.price}" class="hidden" id="p-${rate.courier_code}-${rate.courier_service_code}">
+                            <!-- Hidden inputs for legacy form processing if needed -->
+                            <input type="radio" name="courier_company" value="${rate.company}" class="hidden" id="c-${rate.company}-${rate.courier_service_name}">
+                            <input type="radio" name="courier_type" value="${rate.courier_service_name}" class="hidden" id="t-${rate.company}-${rate.courier_service_name}">
+                            <input type="radio" name="courier_price" value="${rate.price}" class="hidden" id="p-${rate.company}-${rate.courier_service_name}">
                         </label>
                     `).join('');
                 } else {
                     ratesList.innerHTML = `
                         <div class="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 p-4 rounded-lg text-red-600 text-sm italic">
-                            Maaf, tidak ada kurir yang tersedia untuk area ini atau barang terlalu berat.
+                            Maaf, tidak ada kurir tersedia untuk rute ini.
                         </div>
                     `;
                 }
@@ -492,28 +492,39 @@ $order_token = bin2hex(random_bytes(16));
             }
         }
 
-        window.selectCourier = (code, service, price) => {
-            shippingCost = price;
+        window.updateTotal = (cost, courierName) => {
+            shippingCost = parseInt(cost);
 
-            // Link the complex radio to the simple ones for form sub
+            // Sync hidden legacy inputs
+            const courierOption = document.querySelector('input[name="courier_option"]:checked').value;
+            const [company, service, price] = courierOption.split('|');
+
             document.querySelectorAll('input[name="courier_company"]').forEach(i => i.checked = false);
             document.querySelectorAll('input[name="courier_type"]').forEach(i => i.checked = false);
             document.querySelectorAll('input[name="courier_price"]').forEach(i => i.checked = false);
 
-            document.getElementById(`c-${code}-${service}`).checked = true;
-            document.getElementById(`t-${code}-${service}`).checked = true;
-            document.getElementById(`p-${code}-${service}`).checked = true;
+            const cInput = document.getElementById(`c-${company}-${service}`);
+            const tInput = document.getElementById(`t-${company}-${service}`);
+            const pInput = document.getElementById(`p-${company}-${service}`);
+
+            if (cInput) cInput.checked = true;
+            if (tInput) tInput.checked = true;
+            if (pInput) pInput.checked = true;
 
             updateTotalDisplay();
         };
 
         function updateTotalDisplay() {
             const shippingEl = document.getElementById('order-shipping');
-            shippingEl.innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(shippingCost);
+            const totalDisplay = document.getElementById('order-total');
+
+            const formatter = new Intl.NumberFormat('id-ID');
+
+            shippingEl.innerText = 'Rp ' + formatter.format(shippingCost);
             shippingEl.classList.remove('text-green-600');
 
             const finalTotal = baseTotal + shippingCost;
-            totalEl.innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(finalTotal);
+            totalDisplay.innerText = 'Rp ' + formatter.format(finalTotal);
         }
 
         // Close search when clicking outside
