@@ -13,8 +13,8 @@ if (strlen($query) < 3) {
 $biteship = new BiteshipService();
 $result = $biteship->searchArea($query);
 
-if ($result['success']) {
-    echo json_encode(['success' => true, 'areas' => $result['data']['areas']]);
+if (isset($result['success']) && $result['success']) {
+    echo json_encode(['success' => true, 'areas' => $result['data']['areas'] ?? []]);
 } else {
-    echo json_encode(['success' => false, 'message' => $result['message']]);
+    echo json_encode(['success' => false, 'message' => $result['message'] ?? 'Search failed']);
 }

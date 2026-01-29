@@ -19,8 +19,10 @@ class BiteshipService
 
     /**
      * Search for area ID by query (Kelurahan/Kecamatan)
+     * @param string $query
+     * @return array
      */
-    public function searchArea($query)
+    public function searchArea($query): array
     {
         $url = $this->baseUrl . "/maps/areas?countries=ID&input=" . urlencode($query) . "&type=single";
         return $this->request('GET', $url);
@@ -28,8 +30,19 @@ class BiteshipService
 
     /**
      * Check Shipping Rates
+     * @param string $destinationAreaId
+     * @param int $weight
+     * @param array $items
+     * @param string $originAreaId
+     * @param string $couriers
+     * @param float|null $originLat
+     * @param float|null $originLng
+     * @param float|null $destLat
+     * @param float|null $destLng
+     * @param array $extraParams
+     * @return array
      */
-    public function checkRates($destinationAreaId, $weight, $items = [], $originAreaId = BITESHIP_ORIGIN_AREA_ID, $couriers = 'jne,jnt,sicepat,gojek,grab,anteraja,borzo,lalamove', $originLat = null, $originLng = null, $destLat = null, $destLng = null, $extraParams = [])
+    public function checkRates($destinationAreaId, $weight, $items = [], $originAreaId = BITESHIP_ORIGIN_AREA_ID, $couriers = 'jne,jnt,sicepat,gojek,grab,anteraja,borzo,lalamove', $originLat = null, $originLng = null, $destLat = null, $destLng = null, $extraParams = []): array
     {
         $url = $this->baseUrl . "/rates/couriers";
         $data = [
@@ -69,8 +82,10 @@ class BiteshipService
 
     /**
      * Create/Book an Order/Pickup
+     * @param array $orderData
+     * @return array
      */
-    public function createOrder($orderData)
+    public function createOrder($orderData): array
     {
         $url = $this->baseUrl . "/orders";
         return $this->request('POST', $url, $orderData);
@@ -78,8 +93,10 @@ class BiteshipService
 
     /**
      * Get Tracking status by Biteship Order ID
+     * @param string $biteshipOrderId
+     * @return array
      */
-    public function getTracking($biteshipOrderId)
+    public function getTracking($biteshipOrderId): array
     {
         $url = $this->baseUrl . "/orders/" . $biteshipOrderId;
         return $this->request('GET', $url);
@@ -87,8 +104,12 @@ class BiteshipService
 
     /**
      * Core Request Helper (cURL Native)
+     * @param string $method
+     * @param string $url
+     * @param mixed $data
+     * @return array
      */
-    private function request($method, $url, $data = null)
+    private function request($method, $url, $data = null): array
     {
         $ch = curl_init();
 
@@ -141,8 +162,10 @@ class BiteshipService
 
     /**
      * Get Coordinates from Area Name (Using Nominatim/OSM as fallback)
+     * @param string $areaName
+     * @return array|null
      */
-    public function getCoordinatesFromArea($areaName)
+    public function getCoordinatesFromArea($areaName): ?array
     {
         $url = "https://nominatim.openstreetmap.org/search?q=" . urlencode($areaName) . "&format=json&limit=1";
 
