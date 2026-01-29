@@ -100,8 +100,11 @@ try {
     // Include order_token in insert
     $token_val = $order_token ? "'$order_token'" : "NULL";
 
-    $sql = "INSERT INTO orders (id, order_number, customer_name, customer_phone, customer_address, destination_area_id, total_amount, status, payment_method, order_token, order_notes, courier_company, courier_type, weight_total) 
-            VALUES ($next_order_id, '$order_number', '$name', '$phone', '$address', '$destination_area_id', $total, '$status', '$payment_method', $token_val, '$order_notes', '$courier_company', '$courier_type', $weight_total)";
+    $dest_lat = !empty($input['dest_lat']) ? floatval($input['dest_lat']) : "NULL";
+    $dest_lng = !empty($input['dest_lng']) ? floatval($input['dest_lng']) : "NULL";
+
+    $sql = "INSERT INTO orders (id, order_number, customer_name, customer_phone, customer_address, destination_area_id, destination_latitude, destination_longitude, total_amount, status, payment_method, order_token, order_notes, courier_company, courier_type, weight_total) 
+            VALUES ($next_order_id, '$order_number', '$name', '$phone', '$address', '$destination_area_id', $dest_lat, $dest_lng, $total, '$status', '$payment_method', $token_val, '$order_notes', '$courier_company', '$courier_type', $weight_total)";
 
     if (!$conn->query($sql)) {
         if ($conn->errno == 1062) {

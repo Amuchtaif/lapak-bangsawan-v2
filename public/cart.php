@@ -176,6 +176,8 @@
             let subtotal = 0;
             cart.forEach(item => subtotal += item.total_price);
             subtotalEl.innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal);
+            // Update total with subtotal as placeholder
+            totalEl.innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal);
 
             // Fetch dynamic totals from API
             fetch('api_calculate_total.php', {

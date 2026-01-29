@@ -346,7 +346,9 @@ $order_token = bin2hex(random_bytes(16));
                 order_token: formData.get('order_token'),
                 items: cart,
                 total: baseTotal + shippingCost,
-                shipping_cost: shippingCost
+                shipping_cost: shippingCost,
+                dest_lat: document.getElementById('dest-lat').value,
+                dest_lng: document.getElementById('dest-lng').value
             };
 
             try {
@@ -529,7 +531,7 @@ $order_token = bin2hex(random_bytes(16));
                             
                             <!-- Hidden inputs for legacy form processing if needed -->
                             <input type="radio" name="courier_company" value="${rate.company}" class="hidden" id="c-${rate.company}-${rate.courier_service_name}">
-                            <input type="radio" name="courier_type" value="${rate.courier_service_name}" class="hidden" id="t-${rate.company}-${rate.courier_service_name}">
+                            <input type="radio" name="courier_type" value="${rate.type || rate.courier_service_code || rate.courier_service_name}" class="hidden" id="t-${rate.company}-${rate.courier_service_name}">
                             <input type="radio" name="courier_price" value="${rate.price}" class="hidden" id="p-${rate.company}-${rate.courier_service_name}">
                         </label>
                     `).join('');

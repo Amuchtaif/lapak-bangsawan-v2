@@ -68,14 +68,19 @@ $payload = [
     'origin_contact_phone' => '0859110022099',
     'origin_address' => 'Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat',
     'origin_area_id' => BITESHIP_ORIGIN_AREA_ID,
+    'origin_latitude' => BITESHIP_ORIGIN_LAT,
+    'origin_longitude' => BITESHIP_ORIGIN_LNG,
     'destination_contact_name' => $order['customer_name'],
     'destination_contact_phone' => $order['customer_phone'],
     'destination_address' => $order['customer_address'],
     'destination_area_id' => $destination_area_id,
+    'destination_latitude' => $order['destination_latitude'] ? (float)$order['destination_latitude'] : null,
+    'destination_longitude' => $order['destination_longitude'] ? (float)$order['destination_longitude'] : null,
     'courier_company' => $order['courier_company'] ?: 'jne', // Fallback
-    'courier_type' => $order['courier_type'] ?: 'reg',     // Fallback
+    'courier_type' => strtolower($order['courier_type'] ?: 'reg'),     // Fallback & Lowercase
     'delivery_type' => 'now', // or 'scheduled'
     'order_note' => $order['order_notes'] ?? '',
+    'weight' => $total_weight_grams,
     'items' => $items
 ];
 
