@@ -43,8 +43,7 @@ while ($item = $items_query->fetch_assoc()) {
         'description' => $item['product_name'],
         'value' => (int) $item['subtotal'],
         'quantity' => 1, // We treat the weight as the quantity unit in some cases, but for Biteship list it's usually 1 item of X weight
-        'weight' => (int) $weight_grams,
-        'category' => 'food'
+        'weight' => (int) $weight_grams
     ];
 }
 
@@ -60,6 +59,28 @@ if (empty($destination_area_id)) {
     exit;
 }
 
+$dest_lat = $order['destination_latitude'] ? (float)$order['destination_latitude'] : null;
+$dest_lng = $order['destination_longitude'] ? (float)$order['destination_longitude'] : null;
+
+// Fallback: If coordinates missing, try to fetch from address
+if (!$dest_lat || !$dest_lng) {
+    // 1. Try full address
+    $coords = $biteship->getCoordinatesFromArea($order['customer_address']);
+    
+    // 2. If failed, try extracting text inside parentheses (e.g., "Detail (Kecamatan, Kota, Prov)")
+    if (!$coords && preg_match('/\((.*?)\)/', $order['customer_address'], $matches)) {
+        $cleanAddr = $matches[1];
+        $coords = $biteship->getCoordinatesFromArea($cleanAddr);
+    }
+
+    if ($coords) {
+        $dest_lat = $coords['latitude'];
+        $dest_lng = $coords['longitude'];
+        // Update DB for future reference
+        $conn->query("UPDATE orders SET destination_latitude = $dest_lat, destination_longitude = $dest_lng WHERE id = $order_id");
+    }
+}
+
 $payload = [
     'shipper_contact_name' => 'Lapak Bangsawan',
     'shipper_contact_phone' => '0859110022099',
@@ -70,12 +91,20 @@ $payload = [
     'origin_area_id' => BITESHIP_ORIGIN_AREA_ID,
     'origin_latitude' => BITESHIP_ORIGIN_LAT,
     'origin_longitude' => BITESHIP_ORIGIN_LNG,
+    'origin_coordinate' => [
+        'latitude' => BITESHIP_ORIGIN_LAT,
+        'longitude' => BITESHIP_ORIGIN_LNG
+    ],
     'destination_contact_name' => $order['customer_name'],
     'destination_contact_phone' => $order['customer_phone'],
     'destination_address' => $order['customer_address'],
     'destination_area_id' => $destination_area_id,
-    'destination_latitude' => $order['destination_latitude'] ? (float)$order['destination_latitude'] : null,
-    'destination_longitude' => $order['destination_longitude'] ? (float)$order['destination_longitude'] : null,
+    'destination_latitude' => $dest_lat,
+    'destination_longitude' => $dest_lng,
+    'destination_coordinate' => [
+        'latitude' => $dest_lat,
+        'longitude' => $dest_lng
+    ],
     'courier_company' => $order['courier_company'] ?: 'jne', // Fallback
     'courier_type' => strtolower($order['courier_type'] ?: 'reg'),     // Fallback & Lowercase
     'delivery_type' => 'now', // or 'scheduled'

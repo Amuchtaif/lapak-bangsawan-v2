@@ -230,8 +230,12 @@ $order_token = bin2hex(random_bytes(16));
             window.location.href = 'market';
         }
 
-        let total = 0;
+        let baseTotal = 0;
+        let shippingCost = 0;
+        let total = 0; // Local var for subtotal display reference if needed, or just use baseTotal
+        
         cart.forEach(item => {
+            baseTotal += item.total_price;
             total += item.total_price;
             const itemImg = getImageUrl(item.image);
             itemsContainer.innerHTML += `
@@ -300,8 +304,7 @@ $order_token = bin2hex(random_bytes(16));
         // Initialize
         togglePaymentInfo();
 
-        let baseTotal = 0;
-        let shippingCost = 0;
+        // Removed late declarations
 
         // Handle Submit
         document.getElementById('checkout-form').addEventListener('submit', async (e) => {
