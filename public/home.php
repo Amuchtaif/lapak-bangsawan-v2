@@ -96,8 +96,7 @@
                                     100% SEGAR & HALAL
                                 </span>
 
-                                <h1
-                                <h1
+                                <h1 <h1
                                     class="text-[#111318] dark:text-white text-3xl @[480px]:text-4xl lg:text-6xl font-black leading-tight tracking-[-0.03em]">
                                     <?= get_setting('hero_title', 'Segar Hari Ini,<br class="hidden @[864px]:block"> Dikirim Hari Ini') ?>
                                 </h1>
@@ -109,7 +108,7 @@
 
                             <!-- CTA -->
                             <div class="flex flex-col sm:flex-row gap-3 mt-2">
-                                <a href="<?= BASE_URL ?>public/market"
+                                <a href="<?= BASE_URL ?>market"
                                     class="flex w-full sm:w-auto min-w-[160px] items-center justify-center rounded-lg h-12 px-6 bg-primary hover:bg-blue-700 transition-colors text-white text-base font-bold">
                                     Mulai Belanja
                                 </a>
@@ -140,31 +139,31 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 
-                        <?php for($i=1; $i<=3; $i++): 
-                             $title = get_setting("feature_{$i}_title", "Fitur $i");
-                             $desc = get_setting("feature_{$i}_desc", "Deskripsi fitur $i");
-                             $icon = get_setting("feature_{$i}_icon", "check");
-                        ?>
-                        <!-- Card -->
-                        <div class="flex flex-col gap-4 rounded-xl border border-[#dbdfe6] dark:border-[#2d3748]
+                        <?php for ($i = 1; $i <= 3; $i++):
+                            $title = get_setting("feature_{$i}_title", "Fitur $i");
+                            $desc = get_setting("feature_{$i}_desc", "Deskripsi fitur $i");
+                            $icon = get_setting("feature_{$i}_icon", "check");
+                            ?>
+                            <!-- Card -->
+                            <div class="flex flex-col gap-4 rounded-xl border border-[#dbdfe6] dark:border-[#2d3748]
                     bg-white dark:bg-[#1a202c] p-6 shadow-sm hover:shadow-md transition-shadow
                     items-center md:items-start text-center md:text-left">
 
-                            <div class="size-12 rounded-full bg-blue-50 dark:bg-blue-900/30
+                                <div class="size-12 rounded-full bg-blue-50 dark:bg-blue-900/30
                         flex items-center justify-center text-primary
                         mx-auto md:mx-0">
-                                <span class="material-symbols-outlined"><?= $icon ?></span>
-                            </div>
+                                    <span class="material-symbols-outlined"><?= $icon ?></span>
+                                </div>
 
-                            <div class="flex flex-col gap-2">
-                                <h3 class="text-[#111318] dark:text-white text-lg font-bold">
-                                    <?= $title ?>
-                                </h3>
-                                <p class="text-[#606e8a] dark:text-[#a0aec0] text-sm">
-                                    <?= $desc ?>
-                                </p>
+                                <div class="flex flex-col gap-2">
+                                    <h3 class="text-[#111318] dark:text-white text-lg font-bold">
+                                        <?= $title ?>
+                                    </h3>
+                                    <p class="text-[#606e8a] dark:text-[#a0aec0] text-sm">
+                                        <?= $desc ?>
+                                    </p>
+                                </div>
                             </div>
-                        </div>
                         <?php endfor; ?>
 
                     </div>
@@ -319,28 +318,27 @@
                     <div class="flex items-center justify-between mb-6">
                         <h2
                             class="text-[#111318] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">
-                            <?= get_setting('cat_title', 'Kategori Kami') ?></h2>
-                        <a class="text-primary text-sm font-semibold hover:underline"
-                            href="<?= BASE_URL ?>public/market">Lihat
+                            <?= get_setting('cat_title', 'Kategori Kami') ?>
+                        </h2>
+                        <a class="text-primary text-sm font-semibold hover:underline" href="<?= BASE_URL ?>market">Lihat
                             Semua</a>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <?php for($i=1; $i<=4; $i++): 
+                        <?php for ($i = 1; $i <= 4; $i++):
                             $name = get_setting("cat_{$i}_name", "Kategori $i");
                             // For images, if it's a URL (http) stick with it, if not, prepend BASE_URL if it's relative
                             $img = get_setting("cat_{$i}_img", "");
-                            if(!empty($img) && strpos($img, 'http') !== 0) {
+                            if (!empty($img) && strpos($img, 'http') !== 0) {
                                 $img = BASE_URL . $img;
                             }
-                        ?>
-                        <a class="group flex flex-col gap-3 rounded-xl border border-[#dbdfe6] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] p-4 items-center hover:border-primary transition-colors cursor-pointer"
-                            href="<?= BASE_URL ?>public/market?category=<?= urlencode($name) ?>">
-                            <div class="bg-center bg-no-repeat bg-cover rounded-full w-20 h-20 shrink-0 group-hover:scale-105 transition-transform"
-                                data-alt="<?= $name ?> icon"
-                                style='background-image: url("<?= $img ?>");'>
-                            </div>
-                            <h3 class="text-[#111318] dark:text-white text-base font-bold"><?= $name ?></h3>
-                        </a>
+                            ?>
+                            <a class="group flex flex-col gap-3 rounded-xl border border-[#dbdfe6] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] p-4 items-center hover:border-primary transition-colors cursor-pointer"
+                                href="<?= BASE_URL ?>market?category=<?= urlencode($name) ?>">
+                                <div class="bg-center bg-no-repeat bg-cover rounded-full w-20 h-20 shrink-0 group-hover:scale-105 transition-transform"
+                                    data-alt="<?= $name ?> icon" style='background-image: url("<?= $img ?>");'>
+                                </div>
+                                <h3 class="text-[#111318] dark:text-white text-base font-bold"><?= $name ?></h3>
+                            </a>
                         <?php endfor; ?>
                     </div>
                 </div>
@@ -349,36 +347,36 @@
                     <div class="flex items-center justify-between mb-6">
                         <h2
                             class="text-[#111318] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">
-                            <?= get_setting('prod_title', 'Produk Populer') ?></h2>
-                        <a class="text-primary text-sm font-semibold hover:underline"
-                            href="<?= BASE_URL ?>public/market">Lihat
+                            <?= get_setting('prod_title', 'Produk Populer') ?>
+                        </h2>
+                        <a class="text-primary text-sm font-semibold hover:underline" href="<?= BASE_URL ?>market">Lihat
                             Semua</a>
                     </div>
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                        <?php for($i=1; $i<=4; $i++): 
-                             $name = get_setting("prod_{$i}_name", "Produk $i");
-                             $desc = get_setting("prod_{$i}_desc", "Deskripsi $i");
-                             $img = get_setting("prod_{$i}_img", "");
-                             if(!empty($img) && strpos($img, 'http') !== 0) {
+                        <?php for ($i = 1; $i <= 4; $i++):
+                            $name = get_setting("prod_{$i}_name", "Produk $i");
+                            $desc = get_setting("prod_{$i}_desc", "Deskripsi $i");
+                            $img = get_setting("prod_{$i}_img", "");
+                            if (!empty($img) && strpos($img, 'http') !== 0) {
                                 $img = BASE_URL . $img;
-                             }
-                        ?>
-                        <!-- Product Card -->
-                        <div
-                            class="flex flex-col gap-3 rounded-xl border border-[#dbdfe6] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] p-0 overflow-hidden group hover:shadow-lg transition-all">
-                            <div class="w-full aspect-square bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
-                                data-alt="<?= $name ?>"
-                                style='background-image: url("<?= $img ?>");'>
-                            </div>
-                            <div class="p-4 flex flex-col gap-2">
-                                <div class="flex justify-between items-start">
-                                    <h3
-                                        class="text-[#111318] dark:text-white text-base font-bold leading-tight line-clamp-1">
-                                        <?= $name ?></h3>
+                            }
+                            ?>
+                            <!-- Product Card -->
+                            <div
+                                class="flex flex-col gap-3 rounded-xl border border-[#dbdfe6] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] p-0 overflow-hidden group hover:shadow-lg transition-all">
+                                <div class="w-full aspect-square bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
+                                    data-alt="<?= $name ?>" style='background-image: url("<?= $img ?>");'>
                                 </div>
-                                <p class="text-[#606e8a] dark:text-[#a0aec0] text-sm"><?= $desc ?></p>
+                                <div class="p-4 flex flex-col gap-2">
+                                    <div class="flex justify-between items-start">
+                                        <h3
+                                            class="text-[#111318] dark:text-white text-base font-bold leading-tight line-clamp-1">
+                                            <?= $name ?>
+                                        </h3>
+                                    </div>
+                                    <p class="text-[#606e8a] dark:text-[#a0aec0] text-sm"><?= $desc ?></p>
+                                </div>
                             </div>
-                        </div>
                         <?php endfor; ?>
                     </div>
                 </div>
@@ -406,7 +404,7 @@
                         </div>
 
                         <div class="flex-shrink-0">
-                            <a href="<?= BASE_URL ?>public/market"
+                            <a href="<?= BASE_URL ?>market"
                                 class="inline-flex items-center justify-center h-14 px-8 rounded-full bg-white text-primary font-bold text-lg hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 group">
                                 Belanja Sekarang
                                 <span

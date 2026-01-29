@@ -23,10 +23,10 @@ $current_page = basename($_SERVER['PHP_SELF'], ".php");
             <nav class="hidden lg:flex items-center gap-1">
                 <?php
                 $nav_items = [
-                    'home' => ['label' => 'Beranda', 'desc' => 'Halaman Utama', 'icon' => 'home', 'url' => 'public/home'],
-                    'market' => ['label' => 'Belanja', 'desc' => 'Produk Segar', 'icon' => 'shopping_basket', 'url' => 'public/market'],
-                    'about' => ['label' => 'Tentang Kami', 'desc' => 'Kisah Kami', 'icon' => 'info', 'url' => 'public/about'],
-                    'track' => ['label' => 'Lacak', 'desc' => 'Cek Status', 'icon' => 'local_shipping', 'url' => 'public/track']
+                    'home' => ['label' => 'Beranda', 'desc' => 'Halaman Utama', 'icon' => 'home', 'url' => 'home'],
+                    'market' => ['label' => 'Belanja', 'desc' => 'Produk Segar', 'icon' => 'shopping_basket', 'url' => 'market'],
+                    'about' => ['label' => 'Tentang Kami', 'desc' => 'Kisah Kami', 'icon' => 'info', 'url' => 'about'],
+                    'track' => ['label' => 'Lacak', 'desc' => 'Cek Status', 'icon' => 'local_shipping', 'url' => 'track']
                 ];
 
                 foreach ($nav_items as $key => $item):
@@ -49,7 +49,7 @@ $current_page = basename($_SERVER['PHP_SELF'], ".php");
 
             <!-- Right Actions -->
             <div class="flex items-center gap-3">
-                <a href="<?= BASE_URL ?>public/cart"
+                <a href="<?= BASE_URL ?>cart"
                     class="relative group p-2 text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
                     <span class="material-symbols-outlined !text-[28px]">shopping_cart</span>
                     <span id="cart-badge-header"

@@ -9,8 +9,13 @@
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # Clean URL logic
-    # Try current directory + .php
+    # 1. Handle root clean URLs mapping to public/
+    # Example: /checkout -> public/checkout.php
+    RewriteCond %{DOCUMENT_ROOT}/lapak-bangsawan/public/$1.php -f
+    RewriteRule ^([^/]+)$ public/$1.php [L,QSA]
+
+    # 2. Handle sub-path clean URLs inside public/
+    # Example: /public/checkout -> public/checkout.php
     RewriteCond %{REQUEST_FILENAME}.php -f
     RewriteRule ^(.*)$ $1.php [L,QSA]
 </IfModule>

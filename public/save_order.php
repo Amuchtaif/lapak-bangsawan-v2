@@ -96,12 +96,12 @@ try {
     $order_number = "LB-$date_prefix-$random_suffix";
 
     // Create Order
-    $status = 'pending';
+    $status = ($payment_method === 'transfer') ? 'unpaid' : 'pending';
     // Include order_token in insert
     $token_val = $order_token ? "'$order_token'" : "NULL";
 
-    $sql = "INSERT INTO orders (id, order_number, customer_name, customer_phone, email, customer_address, destination_area_id, total_amount, status, payment_method, order_token, order_notes, courier_company, courier_type, weight_total) 
-            VALUES ($next_order_id, '$order_number', '$name', '$phone', '$email', '$address', '$destination_area_id', $total, '$status', '$payment_method', $token_val, '$order_notes', '$courier_company', '$courier_type', $weight_total)";
+    $sql = "INSERT INTO orders (id, order_number, customer_name, customer_phone, customer_address, destination_area_id, total_amount, status, payment_method, order_token, order_notes, courier_company, courier_type, weight_total) 
+            VALUES ($next_order_id, '$order_number', '$name', '$phone', '$address', '$destination_area_id', $total, '$status', '$payment_method', $token_val, '$order_notes', '$courier_company', '$courier_type', $weight_total)";
 
     if (!$conn->query($sql)) {
         if ($conn->errno == 1062) {
@@ -146,47 +146,61 @@ try {
     // Commit Transaction
     $conn->commit();
 
-    // Generate WhatsApp Link
-    $message = "Halo Lapak Bangsawan, saya ingin konfirmasi pesanan saya:\n\n";
-    $message .= "*Order Number:* $order_number\n";
-    $message .= "*Nama:* $name\n";
-    $message .= "*Item:*\n";
-    foreach ($items as $item) {
-        $u = $item['unit'] ?? 'kg';
-        $message .= "- " . $item['name'] . " (" . $item['weight'] . " $u)\n";
-    }
-
-    if ($total_discount > 0) {
-        $message .= "\n*Rincian Diskon Grosir:*\n";
-        foreach ($discounts_detail as $d) {
-            $message .= "- " . $d['label'] . ": -Rp " . number_format($d['amount'], 0, ',', '.') . "\n";
+    // Generate Response based on Payment Method
+    if ($payment_method === 'transfer') {
+        echo json_encode([
+            'success' => true,
+            'order_id' => $order_id,
+            'payment_method' => 'transfer',
+            'redirect_url' => BASE_URL . "payment?id=" . $order_id
+        ]);
+    } else {
+        // COD or others: Generate WhatsApp Link
+        $message = "Halo Lapak Bangsawan, saya ingin konfirmasi pesanan saya:\n\n";
+        $message .= "*Order Number:* $order_number\n";
+        $message .= "*Nama:* $name\n";
+        $message .= "*Item:*\n";
+        foreach ($items as $item) {
+            $u = $item['unit'] ?? 'kg';
+            $message .= "- " . $item['name'] . " (" . $item['weight'] . " $u)\n";
         }
+
+        if ($total_discount > 0) {
+            $message .= "\n*Rincian Diskon Grosir:*\n";
+            foreach ($discounts_detail as $d) {
+                $message .= "- " . $d['label'] . ": -Rp " . number_format($d['amount'], 0, ',', '.') . "\n";
+            }
+        }
+
+        $message .= "\n*Total Akhir:* Rp " . number_format($total, 0, ',', '.') . "\n";
+        $message .= "\n*Alamat Pengiriman:*\n$address\n";
+
+        if (!empty($order_notes)) {
+            $message .= "\n*Catatan Pesanan:*\n$order_notes\n";
+        }
+
+        $pm_label = ($payment_method == 'cod') ? 'COD (Bayar di Tempat)' : 'Transfer Bank (BSI)';
+        $message .= "\n*Metode Pembayaran:* " . $pm_label . "\n";
+
+        if ($courier_company) {
+            $message .= "\n*Pengiriman:* " . strtoupper($courier_company) . " (" . $courier_type . ")\n";
+            $message .= "Ongkir: Rp " . number_format($shipping_cost, 0, ',', '.') . "\n";
+        }
+
+        if ($payment_method == 'transfer') {
+            $message .= "Bank: BSI\nNo. Rek: 7252428245\nA.n: Shohibudin\n";
+        }
+
+        $message .= "\nMohon diproses. Terima kasih!";
+        $wa_url = "https://wa.me/62859110022099?text=" . urlencode($message);
+
+        echo json_encode([
+            'success' => true,
+            'order_id' => $order_id,
+            'payment_method' => 'cod',
+            'whatsapp_url' => $wa_url
+        ]);
     }
-
-    $message .= "\n*Total Akhir:* Rp " . number_format($total, 0, ',', '.') . "\n";
-    $message .= "\n*Alamat Pengiriman:*\n$address\n";
-
-    if (!empty($order_notes)) {
-        $message .= "\n*Catatan Pesanan:*\n$order_notes\n";
-    }
-
-    $pm_label = ($payment_method == 'cod') ? 'COD (Bayar di Tempat)' : 'Transfer Bank (BSI)';
-    $message .= "\n*Metode Pembayaran:* " . $pm_label . "\n";
-
-    if ($courier_company) {
-        $message .= "\n*Pengiriman:* " . strtoupper($courier_company) . " (" . $courier_type . ")\n";
-        $message .= "Ongkir: Rp " . number_format($shipping_cost, 0, ',', '.') . "\n";
-    }
-
-    if ($payment_method == 'transfer') {
-        $message .= "Bank: BSI\nNo. Rek: 7252428245\nA.n: Shohibudin\n";
-    }
-
-    $message .= "\nMohon diproses. Terima kasih!";
-
-    $wa_url = "https://wa.me/62859110022099?text=" . urlencode($message);
-
-    echo json_encode(['success' => true, 'whatsapp_url' => $wa_url]);
 
 } catch (Exception $e) {
     $conn->rollback();

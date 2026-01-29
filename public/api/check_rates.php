@@ -31,7 +31,7 @@ foreach ($items as $item) {
     ];
 }
 
-$couriers = $input['couriers'] ?? 'jne,jnt,sicepat,gojek,grab,anteraja,borzo,lalamove';
+$couriers = $input['couriers'] ?? 'paxel,jne,jnt,sicepat,gojek,grab,anteraja,borzo,lalamove';
 $dest_lat = $input['dest_lat'] ?? null;
 $dest_lng = $input['dest_lng'] ?? null;
 
@@ -74,11 +74,84 @@ $result = $biteship->checkRates(
     $extraParams
 );
 
+// Recommendation Logic
+$recommendation = null;
+$hasInstant = false;
+$hasCold = false;
+$hasNextDay = false;
+
+// Distance-based calculation (always try to calculate if coords available)
+$distance = null;
+if ($dest_lat && $dest_lng && defined('BITESHIP_ORIGIN_LAT') && defined('BITESHIP_ORIGIN_LNG')) {
+    $lat1 = deg2rad(BITESHIP_ORIGIN_LAT);
+    $lon1 = deg2rad(BITESHIP_ORIGIN_LNG);
+    $lat2 = deg2rad($dest_lat);
+    $lon2 = deg2rad($dest_lng);
+
+    $deltaLat = $lat2 - $lat1;
+    $deltaLon = $lon2 - $lon1;
+
+    $a = sin($deltaLat / 2) * sin($deltaLat / 2) +
+        cos($lat1) * cos($lat2) *
+        sin($deltaLon / 2) * sin($deltaLon / 2);
+    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+    $distance = 6371 * $c; // Earth radius in km
+}
+
+if ($result['success'] && !empty($result['data']['pricing'])) {
+    foreach ($result['data']['pricing'] as $rate) {
+        $type = strtolower($rate['service_type'] ?? $rate['courier_service_type'] ?? '');
+        $company = strtolower($rate['company'] ?? '');
+        $serviceName = strtolower($rate['courier_service_name'] ?? '');
+
+        if ($type === 'instant' || $type === 'same_day')
+            $hasInstant = true;
+        if ($company === 'paxel' && (strpos($serviceName, 'cold') !== false || strpos($serviceName, 'beku') !== false || strpos($serviceName, 'frozen') !== false || strpos($serviceName, 'chill') !== false))
+            $hasCold = true;
+        if ($type === 'next_day' || $type === 'nextday' || strpos($serviceName, 'next day') !== false || $type === 'express' || $type === 'one_day')
+            $hasNextDay = true;
+    }
+
+    // Prioritize Recommendations
+    if ($hasInstant && ($distance === null || $distance < 50)) {
+        $msg = 'Kami sangat menyarankan menggunakan kurir **Instan** agar produk tetap fresh dan terjaga kualitasnya.';
+        if ($distance !== null) {
+            $msg = 'Jarak pengiriman cukup dekat (±' . round($distance, 1) . ' km). ' . $msg;
+        }
+        $recommendation = [
+            'type' => 'instant',
+            'title' => 'Rekomendasi Kurir Instan',
+            'message' => $msg
+        ];
+    } elseif ($hasCold) {
+        $recommendation = [
+            'type' => 'cold',
+            'title' => 'Rekomendasi Paxel Cold',
+            'message' => 'Untuk menjaga kualitas produk makanan Anda selama pengiriman jarak jauh, kami menyarankan menggunakan **Paxel Cold** (Dilengkapi pendingin).'
+        ];
+    } elseif ($hasNextDay) {
+        $recommendation = [
+            'type' => 'next_day',
+            'title' => 'Rekomendasi Layanan Next Day',
+            'message' => 'Untuk pengiriman ke luar kota, pilihlah layanan **Next Day** agar paket tidak terlalu lama di perjalanan.'
+        ];
+    }
+}
+
 if ($result['success']) {
     echo json_encode([
         'success' => true,
         'pricing' => $result['data']['pricing'] ?? [],
-        'total_weight' => $totalWeight
+        'total_weight' => $totalWeight,
+        'recommendation' => $recommendation,
+        'distance' => isset($distance) ? round($distance, 2) : null,
+        'debug' => [
+            'hasInstant' => $hasInstant,
+            'hasCold' => $hasCold,
+            'hasNextDay' => $hasNextDay,
+            'distance' => $distance,
+            'dest' => ['lat' => $dest_lat, 'lng' => $dest_lng]
+        ]
     ]);
 } else {
     echo json_encode(['success' => false, 'message' => $result['message']]);

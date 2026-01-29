@@ -42,7 +42,7 @@ class BiteshipService
      * @param array $extraParams
      * @return array
      */
-    public function checkRates($destinationAreaId, $weight, $items = [], $originAreaId = BITESHIP_ORIGIN_AREA_ID, $couriers = 'jne,jnt,sicepat,gojek,grab,anteraja,borzo,lalamove', $originLat = null, $originLng = null, $destLat = null, $destLng = null, $extraParams = []): array
+    public function checkRates($destinationAreaId, $weight, $items = [], $originAreaId = BITESHIP_ORIGIN_AREA_ID, $couriers = 'paxel,jne,jnt,sicepat,gojek,grab,lalamove', $originLat = null, $originLng = null, $destLat = null, $destLng = null, $extraParams = []): array
     {
         $url = $this->baseUrl . "/rates/couriers";
         $data = [

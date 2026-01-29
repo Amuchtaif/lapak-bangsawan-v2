@@ -18,6 +18,7 @@ $order_token = bin2hex(random_bytes(16));
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script>
         tailwind.config = {
@@ -33,6 +34,15 @@ $order_token = bin2hex(random_bytes(16));
                     fontFamily: {
                         "display": ["Inter", "sans-serif"]
                     },
+                    animation: {
+                        "pulse-subtle": "pulse-subtle 3s ease-in-out infinite",
+                    },
+                    keyframes: {
+                        "pulse-subtle": {
+                            "0%, 100%": { opacity: "1" },
+                            "50%": { opacity: "0.8" },
+                        }
+                    }
                 },
             },
         }
@@ -158,28 +168,6 @@ $order_token = bin2hex(random_bytes(16));
                             <div class="text-xs text-slate-500 pl-8">Bayar di tempat saat barang sampai</div>
                         </label>
                     </div>
-
-                    <!-- Bank Info (Conditional) -->
-                    <div id="bank-info"
-                        class="bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900 rounded-lg flex flex-col gap-2 transition-all duration-300 ease-in-out overflow-hidden max-h-0 opacity-0 p-0 border-0">
-                        <p class="text-xs font-bold uppercase text-blue-500 mb-2">Silakan transfer ke:</p>
-                        <div
-                            class="flex justify-between items-center py-1 border-b border-blue-100 dark:border-blue-800/50 last:border-0">
-                            <span class="text-sm text-slate-600 dark:text-slate-300">Bank</span>
-                            <span class="font-bold text-slate-900 dark:text-white">BSI</span>
-                        </div>
-                        <div
-                            class="flex justify-between items-center py-1 border-b border-blue-100 dark:border-blue-800/50 last:border-0">
-                            <span class="text-sm text-slate-600 dark:text-slate-300">No. Rekening</span>
-                            <span
-                                class="font-bold text-slate-900 dark:text-white font-mono tracking-wide text-lg">7252428245</span>
-                        </div>
-                        <div
-                            class="flex justify-between items-center py-1 border-b border-blue-100 dark:border-blue-800/50 last:border-0">
-                            <span class="text-sm text-slate-600 dark:text-slate-300">Nama</span>
-                            <span class="font-bold text-slate-900 dark:text-white">Shohibudin</span>
-                        </div>
-                    </div>
                 </div>
 
 
@@ -217,8 +205,6 @@ $order_token = bin2hex(random_bytes(16));
                             <span id="btn-spinner"
                                 class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
                         </button>
-                        <p class="text-xs text-center text-slate-500 mt-3">Anda akan diarahkan ke WhatsApp untuk
-                            menyelesaikan pesanan.</p>
                     </div>
                 </div>
             </div>
@@ -241,7 +227,7 @@ $order_token = bin2hex(random_bytes(16));
 
         if (cart.length === 0) {
             alert("Keranjang Anda kosong!");
-            window.location.href = 'market.php';
+            window.location.href = 'market';
         }
 
         let total = 0;
@@ -304,13 +290,11 @@ $order_token = bin2hex(random_bytes(16));
         // Payment Toggle
         function togglePaymentInfo() {
             const method = document.querySelector('input[name="payment_method"]:checked').value;
-            const info = document.getElementById('bank-info');
+            const submitBtnText = document.getElementById('btn-text');
             if (method === 'transfer') {
-                info.classList.remove('max-h-0', 'opacity-0', 'p-0', 'border-0');
-                info.classList.add('max-h-96', 'opacity-100', 'p-5', 'border');
+                if (submitBtnText) submitBtnText.innerText = 'Buat Pesanan & Bayar';
             } else {
-                info.classList.remove('max-h-96', 'opacity-100', 'p-5', 'border');
-                info.classList.add('max-h-0', 'opacity-0', 'p-0', 'border-0');
+                if (submitBtnText) submitBtnText.innerText = 'Buat Pesanan (COD)';
             }
         }
         // Initialize
@@ -366,7 +350,7 @@ $order_token = bin2hex(random_bytes(16));
             };
 
             try {
-                const response = await fetch('save_order.php', {
+                const response = await fetch('<?= BASE_URL ?>public/save_order.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -375,7 +359,29 @@ $order_token = bin2hex(random_bytes(16));
 
                 if (result.success) {
                     localStorage.removeItem('cart');
-                    window.location.href = result.whatsapp_url;
+
+                    if (result.payment_method === 'cod') {
+                        Swal.fire({
+                            title: 'Pesanan COD Berhasil!',
+                            text: 'Admin akan segera memproses pesanan Anda.',
+                            icon: 'success',
+                            confirmButtonColor: '#0d59f2',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            window.open(result.whatsapp_url, '_blank');
+                            window.location.href = 'home';
+                        });
+                    } else if (result.payment_method === 'transfer') {
+                        Swal.fire({
+                            title: 'Pesanan Dibuat!',
+                            text: 'Silakan lakukan pembayaran untuk menyelesaikan pesanan.',
+                            icon: 'info',
+                            confirmButtonColor: '#0d59f2',
+                            confirmButtonText: 'Bayar Sekarang'
+                        }).then(() => {
+                            window.location.href = result.redirect_url;
+                        });
+                    }
                 } else {
                     alert('Gagal: ' + result.message);
                     // Reset button on failure
@@ -412,7 +418,7 @@ $order_token = bin2hex(random_bytes(16));
 
             searchTimeout = setTimeout(async () => {
                 try {
-                    const res = await fetch(`api/search_area.php?q=${encodeURIComponent(query)}`);
+                    const res = await fetch('<?= BASE_URL ?>public/api/search_area.php?q=' + encodeURIComponent(query));
                     const data = await res.json();
 
                     if (data.success && data.areas.length > 0) {
@@ -462,14 +468,14 @@ $order_token = bin2hex(random_bytes(16));
             `;
 
             try {
-                const res = await fetch('api/check_rates.php', {
+                const res = await fetch('<?= BASE_URL ?>public/api/check_rates.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         area_id: areaId,
                         area_text: document.getElementById('destination-area-text').value,
                         items: cart,
-                        couriers: 'jne,jnt,sicepat,gojek,grab,anteraja,borzo,lalamove',
+                        couriers: 'paxel,jne,jnt,sicepat,gojek,grab,anteraja,borzo,lalamove',
                         dest_lat: destLat,
                         dest_lng: destLng
                     })
@@ -477,6 +483,27 @@ $order_token = bin2hex(random_bytes(16));
                 const data = await res.json();
 
                 let html = '';
+                if (data.recommendation) {
+                    const rec = data.recommendation;
+                    const bgClass = rec.type === 'instant' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/50' :
+                        (rec.type === 'cold' ? 'bg-cyan-50 dark:bg-cyan-900/20 border-cyan-200 dark:border-cyan-900/50' :
+                            'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-900/50');
+                    const textClass = rec.type === 'instant' ? 'text-blue-700 dark:text-blue-400' :
+                        (rec.type === 'cold' ? 'text-cyan-700 dark:text-cyan-400' :
+                            'text-purple-700 dark:text-purple-400');
+                    const icon = rec.type === 'instant' ? 'bolt' : (rec.type === 'cold' ? 'ac_unit' : 'local_shipping');
+
+                    html += `
+                        <div class="${bgClass} border p-4 rounded-xl flex items-start gap-3 mb-4 animate-pulse-subtle">
+                            <span class="material-symbols-outlined ${textClass}">${icon}</span>
+                            <div>
+                                <h4 class="font-bold text-sm ${textClass} mb-0.5">${rec.title}</h4>
+                                <p class="text-[11px] ${textClass} opacity-90 leading-relaxed">${rec.message}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 if (data.warning_msg) {
                     html += `
                         <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/50 p-3 rounded-lg flex items-start gap-2 mb-2">

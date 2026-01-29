@@ -63,7 +63,7 @@
                     class="hidden flex flex-col items-center justify-center py-12 bg-white dark:bg-card-dark rounded-xl border border-slate-200 dark:border-slate-800">
                     <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">shopping_cart_off</span>
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white">Keranjang belanja Anda kosong</h3>
-                    <br><a href="<?= BASE_URL ?>public/market"
+                    <br><a href="<?= BASE_URL ?>market"
                         class="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-600 transition-colors">Mulai
                         Belanja</a>
                 </div>
@@ -92,7 +92,7 @@
                         </div>
                     </div>
 
-                    <a href="checkout_page.php" id="checkout-btn"
+                    <a href="checkout" id="checkout-btn"
                         class="block w-full bg-primary hover:bg-blue-700 text-white text-center font-bold py-3 px-4 rounded-lg shadow-sm shadow-blue-500/20 active:scale-95 transition-all">
                         Lanjut ke Pembayaran
                     </a>

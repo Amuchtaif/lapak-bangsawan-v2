@@ -133,7 +133,7 @@ $best_sellers = $conn->query($best_seller_query);
                         Kategori Produk
                     </h3>
                 </div>
-                
+
                 <div class="flex flex-col gap-1.5">
                     <?php
                     // Category Icon Mapping
@@ -146,34 +146,36 @@ $best_sellers = $conn->query($best_seller_query);
 
                     $is_all_active = !isset($_GET['category']);
                     ?>
-                    
+
                     <!-- All Products -->
-                    <a href="<?= BASE_URL ?>public/market"
+                    <a href="<?= BASE_URL ?>market"
                         class="group flex items-center justify-between p-3.5 rounded-2xl transition-all duration-300 <?= $is_all_active ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]' : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-white-[0.07]' ?>">
                         <div class="flex items-center gap-3.5">
-                            <div class="size-9 rounded-xl flex items-center justify-center transition-colors <?= $is_all_active ? 'bg-white/20' : 'bg-slate-100 dark:bg-white/10 group-hover:bg-primary/10 group-hover:text-primary' ?>">
+                            <div
+                                class="size-9 rounded-xl flex items-center justify-center transition-colors <?= $is_all_active ? 'bg-white/20' : 'bg-slate-100 dark:bg-white/10 group-hover:bg-primary/10 group-hover:text-primary' ?>">
                                 <span class="material-symbols-outlined !text-[20px]">grid_view</span>
                             </div>
                             <span class="text-sm font-bold">Semua Produk</span>
                         </div>
-                        <?php if($is_all_active): ?>
+                        <?php if ($is_all_active): ?>
                             <div class="size-1.5 rounded-full bg-white animate-pulse"></div>
                         <?php endif; ?>
                     </a>
 
-                    <?php foreach ($categories as $cat): 
+                    <?php foreach ($categories as $cat):
                         $is_cat_active = (isset($_GET['category']) && $_GET['category'] == $cat['slug']);
                         $icon = $cat_icons[$cat['slug']] ?? 'category';
-                    ?>
+                        ?>
                         <a href="?category=<?php echo $cat['slug']; ?>"
                             class="group flex items-center justify-between p-3.5 rounded-2xl transition-all duration-300 <?= $is_cat_active ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]' : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-white-[0.07]' ?>">
                             <div class="flex items-center gap-3.5">
-                                <div class="size-9 rounded-xl flex items-center justify-center transition-colors <?= $is_cat_active ? 'bg-white/20' : 'bg-slate-100 dark:bg-white/10 group-hover:bg-primary/10 group-hover:text-primary' ?>">
+                                <div
+                                    class="size-9 rounded-xl flex items-center justify-center transition-colors <?= $is_cat_active ? 'bg-white/20' : 'bg-slate-100 dark:bg-white/10 group-hover:bg-primary/10 group-hover:text-primary' ?>">
                                     <span class="material-symbols-outlined !text-[20px]"><?= $icon ?></span>
                                 </div>
                                 <span class="text-sm font-bold"><?php echo htmlspecialchars($cat['name']); ?></span>
                             </div>
-                            <?php if($is_cat_active): ?>
+                            <?php if ($is_cat_active): ?>
                                 <div class="size-1.5 rounded-full bg-white animate-pulse"></div>
                             <?php endif; ?>
                         </a>
@@ -201,15 +203,21 @@ $best_sellers = $conn->query($best_seller_query);
                         <span class="selected-label">
                             <?php
                             $sort = $_GET['sort'] ?? '';
-                            if ($sort == 'price_asc') echo 'Harga: Rendah ke Tinggi';
-                            else if ($sort == 'price_desc') echo 'Harga: Tinggi ke Rendah';
-                            else if ($sort == 'name_asc') echo 'Nama: A-Z';
-                            else echo 'Rekomendasi';
+                            if ($sort == 'price_asc')
+                                echo 'Harga: Rendah ke Tinggi';
+                            else if ($sort == 'price_desc')
+                                echo 'Harga: Tinggi ke Rendah';
+                            else if ($sort == 'name_asc')
+                                echo 'Nama: A-Z';
+                            else
+                                echo 'Rekomendasi';
                             ?>
                         </span>
-                        <span class="material-symbols-outlined text-slate-400 selected-icon transition-transform">expand_more</span>
+                        <span
+                            class="material-symbols-outlined text-slate-400 selected-icon transition-transform">expand_more</span>
                     </button>
-                    <div class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-[#1a202c] border border-slate-200 dark:border-white/5 rounded-2xl shadow-2xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
+                    <div
+                        class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-[#1a202c] border border-slate-200 dark:border-white/5 rounded-2xl shadow-2xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
                         <div class="max-h-60 overflow-y-auto p-2">
                             <div class="custom-option px-4 py-3 rounded-xl hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm font-bold <?= $sort == '' ? 'bg-primary/10 text-primary font-black' : '' ?>"
                                 data-value="">Rekomendasi</div>
@@ -225,14 +233,18 @@ $best_sellers = $conn->query($best_seller_query);
             </div>
 
             <!-- Optional: Delivery Info Banner in Sidebar -->
-            <div class="p-5 rounded-3xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 overflow-hidden relative group">
-                <div class="absolute top-0 right-0 -mr-6 -mt-6 opacity-10 group-hover:scale-110 transition-transform duration-500">
+            <div
+                class="p-5 rounded-3xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 overflow-hidden relative group">
+                <div
+                    class="absolute top-0 right-0 -mr-6 -mt-6 opacity-10 group-hover:scale-110 transition-transform duration-500">
                     <span class="material-symbols-outlined text-[100px]">local_shipping</span>
                 </div>
                 <div class="relative z-10 flex flex-col gap-3">
                     <span class="text-[10px] font-black uppercase tracking-widest opacity-60">Info Pengiriman</span>
                     <p class="text-sm font-bold leading-snug">Gratis ongkir untuk wilayah Cirebon Kota!</p>
-                    <a href="<?= BASE_URL ?>public/about" class="text-[10px] font-black uppercase tracking-widest underline decoration-primary underline-offset-4">Pelajari Selengkapnya</a>
+                    <a href="<?= BASE_URL ?>about"
+                        class="text-[10px] font-black uppercase tracking-widest underline decoration-primary underline-offset-4">Pelajari
+                        Selengkapnya</a>
                 </div>
             </div>
         </aside>
@@ -241,7 +253,8 @@ $best_sellers = $conn->query($best_seller_query);
             <!-- Toolbar Mobile (Only Categories) -->
             <div class="md:hidden flex flex-col gap-4 mb-2">
                 <div class="flex items-center gap-3">
-                    <label class="text-xs font-black uppercase tracking-widest text-slate-400" for="category">Kategori</label>
+                    <label class="text-xs font-black uppercase tracking-widest text-slate-400"
+                        for="category">Kategori</label>
                     <div class="custom-select-wrapper relative flex-1"
                         data-onchange="window.location.href = updateQueryStringParameter('category', '%val%')">
                         <select class="hidden">
@@ -268,9 +281,11 @@ $best_sellers = $conn->query($best_seller_query);
                                 echo htmlspecialchars($current_cat);
                                 ?>
                             </span>
-                            <span class="material-symbols-outlined text-slate-400 selected-icon transition-transform">expand_more</span>
+                            <span
+                                class="material-symbols-outlined text-slate-400 selected-icon transition-transform">expand_more</span>
                         </button>
-                        <div class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-[#1a202c] border border-slate-200 dark:border-white/5 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
+                        <div
+                            class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-[#1a202c] border border-slate-200 dark:border-white/5 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
                             <div class="max-h-60 overflow-y-auto p-2">
                                 <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?= !isset($_GET['category']) ? 'bg-primary/10 text-primary font-bold' : '' ?>"
                                     data-value="">Semua Kategori</div>
@@ -286,7 +301,8 @@ $best_sellers = $conn->query($best_seller_query);
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <label class="text-xs font-black uppercase tracking-widest text-slate-400" for="sort-mobile">Urutkan</label>
+                    <label class="text-xs font-black uppercase tracking-widest text-slate-400"
+                        for="sort-mobile">Urutkan</label>
                     <div class="custom-select-wrapper relative flex-1"
                         data-onchange="window.location.href = updateQueryStringParameter('sort', '%val%')">
                         <select class="hidden">
@@ -300,15 +316,21 @@ $best_sellers = $conn->query($best_seller_query);
                             <span class="selected-label">
                                 <?php
                                 $sort = $_GET['sort'] ?? '';
-                                if ($sort == 'price_asc') echo 'Harga: Rendah ke Tinggi';
-                                else if ($sort == 'price_desc') echo 'Harga: Tinggi ke Rendah';
-                                else if ($sort == 'name_asc') echo 'Nama: A-Z';
-                                else echo 'Rekomendasi';
+                                if ($sort == 'price_asc')
+                                    echo 'Harga: Rendah ke Tinggi';
+                                else if ($sort == 'price_desc')
+                                    echo 'Harga: Tinggi ke Rendah';
+                                else if ($sort == 'name_asc')
+                                    echo 'Nama: A-Z';
+                                else
+                                    echo 'Rekomendasi';
                                 ?>
                             </span>
-                            <span class="material-symbols-outlined text-slate-400 selected-icon transition-transform">expand_more</span>
+                            <span
+                                class="material-symbols-outlined text-slate-400 selected-icon transition-transform">expand_more</span>
                         </button>
-                        <div class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-[#1a202c] border border-slate-200 dark:border-white/5 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
+                        <div
+                            class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-[#1a202c] border border-slate-200 dark:border-white/5 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
                             <div class="max-h-60 overflow-y-auto p-2">
                                 <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?= $sort == '' ? 'bg-primary/10 text-primary font-bold' : '' ?>"
                                     data-value="">Rekomendasi</div>
@@ -707,7 +729,7 @@ $best_sellers = $conn->query($best_seller_query);
                 opt.addEventListener('click', () => {
                     const val = opt.dataset.value;
                     label.innerText = opt.innerText;
-                    
+
                     if (select) select.value = val;
 
                     const onchange = wrapper.dataset.onchange;
