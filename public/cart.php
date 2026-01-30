@@ -60,12 +60,25 @@
                 </div>
 
                 <div id="empty-cart-message"
-                    class="hidden flex flex-col items-center justify-center py-12 bg-white dark:bg-card-dark rounded-xl border border-slate-200 dark:border-slate-800">
-                    <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">shopping_cart_off</span>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Keranjang belanja Anda kosong</h3>
-                    <br><a href="<?= BASE_URL ?>market"
-                        class="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-600 transition-colors">Mulai
-                        Belanja</a>
+                    class="hidden flex flex-col items-center justify-center py-16 px-4 bg-white dark:bg-card-dark rounded-3xl border border-slate-200 dark:border-slate-800 text-center">
+                    <div
+                        class="size-32 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 relative">
+                        <span
+                            class="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-600">shopping_cart</span>
+                        <div
+                            class="absolute top-2 right-2 bg-red-500 rounded-full p-2 border-4 border-white dark:border-card-dark">
+                            <span class="material-symbols-outlined text-white text-sm font-bold">close</span>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Keranjang Anda Kosong</h3>
+                    <p class="text-slate-500 dark:text-slate-400 max-w-xs mx-auto mb-8 leading-relaxed">
+                        Sepertinya Anda belum menambahkan produk apapun. Yuk mulai belanja kebutuhan Anda sekarang!
+                    </p>
+                    <a href="<?= BASE_URL ?>market"
+                        class="group bg-primary hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-500/30 transition-all flex items-center gap-2 hover:-translate-y-1">
+                        <span class="material-symbols-outlined group-hover:animate-bounce">storefront</span>
+                        Mulai Belanja
+                    </a>
                 </div>
             </div>
 

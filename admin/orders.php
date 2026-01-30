@@ -151,7 +151,8 @@ $orders_result = $conn->query($orders_query);
                         <?php endif; ?>
                         <div class="flex items-center justify-between">
                             <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Pesanan
-                                #<?php echo str_pad($order_data['id'], 5, '0', STR_PAD_LEFT); ?></h2>
+                                #<?php echo htmlspecialchars($order_data['order_number'] ?? str_pad($order_data['id'], 5, '0', STR_PAD_LEFT)); ?>
+                            </h2>
                             <div class="flex gap-2">
                                 <button onclick="confirmDelete('orders?action=delete&id=<?php echo $order_data['id']; ?>')"
                                     class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-bold transition-colors flex items-center gap-2">

@@ -101,10 +101,21 @@ $best_sellers = $conn->query($best_seller_query);
     class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased flex flex-col min-h-screen">
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-5 right-5 z-[100] transition-all duration-300 opacity-0 invisible translate-x-4">
-        <div class="bg-slate-900 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3">
-            <span class="material-symbols-outlined text-green-400">check_circle</span>
-            <span class="font-medium">Ditambahkan ke Keranjang!</span>
+    <div id="toast"
+        class="fixed bottom-6 right-6 z-[100] transition-all duration-300 opacity-0 invisible translate-y-4">
+        <div
+            class="bg-slate-900 dark:bg-card-dark text-white px-5 py-4 rounded-xl shadow-2xl flex items-center gap-4 border border-white/10">
+            <div class="bg-green-500/20 p-2 rounded-full text-green-400">
+                <span class="material-symbols-outlined text-[20px]">check_circle</span>
+            </div>
+            <div>
+                <h4 class="font-bold text-sm">Produk Ditambahkan!</h4>
+                <p class="text-xs text-slate-400 mt-0.5">Cek keranjang belanja Anda.</p>
+            </div>
+            <a href="<?= BASE_URL ?>cart"
+                class="ml-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">
+                Lihat Keranjang
+            </a>
         </div>
     </div>
 
@@ -683,9 +694,9 @@ $best_sellers = $conn->query($best_seller_query);
 
         function showToast() {
             const toast = document.getElementById('toast');
-            toast.classList.remove('opacity-0', 'invisible', 'translate-x-4');
+            toast.classList.remove('opacity-0', 'invisible', 'translate-y-4');
             setTimeout(() => {
-                toast.classList.add('opacity-0', 'invisible', 'translate-x-4');
+                toast.classList.add('opacity-0', 'invisible', 'translate-y-4');
             }, 3000);
         }
 

@@ -134,70 +134,99 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || ($order_number && $phone)) {
 
                     <div class="p-6 md:p-8 space-y-8">
                         <!-- Progress (Simplified) -->
-                        <div class="flex items-center justify-between relative px-2">
-                            <div
-                                class="absolute top-1/2 left-0 w-full h-0.5 bg-slate-100 dark:bg-slate-800 -translate-y-1/2">
-                            </div>
-
-                            <?php
-                            $stages = ['pending', 'confirmed', 'completed']; // Basic status map
-                            $current_stage_idx = array_search($order['status'], $stages);
-                            if ($current_stage_idx === false)
-                                $current_stage_idx = 0;
-                            ?>
-
-                            <div class="relative z-10 flex flex-col items-center gap-2">
-                                <div
-                                    class="size-8 rounded-full border-2 flex items-center justify-center bg-white dark:bg-slate-900 <?= $current_stage_idx >= 0 ? 'border-primary bg-primary text-white' : 'border-slate-200 dark:border-slate-700 text-slate-300' ?>">
-                                    <span class="material-symbols-outlined text-sm">inventory_2</span>
-                                </div>
-                                <span class="text-[10px] font-bold uppercase tracking-wider">Diterima</span>
-                            </div>
-
-                            <div class="relative z-10 flex flex-col items-center gap-2">
-                                <div
-                                    class="size-8 rounded-full border-2 flex items-center justify-center bg-white dark:bg-slate-900 <?= $current_stage_idx >= 1 || $order['status'] == 'completed' ? 'border-primary bg-primary text-white' : 'border-slate-200 dark:border-slate-700 text-slate-300' ?>">
-                                    <span class="material-symbols-outlined text-sm">check_circle</span>
-                                </div>
-                                <span class="text-[10px] font-bold uppercase tracking-wider">Diproses</span>
-                            </div>
-
-                            <div class="relative z-10 flex flex-col items-center gap-2">
-                                <div
-                                    class="size-8 rounded-full border-2 flex items-center justify-center bg-white dark:bg-slate-900 <?= $order['status'] == 'completed' ? 'border-primary bg-primary text-white' : 'border-slate-200 dark:border-slate-700 text-slate-300' ?>">
-                                    <span class="material-symbols-outlined text-sm">local_shipping</span>
-                                </div>
-                                <span class="text-[10px] font-bold uppercase tracking-wider">Selesai</span>
-                            </div>
-                        </div>
-
+                        <!-- Detailed Timeline (Vertical) -->
                         <div class="border-t border-slate-100 dark:border-slate-800 pt-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Kurir /
-                                        Pengiriman</p>
-                                    <p class="font-bold text-slate-800 dark:text-white uppercase">
-                                        <?= $order['courier_company'] ? strtoupper($order['courier_company']) : 'Internal Delivery' ?>
-                                    </p>
+                            <h3 class="font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">history</span>
+                                Riwayat Pesanan
+                            </h3>
+
+                            <div class="relative pl-4 border-l-2 border-slate-100 dark:border-slate-800 space-y-8"
+                                id="tracking-timeline">
+                                <!-- Default Status from Database -->
+                                <div class="relative">
+                                    <div
+                                        class="absolute -left-[21px] top-1 rounded-full bg-primary border-4 border-white dark:border-slate-900 w-3.5 h-3.5">
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-sm font-bold text-slate-900 dark:text-white uppercase"><?= $order['status'] ?></span>
+                                        <span
+                                            class="text-xs text-slate-400 mt-1"><?= date('d M Y H:i', strtotime($order['created_at'])) ?>
+                                            (Waktu Pemesanan)</span>
+                                        <p class="text-sm text-slate-600 dark:text-slate-400 mt-2">
+                                            Status terakhir pesanan Anda di sistem kami.
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Nomor Resi
-                                        (Waybill)</p>
-                                    <p class="font-mono font-bold text-slate-800 dark:text-white">
-                                        <?= $order['tracking_id'] ?: 'Belum Tersedia' ?>
-                                    </p>
-                                </div>
+
+                                <!-- Loading State for External Tracking -->
+                                <?php if ($order['tracking_id']): ?>
+                                    <div id="loading-tracking" class="relative">
+                                        <div
+                                            class="absolute -left-[21px] top-1 rounded-full bg-slate-200 dark:bg-slate-700 border-4 border-white dark:border-slate-900 w-3.5 h-3.5 animate-pulse">
+                                        </div>
+                                        <div class="flex flex-col gap-2">
+                                            <span class="h-4 w-32 bg-slate-100 dark:bg-slate-800 rounded animate-pulse"></span>
+                                            <span class="h-3 w-48 bg-slate-100 dark:bg-slate-800 rounded animate-pulse"></span>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
 
                         <?php if ($order['tracking_id']): ?>
-                            <div class="pt-4">
-                                <a href="https://biteship.com/id/tracking/<?= $order['tracking_id'] ?>" target="_blank"
-                                    class="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold py-4 px-6 rounded-xl flex justify-center items-center gap-2 hover:opacity-90 transition-all">
-                                    <span class="material-symbols-outlined">track_changes</span>
-                                    Lacak Via Biteship
-                                </a>
-                            </div>
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function () {
+                                    const orderNo = '<?= $order['order_number'] ?>'; // Must use Order Number
+                                    const phoneNo = '<?= $order['customer_phone'] ?>'; // Must use Phone
+
+                                    const formData = new FormData();
+                                    formData.append('order_number', orderNo);
+                                    formData.append('phone_number', phoneNo);
+
+                                    fetch('<?= BASE_URL ?>api/track_order.php', {
+                                        method: 'POST',
+                                        body: formData
+                                    })
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            const timelineContainer = document.getElementById('tracking-timeline');
+                                            const loader = document.getElementById('loading-tracking');
+                                            if (loader) loader.remove();
+
+                                            if (data.success && data.data && data.data.history) {
+                                                // Process history (reverse to show latest first)
+                                                const history = data.data.history; // Biteship usually returns oldest first, check docs. 
+                                                // Usually for timeline UI, we want NEWEST at TOP.
+                                                // Biteship history: [ {status, time, note}, ... ]
+
+                                                // Append history items
+                                                history.reverse().forEach(item => { // Reverse so latest is top
+                                                    const date = new Date(item.updated_at);
+                                                    const formattedDate = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                                                    const html = `
+                                                    <div class="relative animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                                        <div class="absolute -left-[21px] top-1 rounded-full bg-green-500 border-4 border-white dark:border-slate-900 w-3.5 h-3.5 shadow-sm shadow-green-500/50"></div>
+                                                        <div class="flex flex-col">
+                                                            <span class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wide text-green-600 dark:text-green-400">
+                                                                ${item.status}
+                                                            </span>
+                                                            <span class="text-[10px] font-bold text-slate-400 mt-0.5 tracking-wider uppercase">${formattedDate}</span>
+                                                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mt-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                                                                ${item.note || 'Posisi paket diperbarui.'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                `;
+                                                    timelineContainer.insertAdjacentHTML('afterbegin', html); // Insert at top
+                                                });
+                                            }
+                                        })
+                                        .catch(err => console.error('Gagal memuat tracking:', err));
+                                });
+                            </script>
                         <?php endif; ?>
                     </div>
                 </div>

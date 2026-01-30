@@ -92,13 +92,15 @@ class BiteshipService
     }
 
     /**
-     * Get Tracking status by Biteship Order ID
-     * @param string $biteshipOrderId
+     * Get Tracking status by Waybill ID and Courier Code
+     * @param string $waybillId
+     * @param string $courierCode
      * @return array
      */
-    public function getTracking($biteshipOrderId): array
+    public function getTracking($waybillId, $courierCode): array
     {
-        $url = $this->baseUrl . "/orders/" . $biteshipOrderId;
+        // Endpoint: /v1/trackings/{waybill_id}/couriers/{courier_code}
+        $url = $this->baseUrl . "/trackings/" . $waybillId . "/couriers/" . $courierCode;
         return $this->request('GET', $url);
     }
 

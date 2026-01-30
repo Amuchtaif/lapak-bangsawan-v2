@@ -67,20 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['payment_proof'])) {
 
                 if ($stmt->execute()) {
                     $success = "Bukti pembayaran berhasil diupload! Admin akan memverifikasi pesanan Anda.";
-
-                    // Construct WhatsApp Notification
-                    $wa_phone = "62859110022099";
-                    $wa_msg = "Halo Lapak Bangsawan, saya sudah upload bukti pembayaran untuk:\n\n";
-                    $wa_msg .= "*Order Number:* " . $order['order_number'] . "\n";
-                    $wa_msg .= "*Total:* Rp " . number_format($order['total_amount'], 0, ',', '.') . "\n\n";
-                    $wa_msg .= "Mohon segera diverifikasi. Terima kasih!";
-                    $wa_url = "https://wa.me/$wa_phone?text=" . urlencode($wa_msg);
-
-                    echo "<script>
-                        alert('$success'); 
-                        window.open('$wa_url', '_blank');
-                        window.location.href='" . BASE_URL . "home';
-                    </script>";
+                    header("Location: " . BASE_URL . "public/success.php?order_id=" . $order_id);
                     exit;
                 } else {
                     $error = "Gagal menyimpan data ke database.";

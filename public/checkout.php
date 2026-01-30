@@ -233,7 +233,7 @@ $order_token = bin2hex(random_bytes(16));
         let baseTotal = 0;
         let shippingCost = 0;
         let total = 0; // Local var for subtotal display reference if needed, or just use baseTotal
-        
+
         cart.forEach(item => {
             baseTotal += item.total_price;
             total += item.total_price;
@@ -373,8 +373,8 @@ $order_token = bin2hex(random_bytes(16));
                             confirmButtonColor: '#0d59f2',
                             confirmButtonText: 'OK'
                         }).then(() => {
-                            window.open(result.whatsapp_url, '_blank');
-                            window.location.href = 'home';
+                            // Redirect to success page for COD
+                            window.location.href = 'success.php?order_id=' + result.order_id;
                         });
                     } else if (result.payment_method === 'transfer') {
                         Swal.fire({
