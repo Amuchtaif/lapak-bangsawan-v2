@@ -60,6 +60,47 @@ try {
     $trackingData = $biteship->getTracking($waybillId, $courierCode);
 
     if ($trackingData['success']) {
+        // --- AUTO-SYNC LOGIC START ---
+        $biteshipStatus = $trackingData['data']['status'] ?? '';
+
+        // Map Biteship status to Local Status
+        // Biteship: placed, scheduled, confirmed, allocated, picking_up, picked, dropping_off, return_in_transit, delivered, rejected, courier_not_found, returned, cancelled, disposed
+        $newLocalStatus = '';
+
+        switch ($biteshipStatus) {
+            case 'picking_up':
+            case 'picked':
+            case 'dropping_off':
+                $newLocalStatus = 'shipped'; // Dalam Pengiriman
+                break;
+            case 'delivered':
+                $newLocalStatus = 'delivered'; // Selesai / Diterima
+                break;
+            case 'cancelled':
+            case 'rejected':
+            case 'courier_not_found':
+            case 'returned':
+                $newLocalStatus = 'cancelled';
+                break;
+            case 'confirmed':
+            case 'allocated':
+                $newLocalStatus = 'ready_to_ship';
+                break;
+        }
+
+        // Update DB only if status is valid and different from current status
+        if ($newLocalStatus && $newLocalStatus !== $order['status']) {
+            // Prevent reverting 'completed' if already set manually (optional safety)
+            // But here we trust Biteship status more for logistics
+            if ($order['status'] !== 'completed' && $order['status'] !== 'cancelled') {
+                // Use order_number from input since we retrieved data using it
+                $updateStmt = $conn->prepare("UPDATE orders SET status = ? WHERE order_number = ?");
+                $updateStmt->bind_param("ss", $newLocalStatus, $orderNumber);
+                $updateStmt->execute();
+            }
+        }
+        // --- AUTO-SYNC LOGIC END ---
+
         jsonResponse(true, 'Data tracking ditemukan.', $trackingData['data']);
     } else {
         // Jika gagal dari Biteship (misal resi belum terlacak di sistem kurir)

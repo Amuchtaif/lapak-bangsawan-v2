@@ -154,6 +154,21 @@ $orders_result = $conn->query($orders_query);
                                 #<?php echo htmlspecialchars($order_data['order_number'] ?? str_pad($order_data['id'], 5, '0', STR_PAD_LEFT)); ?>
                             </h2>
                             <div class="flex gap-2">
+                                <?php if ($order_data['status'] !== 'cancelled' && $order_data['status'] !== 'completed'): ?>
+                                    <button onclick="cancelOrder(<?php echo $order_data['id']; ?>)"
+                                        class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2 shadow-sm shadow-red-500/30">
+                                        <span class="material-icons-round text-sm">cancel</span> Batalkan Pesanan
+                                    </button>
+                                <?php endif; ?>
+
+                                <?php if ($order_data['status'] == 'ready_to_ship' && empty($order_data['biteship_order_id'])): ?>
+                                    <button onclick="syncBiteshipId(<?php echo $order_data['id']; ?>)"
+                                        class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2 shadow-sm shadow-amber-500/30"
+                                        title="Sinkronisasi ID Biteship yang hilang">
+                                        <span class="material-icons-round text-sm">sync_problem</span> Sync Data Biteship
+                                    </button>
+                                <?php endif; ?>
+
                                 <button onclick="confirmDelete('orders?action=delete&id=<?php echo $order_data['id']; ?>')"
                                     class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-bold transition-colors flex items-center gap-2">
                                     <span class="material-icons-round text-sm">delete</span> Hapus
@@ -165,7 +180,7 @@ $orders_result = $conn->query($orders_query);
                                 </a>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6 mb-6">
                             <!-- Customer & Delivery Info (Merged) -->
                             <div
                                 class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm h-full flex flex-col gap-6">
@@ -317,54 +332,95 @@ $orders_result = $conn->query($orders_query);
                                 </div>
                             </div>
                             <!-- Biteship Fulfillment -->
-                            <?php if ($order_data['status'] !== 'completed'): ?>
-                                <div
-                                    class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-primary/30 dark:border-primary/20 shadow-sm relative overflow-hidden">
-                                    <div class="absolute top-0 right-0 p-2 opacity-10">
-                                        <span class="material-symbols-outlined text-4xl text-primary">local_shipping</span>
-                                    </div>
-                                    <h3 class="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                                        <span class="material-icons-round text-primary text-xl">local_shipping</span>
-                                        Fulfillment Logistics
-                                    </h3>
+                            <div
+                                class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-primary/30 dark:border-primary/20 shadow-sm relative overflow-hidden h-full flex flex-col">
+                                <div class="absolute top-0 right-0 p-2 opacity-10">
+                                    <span class="material-symbols-outlined text-4xl text-primary">local_shipping</span>
+                                </div>
+                                <h3 class="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <span class="material-icons-round text-primary text-xl">local_shipping</span>
+                                    Fulfillment Logistics
+                                </h3>
 
-                                    <?php if (empty($order_data['tracking_id'])): ?>
-                                        <div id="fulfillment-pending">
-                                            <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
-                                                Order ini siap diproses untuk pengiriman via kurir pilihan. Klik tombol di bawah
-                                                untuk Booking Kurir & Pickup Paket.
-                                            </p>
-                                            <button onclick="processShipping(<?php echo $order_data['id']; ?>)"
-                                                id="btn-process-shipping"
-                                                class="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/30 flex justify-center items-center gap-2">
-                                                <span class="material-icons-round text-lg">local_shipping</span>
-                                                Request Pickup
-                                                <span id="shipping-spinner"
-                                                    class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                                            </button>
-                                            <p class="text-[10px] text-slate-400 mt-3 text-center italic">*Data akan dikirim ke API
-                                                Biteship</p>
-                                        </div>
-                                    <?php else: ?>
-                                        <div class="text-center py-2">
-                                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Nomor
-                                                Resi / Waybill</p>
-                                            <h4 class="text-2xl font-black text-primary mb-4">
+                                <?php if (empty($order_data['tracking_id'])): ?>
+                                    <div id="fulfillment-pending">
+                                        <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                                            Order ini siap diproses untuk pengiriman via kurir pilihan. Klik tombol di bawah
+                                            untuk Booking Kurir & Pickup Paket.
+                                        </p>
+                                        <button onclick="processShipping(<?php echo $order_data['id']; ?>)"
+                                            id="btn-process-shipping"
+                                            class="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/30 flex justify-center items-center gap-2">
+                                            <span class="material-icons-round text-lg">local_shipping</span>
+                                            Request Pickup
+                                            <span id="shipping-spinner"
+                                                class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                                        </button>
+                                        <p class="text-[10px] text-slate-400 mt-3 text-center italic">*Data akan dikirim ke API
+                                            Biteship</p>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="text-center py-2">
+                                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Nomor
+                                            Resi / Waybill</p>
+                                        <h4 class="text-2xl font-black text-primary mb-4">
+                                            <?php echo $order_data['tracking_id']; ?>
+                                        </h4>
+
+                                        <!-- Fulfillment / Resi -->
+                                        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">No.
+                                                    Resi / AWB</span>
+                                                <button onclick="copyToClipboard('<?php echo $order_data['tracking_id']; ?>')"
+                                                    class="text-xs text-primary hover:text-blue-600 font-medium flex items-center gap-1">
+                                                    Salin <span class="material-icons-round text-[10px]">content_copy</span>
+                                                </button>
+                                            </div>
+                                            <div
+                                                class="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg font-mono text-sm font-bold text-slate-900 dark:text-white text-center tracking-widest border border-slate-200 dark:border-slate-700 mb-3 select-all">
                                                 <?php echo $order_data['tracking_id']; ?>
-                                            </h4>
-                                            <a href="https://biteship.com/id/tracking/<?php echo $order_data['tracking_id']; ?>"
-                                                target="_blank"
-                                                class="inline-flex items-center gap-2 px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-sm font-bold transition-all">
-                                                <span class="material-icons-round text-sm">track_changes</span>
-                                                Lacak Paket
-                                            </a>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 gap-2">
+                                                <!-- Logic for Print Label -->
+                                                <?php
+                                                $has_label = !empty($order_data['shipping_label_url']);
+                                                // If URL exists but seems like just a tracking link (not PDF), we might still want to Refetch?
+                                                // For now, trust DB unless empty.
+                                        
+                                                if ($has_label):
+                                                    ?>
+                                                    <a href="<?php echo $order_data['shipping_label_url']; ?>" target="_blank"
+                                                        class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                                                        <span class="material-icons-round text-lg">print</span>
+                                                        Cetak Label
+                                                    </a>
+                                                <?php else: ?>
+                                                    <!-- Missing Label Button -->
+                                                    <a href="../api/refetch_label.php?id=<?php echo $order_data['id']; ?>"
+                                                        target="_blank"
+                                                        class="w-full bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors border border-yellow-200">
+                                                        <span class="material-icons-round text-lg">sync</span>
+                                                        Ambil Label
+                                                    </a>
+                                                <?php endif; ?>
+
+                                                <a href="https://cekresi.com/?noresi=<?php echo $order_data['tracking_id']; ?>"
+                                                    target="_blank"
+                                                    class="w-full bg-primary/10 hover:bg-primary/20 text-primary font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                                                    <span class="material-icons-round text-lg">local_shipping</span>
+                                                    Lacak Packet
+                                                </a>
+                                            </div>
                                         </div>
                                     <?php endif; ?>
                                 </div>
-                            <?php endif; ?>
+                            </div>
+
                             <!-- Order Status Update -->
                             <div
-                                class="<?php echo $order_data['status'] === 'completed' ? 'md:col-span-2' : ''; ?> bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                                class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm h-full flex flex-col">
                                 <h3 class="font-bold text-slate-900 dark:text-white mb-4">Status Pesanan</h3>
                                 <form method="POST">
                                     <input type="hidden" name="order_id" value="<?php echo $order_data['id']; ?>">
@@ -372,19 +428,36 @@ $orders_result = $conn->query($orders_query);
                                     <div class="custom-select-wrapper relative mb-4">
                                         <select name="status" class="hidden">
                                             <option value="pending" <?php echo $order_data['status'] == 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                            <option value="completed" <?php echo $order_data['status'] == 'completed' ? 'selected' : ''; ?>>Completed</option>
-                                            <option value="cancelled" <?php echo $order_data['status'] == 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                                            <option value="ready_to_ship" <?php echo $order_data['status'] == 'ready_to_ship' ? 'selected' : ''; ?>>Siap
+                                                Dikirim</option>
+                                            <option value="shipped" <?php echo $order_data['status'] == 'shipped' ? 'selected' : ''; ?>>Dalam Pengiriman</option>
+                                            <option value="completed" <?php echo $order_data['status'] == 'completed' ? 'selected' : ''; ?>>Selesai</option>
+                                            <option value="cancelled" <?php echo $order_data['status'] == 'cancelled' ? 'selected' : ''; ?>>Dibatalkan</option>
                                         </select>
                                         <button type="button"
                                             class="custom-select-trigger w-full flex items-center justify-between rounded-lg border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 text-sm focus:ring-primary focus:border-primary transition-all text-left shadow-sm">
                                             <span class="selected-label">
                                                 <?php
-                                                if ($order_data['status'] == 'completed')
-                                                    echo 'Completed';
-                                                else if ($order_data['status'] == 'cancelled')
-                                                    echo 'Cancelled';
-                                                else
-                                                    echo 'Pending';
+                                                switch ($order_data['status']) {
+                                                    case 'completed':
+                                                    case 'delivered':
+                                                        echo 'Selesai / Diterima';
+                                                        break;
+                                                    case 'cancelled':
+                                                        echo 'Dibatalkan';
+                                                        break;
+                                                    case 'ready_to_ship':
+                                                        echo 'Siap Dikirim / Menunggu Kurir';
+                                                        break;
+                                                    case 'confirmed':
+                                                        echo 'Dikonfirmasi';
+                                                        break;
+                                                    case 'shipped':
+                                                        echo 'Dalam Pengiriman';
+                                                        break;
+                                                    default:
+                                                        echo ucfirst($order_data['status']);
+                                                }
                                                 ?>
                                             </span>
                                             <span
@@ -395,10 +468,14 @@ $orders_result = $conn->query($orders_query);
                                             <div class="p-1">
                                                 <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'pending' ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
                                                     data-value="pending">Pending</div>
-                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'completed' ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
-                                                    data-value="completed">Completed</div>
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'ready_to_ship' ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
+                                                    data-value="ready_to_ship">Siap Dikirim / Menunggu Kurir</div>
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'shipped' ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
+                                                    data-value="shipped">Dalam Pengiriman</div>
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo ($order_data['status'] == 'completed' || $order_data['status'] == 'delivered') ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
+                                                    data-value="completed">Selesai / Diterima</div>
                                                 <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'cancelled' ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
-                                                    data-value="cancelled">Cancelled</div>
+                                                    data-value="cancelled">Dibatalkan</div>
                                             </div>
                                         </div>
                                     </div>
@@ -410,7 +487,7 @@ $orders_result = $conn->query($orders_query);
                         </div>
                         <!-- Order Items -->
                         <div
-                            class="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                            class="md:col-span-2 lg:col-span-4 bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
                             <div class="overflow-x-auto w-full">
                                 <table class="w-full text-left text-sm text-slate-500 dark:text-slate-400">
                                     <thead
@@ -438,7 +515,8 @@ $orders_result = $conn->query($orders_query);
                                                 <td class="px-6 py-4 whitespace-nowrap">Rp
                                                     <?php echo number_format($item['price_per_kg'], 0, ',', '.'); ?>
                                                 </td>
-                                                <td class="px-6 py-4 whitespace-nowrap"><?php echo $item['weight']; ?> kg</td>
+                                                <td class="px-6 py-4 whitespace-nowrap"><?php echo $item['weight']; ?> kg
+                                                </td>
                                                 <td
                                                     class="px-6 py-4 text-right font-medium text-slate-900 dark:text-white whitespace-nowrap">
                                                     Rp
@@ -466,7 +544,8 @@ $orders_result = $conn->query($orders_query);
                     <!-- List View -->
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Manajemen Pesanan
+                            <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Manajemen
+                                Pesanan
                             </h2>
                             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Kelola pesanan, lacak berat, dan
                                 proses pengiriman.</p>
@@ -492,7 +571,8 @@ $orders_result = $conn->query($orders_query);
                                     <h3 class="font-medium text-slate-900 dark:text-white">
                                         <?php echo $_SESSION['status_type'] == 'success' ? 'Berhasil' : 'Gagal'; ?>
                                     </h3>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $_SESSION['status_msg']; ?>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                                        <?php echo $_SESSION['status_msg']; ?>
                                     </p>
                                 </div>
                             </div>
@@ -550,15 +630,29 @@ $orders_result = $conn->query($orders_query);
                                                     <?php
                                                     $status_colors = [
                                                         'pending' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+                                                        'ready_to_ship' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+                                                        'shipped' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+                                                        'confirmed' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
                                                         'completed' => 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+                                                        'delivered' => 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
                                                         'cancelled' => 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
                                                     ];
                                                     $curr_status = $order['status'];
+                                                    // Map display names for list view
+                                                    $status_display = [
+                                                        'pending' => 'Pending',
+                                                        'ready_to_ship' => 'Siap Dikirim / Menunggu Kurir',
+                                                        'shipped' => 'Dalam Pengiriman',
+                                                        'confirmed' => 'Dikonfirmasi',
+                                                        'completed' => 'Selesai / Diterima',
+                                                        'delivered' => 'Selesai / Diterima',
+                                                        'cancelled' => 'Dibatalkan'
+                                                    ];
                                                     $color_class = $status_colors[$curr_status] ?? 'bg-slate-100 text-slate-600';
                                                     ?>
                                                     <span
                                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $color_class; ?> capitalize">
-                                                        <?php echo $curr_status; ?>
+                                                        <?php echo $status_display[$curr_status] ?? $curr_status; ?>
                                                     </span>
                                                 </td>
                                                 <td class="px-6 py-4 text-right">
@@ -779,6 +873,137 @@ $orders_result = $conn->query($orders_query);
                 btn.classList.remove('opacity-75', 'cursor-not-allowed');
             }
             if (spinner) spinner.classList.add('hidden');
+        }
+
+        function cancelOrder(orderId) {
+            Swal.fire({
+                title: 'Batalkan Pesanan?',
+                text: "Silakan masukkan alasan pembatalan:",
+                input: 'text',
+                inputPlaceholder: 'Misal: Stok habis, Customer minta cancel',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Batalkan',
+                cancelButtonText: 'Kembali',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Alasan pembatalan wajib diisi!'
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performCancelRequest(orderId, result.value);
+                }
+            });
+        }
+
+        function performCancelRequest(orderId, reason) {
+            Swal.fire({
+                title: 'Memproses...',
+                text: 'Sedang membatalkan pesanan',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const formData = new FormData();
+            formData.append('order_id', orderId);
+            formData.append('reason', reason);
+
+            fetch('../api/cancel_order.php', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Dibatalkan!',
+                            text: data.message,
+                            icon: 'success',
+                            confirmButtonColor: '#0d59f2'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Gagal Membatalkan',
+                            text: data.message,
+                            icon: 'error',
+                            confirmButtonColor: '#0d59f2'
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Gagal menghubungi server',
+                        icon: 'error',
+                        confirmButtonColor: '#0d59f2'
+                    });
+                });
+        }
+
+        function syncBiteshipId(orderId) {
+            Swal.fire({
+                title: 'Sync Biteship ID',
+                text: "Sistem akan mencoba mencari ID Biteship berdasarkan Nomor Resi (Waybill) secara otomatis.",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Sinkronisasi',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performSyncRequest(orderId);
+                }
+            });
+        }
+
+        function performSyncRequest(orderId) {
+            Swal.fire({
+                title: 'Sedang Sinkronisasi...',
+                text: 'Menghubungi Biteship API...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            fetch('../api/sync_biteship_id.php?order_id=' + orderId)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Berhasil!',
+                            text: data.message + '\nID: ' + data.biteship_id,
+                            icon: 'success',
+                            confirmButtonColor: '#0d59f2'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Gagal Sync',
+                            text: data.message,
+                            icon: 'error',
+                            confirmButtonColor: '#0d59f2'
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Terjadi kesalahan jaringan',
+                        icon: 'error',
+                        confirmButtonColor: '#0d59f2'
+                    });
+                });
         }
     </script>
 </body>

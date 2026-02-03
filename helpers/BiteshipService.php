@@ -92,6 +92,43 @@ class BiteshipService
     }
 
     /**
+     * Cancel Order
+     * @param string $orderId Biteship Order ID
+     * @param string $reason Cancellation Reason
+     * @return array
+     */
+    public function cancelOrder($orderId, $reason): array
+    {
+        // Endpoint: DELETE /v1/orders/{id}
+        $url = $this->baseUrl . "/orders/" . $orderId;
+        // Body: reason (required)
+        return $this->request('DELETE', $url, ['reason' => $reason]);
+    }
+
+    /**
+     * Retrieve Multiple Orders
+     * @param int $limit
+     * @return array
+     */
+    public function retrieveOrders($limit = 50): array
+    {
+        $url = $this->baseUrl . "/orders?limit=" . $limit;
+        return $this->request('GET', $url);
+    }
+
+    /**
+     * Get Single Order Details
+     * @param string $orderId
+     * @return array
+     */
+    public function getOrder($orderId): array
+    {
+        // Endpoint: GET /v1/orders/{id}
+        $url = $this->baseUrl . "/orders/" . $orderId;
+        return $this->request('GET', $url);
+    }
+
+    /**
      * Get Tracking status by Waybill ID and Courier Code
      * @param string $waybillId
      * @param string $courierCode
@@ -127,6 +164,11 @@ class BiteshipService
 
         if ($method === 'POST') {
             curl_setopt($ch, CURLOPT_POST, true);
+            if ($data) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            }
+        } elseif ($method === 'DELETE') {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
             if ($data) {
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
             }

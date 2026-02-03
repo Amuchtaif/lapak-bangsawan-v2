@@ -59,14 +59,14 @@ if (empty($destination_area_id)) {
     exit;
 }
 
-$dest_lat = $order['destination_latitude'] ? (float)$order['destination_latitude'] : null;
-$dest_lng = $order['destination_longitude'] ? (float)$order['destination_longitude'] : null;
+$dest_lat = $order['destination_latitude'] ? (float) $order['destination_latitude'] : null;
+$dest_lng = $order['destination_longitude'] ? (float) $order['destination_longitude'] : null;
 
 // Fallback: If coordinates missing, try to fetch from address
 if (!$dest_lat || !$dest_lng) {
     // 1. Try full address
     $coords = $biteship->getCoordinatesFromArea($order['customer_address']);
-    
+
     // 2. If failed, try extracting text inside parentheses (e.g., "Detail (Kecamatan, Kota, Prov)")
     if (!$coords && preg_match('/\((.*?)\)/', $order['customer_address'], $matches)) {
         $cleanAddr = $matches[1];
@@ -121,12 +121,28 @@ if ($response['success']) {
     $tracking_id = $biteship_data['courier']['waybill_id'] ?? $biteship_data['id'] ?? '';
 
     if ($tracking_id) {
-        // Update order with tracking ID
-        $conn->query("UPDATE orders SET tracking_id = '$tracking_id', status = 'confirmed' WHERE id = $order_id");
+        // DEBUG: Log the entire response to a file to verify the field name
+        file_put_contents('biteship_response_log.txt', print_r($biteship_data, true), FILE_APPEND);
+
+        // Extract Shipping Label URL
+        // We ONLY want the PDF/Image label. Do NOT fallback to tracking links here.
+        $shipping_label_url = $biteship_data['shipping_label_url'] ?? $biteship_data['shipping_label_link'] ?? null;
+
+        $shipping_label_sql = $shipping_label_url ? "'$shipping_label_url'" : "NULL";
+
+        // Get Biteship Order ID
+        $biteship_order_id = $biteship_data['id'] ?? '';
+
+        // Update order with tracking ID and Shipping Label and Biteship ID
+        $updateStmt = $conn->prepare("UPDATE orders SET tracking_id = ?, shipping_label_url = ?, biteship_order_id = ?, status = 'ready_to_ship' WHERE id = ?");
+        $updateStmt->bind_param("sssi", $tracking_id, $shipping_label_url, $biteship_order_id, $order_id);
+        $updateStmt->execute();
+
         echo json_encode([
             'success' => true,
             'tracking_id' => $tracking_id,
-            'message' => 'Pickup request successful'
+            'message' => 'Pickup request successful, Label Generated.',
+            'debug_label' => $shipping_label_url // Return this to frontend too for quick check
         ]);
     } else {
         echo json_encode([

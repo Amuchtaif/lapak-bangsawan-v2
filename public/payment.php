@@ -19,9 +19,12 @@ if ($result->num_rows === 0) {
 
 $order = $result->fetch_assoc();
 
+// Debug output (Temporary)
+// echo "<pre>"; print_r($order); echo "</pre>";
+
 // Access Control Logic
-if ($order['status'] !== 'unpaid' || $order['payment_method'] !== 'transfer') {
-    // If user tries to access payment page for COD or already paid order
+if ($order['status'] !== 'pending' || $order['payment_method'] !== 'transfer') {
+    // Return to home if order doesn't match criteria
     header("Location: " . BASE_URL . "home");
     exit();
 }
