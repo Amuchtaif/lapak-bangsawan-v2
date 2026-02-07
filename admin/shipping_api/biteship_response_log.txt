@@ -808,3 +808,138 @@ Array
     [draft_order_id] => 
     [return_id] => 
 )
+Array
+(
+    [success] => 1
+    [message] => Order successfully created
+    [object] => order
+    [id] => 69834bda8fa932a860410541
+    [shipper] => Array
+        (
+            [name] => Lapak Bangsawan
+            [email] => lapakbangsawan@gmail.com
+            [phone] => 0859110022099
+            [organization] => Personal Account
+        )
+
+    [origin] => Array
+        (
+            [contact_name] => Lapak Bangsawan
+            [contact_phone] => 0859110022099
+            [coordinate] => Array
+                (
+                    [latitude] => -6.7448152867791
+                    [longitude] => 108.53552144352
+                )
+
+            [address] => Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat
+            [note] => -
+            [postal_code] => 45134
+            [collection_method] => pickup
+        )
+
+    [destination] => Array
+        (
+            [contact_name] => Aufar
+            [contact_phone] => 0786756564
+            [address] => asunah (Harjamukti, Cirebon, Jawa Barat. 45141)
+            [note] => -
+            [proof_of_delivery] => Array
+                (
+                    [use] => 
+                    [fee] => 0
+                    [note] => 
+                    [link] => 
+                )
+
+            [cash_on_delivery] => Array
+                (
+                    [id] => 
+                    [amount] => 0
+                    [fee] => 0
+                    [amountCurrency] => IDR
+                    [feeCurrency] => IDR
+                    [note] => 
+                    [type] => 
+                    [status] => 
+                    [payment_status] => pending
+                    [payment_method] => cash
+                )
+
+            [coordinate] => Array
+                (
+                    [latitude] => -6.7415906
+                    [longitude] => 108.5462291
+                )
+
+            [postal_code] => 45143
+        )
+
+    [stops] => Array
+        (
+        )
+
+    [courier] => Array
+        (
+            [tracking_id] => T78KsovomnYMvtkG65KYmlEe
+            [waybill_id] => WYB-1770212314828
+            [company] => grab
+            [name] => 
+            [phone] => 
+            [type] => instant
+            [link] => https://track.biteship.com/T78KsovomnYMvtkG65KYmlEe?environment=development
+            [insurance] => Array
+                (
+                    [amount] => 0
+                    [fee] => 0
+                    [note] => 
+                    [amount_currency] => IDR
+                    [fee_currency] => IDR
+                )
+
+            [routing_code] => ROUTEC123
+        )
+
+    [delivery] => Array
+        (
+            [datetime] => 2026-02-04T20:38+07:00
+            [note] => 
+            [type] => now
+            [distance] => 2
+            [distance_unit] => kilometer
+        )
+
+    [reference_id] => 
+    [items] => Array
+        (
+            [0] => Array
+                (
+                    [name] => Ikan Lele
+                    [description] => Ikan Lele
+                    [category] => others
+                    [sku] => 
+                    [value] => 25000
+                    [quantity] => 1
+                    [length] => 1
+                    [width] => 1
+                    [height] => 1
+                    [weight] => 1000
+                )
+
+        )
+
+    [extra] => Array
+        (
+        )
+
+    [currency] => IDR
+    [tax_lines] => Array
+        (
+        )
+
+    [price] => 10000
+    [note] => 
+    [status] => confirmed
+    [draft_order_id] => 
+    [return_id] => 
+)
