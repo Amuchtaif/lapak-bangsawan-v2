@@ -193,7 +193,7 @@
             totalEl.innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal);
 
             // Fetch dynamic totals from API
-            fetch('api_calculate_total.php', {
+            fetch(BASE_URL + 'public/api_calculate_total.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ items: cart })

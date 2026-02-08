@@ -9,7 +9,35 @@ if (!$input || !isset($input['items'])) {
     exit;
 }
 
-$calculation = calculateCartTotal($input['items']);
+// Enrich items with verified category from database
+$enriched_items = [];
+foreach ($input['items'] as $item) {
+    $pid = intval($item['product_id'] ?? 0);
+    $category = $item['category'] ?? 'Uncategorized';
+    
+    // Fetch real category from database if product_id exists
+    if ($pid > 0) {
+        $stmt = $conn->prepare("SELECT p.price, c.name as category_name 
+                                FROM products p 
+                                LEFT JOIN categories c ON p.category_id = c.id 
+                                WHERE p.id = ?");
+        $stmt->bind_param("i", $pid);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($res->num_rows > 0) {
+            $row = $res->fetch_assoc();
+            $category = $row['category_name'] ?? 'Uncategorized';
+            // Optionally verify price from DB for security
+            $item['price'] = floatval($row['price']);
+        }
+        $stmt->close();
+    }
+    
+    $item['category'] = $category;
+    $enriched_items[] = $item;
+}
+
+$calculation = calculateCartTotal($enriched_items);
 
 // Format rupiah for JS display
 $calculation['subtotal_formatted'] = 'Rp ' . number_format($calculation['subtotal'], 0, ',', '.');

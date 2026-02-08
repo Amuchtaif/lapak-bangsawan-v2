@@ -109,6 +109,13 @@ $order_token = bin2hex(random_bytes(16));
                                 <input type="text" id="area-search-input" required autocomplete="off"
                                     placeholder="Ketik minimal 3 karakter untuk mencari..."
                                     class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">
+                                
+                                <button type="button" id="btn-geolocation"
+                                    class="mt-2 text-sm text-primary font-bold flex items-center gap-1 hover:underline">
+                                    <span class="material-symbols-outlined text-lg">my_location</span>
+                                    Gunakan Lokasi Saya
+                                </button>
+
                                 <input type="hidden" name="destination_area_id" id="destination-area-id">
                                 <input type="hidden" name="destination_area_text" id="destination-area-text">
                                 <input type="hidden" name="dest_lat" id="dest-lat">
@@ -257,7 +264,7 @@ $order_token = bin2hex(random_bytes(16));
         if (subtotalEl) subtotalEl.innerText = formattedSubtotal;
 
         // Fetch dynamic totals for discounts
-        fetch('api_calculate_total.php', {
+        fetch(BASE_URL + 'public/api_calculate_total.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ items: cart })
@@ -586,6 +593,58 @@ $order_token = bin2hex(random_bytes(16));
             const finalTotal = baseTotal + shippingCost;
             totalDisplay.innerText = 'Rp ' + formatter.format(finalTotal);
         }
+
+
+        // Geolocation Logic
+        const btnGeo = document.getElementById('btn-geolocation');
+        btnGeo.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                alert('Browser Anda tidak mendukung Geolocation.');
+                return;
+            }
+
+            btnGeo.innerHTML = '<span class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></span> Mencari lokasi...';
+            btnGeo.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    document.getElementById('dest-lat').value = lat;
+                    document.getElementById('dest-lng').value = lng;
+                    
+                    // Optional: Reverse Geocoding could go here if needed to fill the text input
+                    areaSearchInput.value = "Lokasi Saya (" + lat.toFixed(4) + ", " + lng.toFixed(4) + ")";
+                    document.getElementById('destination-area-text').value = "Pinned Location";
+                    // For area_id, we might leave it empty or set a flag. 
+                    // But check_rates.php needs area_id usually for Biteship fallback. 
+                    // If we have coords, we prioritize coords in our logic.
+                    // However, Biteship might still need an area_id. 
+                    // For now, let's assume we proceed with empty area_id if we have coords, 
+                    // OR we force user to still select area for Biteship accuracy if needed.
+                    // But let's try to just trigger checkRates with what we have.
+                    
+                    checkRates('', lat, lng);
+
+                    btnGeo.innerHTML = '<span class="material-symbols-outlined text-lg">check</span> Lokasi ditemukan';
+                    btnGeo.classList.remove('text-primary');
+                    btnGeo.classList.add('text-green-600');
+                    setTimeout(() => {
+                        btnGeo.innerHTML = '<span class="material-symbols-outlined text-lg">my_location</span> Gunakan Lokasi Saya';
+                        btnGeo.classList.add('text-primary');
+                        btnGeo.classList.remove('text-green-600');
+                        btnGeo.disabled = false;
+                    }, 3000);
+                },
+                (error) => {
+                    console.error(error);
+                    alert('Gagal mengambil lokasi: ' + error.message);
+                    btnGeo.innerHTML = '<span class="material-symbols-outlined text-lg">my_location</span> Gunakan Lokasi Saya';
+                    btnGeo.disabled = false;
+                }
+            );
+        });
 
         // Close search when clicking outside
         document.addEventListener('click', (e) => {
