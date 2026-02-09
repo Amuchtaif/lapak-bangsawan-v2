@@ -5,7 +5,7 @@
 
 // Determine Environment: 'sandbox' or 'production'
 // You can set this via server environment variable or manually here.
-define('BITESHIP_ENV', getenv('BITESHIP_ENV') ?: 'sandbox'); 
+define('BITESHIP_ENV', getenv('BITESHIP_ENV') ?: 'production'); 
 
 // API Keys - Replace with your actual keys
 // It is recommended to use environment variables for keys in production

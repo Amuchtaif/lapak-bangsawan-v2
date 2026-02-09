@@ -130,7 +130,7 @@ $order_token = bin2hex(random_bytes(16));
                             <div>
                                 <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                                     Kode Pos</label>
-                                <input type="text" name="postal_code" id="postal-code" required maxlength="5" pattern="\d{5}"
+                                <input type="text" name="postal_code" id="postal-code" maxlength="5" pattern="\d{5}"
                                     placeholder="Ex: 45132"
                                     oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                     class="w-full md:w-1/3 rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">

@@ -150,21 +150,18 @@ if (!$dest_lat || !$dest_lng) {
     'courier_type' => strtolower($order['courier_type'] ?: 'reg'),     // Fallback & Lowercase
     'delivery_type' => 'now', // or 'scheduled'
     'order_note' => $order['order_notes'] ?? '',
+    'reference_id' => (string) $order_id, // Important for COD Reconciliation
     'weight' => $total_weight_grams,
     'items' => $items
 ];
 
 // Add COD Parameters if Payment Method is 'cod'
-// Ensure case-insensitivity and trim
-$payment_method_normalized = strtolower(trim($order['payment_method'] ?? ''));
-
-// Add COD Parameters if Payment Method is 'cod'
-// Ensure case-insensitivity and trim
 $payment_method_normalized = strtolower(trim($order['payment_method'] ?? ''));
 
 if ($payment_method_normalized === 'cod') {
-    // Standard Biteship V1: cash_on_delivery is an integer at the root
-    $payload['cash_on_delivery'] = (int) $order['total_amount'];
+    // Format Updated based on specific User JSON Example (Flat Payload Style)
+    $payload['destination_cash_on_delivery'] = (int) $order['total_amount'];
+    $payload['destination_cash_on_delivery_type'] = 'cash'; // 'cash' or '7_days' etc. usually 'cash' for direct payment
 }
 
 // DEBUG: Log the payload request

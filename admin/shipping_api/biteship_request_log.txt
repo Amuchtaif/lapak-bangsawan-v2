@@ -105,3 +105,233 @@ Array
     [cod_amount] => 32000
     [cod_type] => cash
 )
+Array
+(
+    [shipper_contact_name] => Lapak Bangsawan
+    [shipper_contact_phone] => 0859110022099
+    [shipper_contact_email] => lapakbangsawan@gmail.com
+    [origin_contact_name] => Lapak Bangsawan
+    [origin_contact_phone] => 0859110022099
+    [origin_address] => Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat
+    [origin_area_id] => IDNP9IDNC105IDND171IDZ45171
+    [origin_latitude] => -6.7448152867791
+    [origin_longitude] => 108.53552144352
+    [origin_coordinate] => Array
+        (
+            [latitude] => -6.7448152867791
+            [longitude] => 108.53552144352
+        )
+
+    [destination_contact_name] => Andi Muchtaif
+    [destination_contact_phone] => 089651804382
+    [destination_address] => Jl Kalitanjung No52b Kota Cirebon (Pinned Location) [Kode Pos: ]
+    [destination_postal_code] => 
+    [destination_area_id] => IDNP9IDNC105IDND151IDZ45131
+    [destination_latitude] => -6.7458196
+    [destination_longitude] => 108.535388
+    [destination_coordinate] => Array
+        (
+            [latitude] => -6.7458196
+            [longitude] => 108.535388
+        )
+
+    [courier_company] => jne
+    [courier_type] => reg
+    [delivery_type] => now
+    [order_note] => 
+    [weight] => 1000
+    [items] => Array
+        (
+            [0] => Array
+                (
+                    [name] => Ikan Lele
+                    [description] => Ikan Lele
+                    [value] => 25000
+                    [quantity] => 1
+                    [weight] => 1000
+                )
+
+        )
+
+    [cash_on_delivery] => Array
+        (
+            [amount] => 34000
+            [type] => cash
+            [note] => COD Order #1
+        )
+
+)
+Array
+(
+    [shipper_contact_name] => Lapak Bangsawan
+    [shipper_contact_phone] => 0859110022099
+    [shipper_contact_email] => lapakbangsawan@gmail.com
+    [origin_contact_name] => Lapak Bangsawan
+    [origin_contact_phone] => 0859110022099
+    [origin_address] => Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat
+    [origin_area_id] => IDNP9IDNC105IDND171IDZ45171
+    [origin_latitude] => -6.7448152867791
+    [origin_longitude] => 108.53552144352
+    [origin_coordinate] => Array
+        (
+            [latitude] => -6.7448152867791
+            [longitude] => 108.53552144352
+        )
+
+    [destination_contact_name] => Andi Muchtaif
+    [destination_contact_phone] => 089651804382
+    [destination_address] => Jl Kalitanjung No52b Kota Cirebon (Pinned Location) [Kode Pos: ]
+    [destination_postal_code] => 
+    [destination_area_id] => IDNP9IDNC105IDND151IDZ45131
+    [destination_latitude] => -6.7386823
+    [destination_longitude] => 108.5344551
+    [destination_coordinate] => Array
+        (
+            [latitude] => -6.7386823
+            [longitude] => 108.5344551
+        )
+
+    [courier_company] => grab
+    [courier_type] => instant
+    [delivery_type] => now
+    [order_note] => 
+    [reference_id] => 2
+    [weight] => 1000
+    [items] => Array
+        (
+            [0] => Array
+                (
+                    [name] => Daging Ayam Paha
+                    [description] => Daging Ayam Paha
+                    [value] => 32000
+                    [quantity] => 1
+                    [weight] => 1000
+                )
+
+        )
+
+    [cash_on_delivery] => Array
+        (
+            [id] => 2
+            [amount] => 42000
+            [type] => cash
+            [note] => Tagihan COD # 2
+        )
+
+)
+Array
+(
+    [shipper_contact_name] => Lapak Bangsawan
+    [shipper_contact_phone] => 0859110022099
+    [shipper_contact_email] => lapakbangsawan@gmail.com
+    [origin_contact_name] => Lapak Bangsawan
+    [origin_contact_phone] => 0859110022099
+    [origin_address] => Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat
+    [origin_area_id] => IDNP9IDNC105IDND171IDZ45171
+    [origin_latitude] => -6.7448152867791
+    [origin_longitude] => 108.53552144352
+    [origin_coordinate] => Array
+        (
+            [latitude] => -6.7448152867791
+            [longitude] => 108.53552144352
+        )
+
+    [destination_contact_name] => Andi Muchtaif
+    [destination_contact_phone] => 089651804382
+    [destination_address] => Jl Kalitanjung No52b Kota Cirebon (Pinned Location) [Kode Pos: ]
+    [destination_postal_code] => 
+    [destination_area_id] => IDNP9IDNC105IDND151IDZ45131
+    [destination_latitude] => -6.7386823
+    [destination_longitude] => 108.5344551
+    [destination_coordinate] => Array
+        (
+            [latitude] => -6.7386823
+            [longitude] => 108.5344551
+        )
+
+    [courier_company] => jne
+    [courier_type] => reg
+    [delivery_type] => now
+    [order_note] => 
+    [reference_id] => 3
+    [weight] => 1000
+    [items] => Array
+        (
+            [0] => Array
+                (
+                    [name] => Fillet Paha Kulit
+                    [description] => Fillet Paha Kulit
+                    [value] => 44000
+                    [quantity] => 1
+                    [weight] => 1000
+                )
+
+        )
+
+    [cash_on_delivery] => Array
+        (
+            [id] => 3
+            [amount] => 53000
+            [type] => cash
+            [note] => Tagihan COD # 3
+        )
+
+)
+Array
+(
+    [shipper_contact_name] => Lapak Bangsawan
+    [shipper_contact_phone] => 0859110022099
+    [shipper_contact_email] => lapakbangsawan@gmail.com
+    [origin_contact_name] => Lapak Bangsawan
+    [origin_contact_phone] => 0859110022099
+    [origin_address] => Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat
+    [origin_area_id] => IDNP9IDNC105IDND171IDZ45171
+    [origin_latitude] => -6.7448152867791
+    [origin_longitude] => 108.53552144352
+    [origin_coordinate] => Array
+        (
+            [latitude] => -6.7448152867791
+            [longitude] => 108.53552144352
+        )
+
+    [destination_contact_name] => Andi Muchtaif
+    [destination_contact_phone] => 089651804382
+    [destination_address] => Jl Kalitanjung No52b Kota Cirebon (Pinned Location) [Kode Pos: ]
+    [destination_postal_code] => 
+    [destination_area_id] => IDNP9IDNC105IDND151IDZ45131
+    [destination_latitude] => -6.7386823
+    [destination_longitude] => 108.5344551
+    [destination_coordinate] => Array
+        (
+            [latitude] => -6.7386823
+            [longitude] => 108.5344551
+        )
+
+    [courier_company] => gojek
+    [courier_type] => instant
+    [delivery_type] => now
+    [order_note] => 
+    [reference_id] => 4
+    [weight] => 1000
+    [items] => Array
+        (
+            [0] => Array
+                (
+                    [name] => Ikan Nila
+                    [description] => Ikan Nila
+                    [value] => 33000
+                    [quantity] => 1
+                    [weight] => 1000
+                )
+
+        )
+
+    [cash_on_delivery] => Array
+        (
+            [id] => 4
+            [amount] => 48500
+            [type] => cash
+            [note] => Tagihan COD # 4
+        )
+
+)
