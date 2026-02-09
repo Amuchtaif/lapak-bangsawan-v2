@@ -48,8 +48,10 @@ $products = $conn->query($query);
 $best_seller_query = "
     SELECT p.*, c.name as category_name, SUM(oi.weight) as total_sold 
     FROM order_items oi 
+    JOIN orders o ON oi.order_id = o.id
     JOIN products p ON oi.product_name = p.name 
     LEFT JOIN categories c ON p.category_id = c.id
+    WHERE o.status IN ('completed', 'delivered')
     GROUP BY p.id 
     ORDER BY total_sold DESC 
     LIMIT 6";

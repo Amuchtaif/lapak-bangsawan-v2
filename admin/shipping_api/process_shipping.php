@@ -150,7 +150,7 @@ if (!$dest_lat || !$dest_lng) {
     'courier_type' => strtolower($order['courier_type'] ?: 'reg'),     // Fallback & Lowercase
     'delivery_type' => 'now', // or 'scheduled'
     'order_note' => $order['order_notes'] ?? '',
-    'reference_id' => (string) $order_id, // Important for COD Reconciliation
+    'reference_id' => (string) $order_id . '-' . time(), // Append time to allow retries
     'weight' => $total_weight_grams,
     'items' => $items
 ];
@@ -161,11 +161,11 @@ $payment_method_normalized = strtolower(trim($order['payment_method'] ?? ''));
 if ($payment_method_normalized === 'cod') {
     // Format Updated based on specific User JSON Example (Flat Payload Style)
     $payload['destination_cash_on_delivery'] = (int) $order['total_amount'];
-    $payload['destination_cash_on_delivery_type'] = 'cash'; // 'cash' or '7_days' etc. usually 'cash' for direct payment
+    $payload['destination_cash_on_delivery_type'] = '3_days'; // Default is 7_days if not specified
 }
 
 // DEBUG: Log the payload request
-file_put_contents('biteship_request_log.txt', print_r($payload, true), FILE_APPEND);
+@file_put_contents('biteship_request_log.txt', print_r($payload, true), FILE_APPEND);
 
 // 4. Call Biteship API
 $response = $biteship->createOrder($payload);
@@ -176,7 +176,7 @@ if ($response['success']) {
 
     if ($tracking_id) {
         // DEBUG: Log the entire response to a file to verify the field name
-        file_put_contents('biteship_response_log.txt', print_r($biteship_data, true), FILE_APPEND);
+        @file_put_contents('biteship_response_log.txt', print_r($biteship_data, true), FILE_APPEND);
 
         // Extract Shipping Label URL
         // We ONLY want the PDF/Image label. Do NOT fallback to tracking links here.

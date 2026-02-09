@@ -281,14 +281,14 @@ class BiteshipService
         
         if (!$data || !isset($data['address'])) {
             // Debug: Log if OSM fails
-            file_put_contents('osm_debug.log', "OSM Failed for $lat,$lng: " . $res . PHP_EOL, FILE_APPEND);
+            @file_put_contents('osm_debug.log', "OSM Failed for $lat,$lng: " . $res . PHP_EOL, FILE_APPEND);
             return null;
         }
 
         $addr = $data['address'];
         
         // Debug: Log OSM Result
-        file_put_contents('osm_debug.log', "OSM Result: " . print_r($addr, true) . PHP_EOL, FILE_APPEND);
+        @file_put_contents('osm_debug.log', "OSM Result: " . print_r($addr, true) . PHP_EOL, FILE_APPEND);
         
         // Refined Mapping for Indonesia
         $kelurahan = $addr['village'] ?? $addr['suburb'] ?? $addr['hamlet'] ?? '';

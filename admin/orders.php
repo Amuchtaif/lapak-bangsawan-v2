@@ -270,7 +270,7 @@ $orders_result = $conn->query($orders_query);
                                     $pm = isset($order_data['payment_method']) ? $order_data['payment_method'] : 'transfer';
                                     ?>
 
-                                    <?php if ($pm == 'cod'): ?>
+                                    <?php if (strtolower($pm) == 'cod'): ?>
                                         <!-- COD View -->
                                         <div class="flex flex-col items-center justify-center py-6 text-center h-full">
                                             <div
@@ -344,21 +344,41 @@ $orders_result = $conn->query($orders_query);
 
                                 <?php if (empty($order_data['tracking_id'])): ?>
                                     <div id="fulfillment-pending">
-                                        <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
-                                            Order ini siap diproses untuk pengiriman via kurir pilihan. Klik tombol di bawah
-                                            untuk Booking Kurir & Pickup Paket.
-                                        </p>
-                                        <button onclick="processShipping(<?php echo $order_data['id']; ?>)"
-                                            id="btn-process-shipping"
-                                            class="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/30 flex justify-center items-center gap-2">
-                                            <span class="material-icons-round text-lg">local_shipping</span>
-                                            Request Pickup
-                                            <span id="shipping-spinner"
-                                                class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                                        </button>
-                                        <p class="text-[10px] text-slate-400 mt-3 text-center italic">*Data akan dikirim ke API
-                                            Biteship</p>
-                                    </div>
+                                        <?php if (empty($order_data['courier_company']) || in_array(strtolower($order_data['courier_company']), ['local', 'internal', 'pickup'])): ?>
+                                            <!-- Local Courier View -->
+                                            <div
+                                                class="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg border border-blue-100 dark:border-blue-900/30 mb-4">
+                                                <p class="text-sm font-bold text-blue-700 dark:text-blue-400 flex items-center gap-2">
+                                                    <span class="material-icons-round text-base">local_shipping</span>
+                                                    Kurir Internal / Toko
+                                                </p>
+                                                <p class="text-xs text-blue-600 dark:text-blue-500 mt-1">
+                                                    Pengiriman dilakukan oleh kurir toko. Tidak perlu request pickup ke logistik
+                                                    eksternal.
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="w-full bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 py-3 rounded-lg font-medium flex justify-center items-center gap-3 border border-dashed border-slate-300 dark:border-slate-600 select-none cursor-default">
+                                                <span class="material-icons-round text-lg">check_circle</span>
+                                                Pickup Otomatis / Manual
+                                            </div>
+                                        <?php else: ?>
+                                            <!-- External Courier View -->
+                                            <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                                                Order ini siap diproses untuk pengiriman via kurir pilihan. Klik tombol di bawah
+                                                untuk Booking Kurir & Pickup Paket.
+                                            </p>
+                                            <button onclick="processShipping(<?php echo $order_data['id']; ?>)"
+                                                id="btn-process-shipping"
+                                                class="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/30 flex justify-center items-center gap-2">
+                                                <span class="material-icons-round text-lg">local_shipping</span>
+                                                Request Pickup
+                                                <span id="shipping-spinner"
+                                                    class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                                            </button>
+                                            <p class="text-[10px] text-slate-400 mt-3 text-center italic">*Data akan dikirim ke API
+                                                Biteship</p>
+                                        <?php endif; ?>
                                 <?php else: ?>
                                     <div class="text-center py-2">
                                         <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Nomor
@@ -419,8 +439,7 @@ $orders_result = $conn->query($orders_query);
                             </div>
 
                             <!-- Order Status Update -->
-                            <div
-                                class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm h-full flex flex-col">
+                            <div class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm h-full flex flex-col">
                                 <h3 class="font-bold text-slate-900 dark:text-white mb-4">Status Pesanan</h3>
                                 <form method="POST">
                                     <input type="hidden" name="order_id" value="<?php echo $order_data['id']; ?>">
@@ -428,14 +447,12 @@ $orders_result = $conn->query($orders_query);
                                     <div class="custom-select-wrapper relative mb-4">
                                         <select name="status" class="hidden">
                                             <option value="pending" <?php echo $order_data['status'] == 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                            <option value="ready_to_ship" <?php echo $order_data['status'] == 'ready_to_ship' ? 'selected' : ''; ?>>Siap
-                                                Dikirim</option>
+                                            <option value="ready_to_ship" <?php echo $order_data['status'] == 'ready_to_ship' ? 'selected' : ''; ?>>Siap Dikirim</option>
                                             <option value="shipped" <?php echo $order_data['status'] == 'shipped' ? 'selected' : ''; ?>>Dalam Pengiriman</option>
                                             <option value="completed" <?php echo $order_data['status'] == 'completed' ? 'selected' : ''; ?>>Selesai</option>
                                             <option value="cancelled" <?php echo $order_data['status'] == 'cancelled' ? 'selected' : ''; ?>>Dibatalkan</option>
                                         </select>
-                                        <button type="button"
-                                            class="custom-select-trigger w-full flex items-center justify-between rounded-lg border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 text-sm focus:ring-primary focus:border-primary transition-all text-left shadow-sm">
+                                        <button type="button" class="custom-select-trigger w-full flex items-center justify-between rounded-lg border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 text-sm focus:ring-primary focus:border-primary transition-all text-left shadow-sm">
                                             <span class="selected-label">
                                                 <?php
                                                 switch ($order_data['status']) {
@@ -460,28 +477,19 @@ $orders_result = $conn->query($orders_query);
                                                 }
                                                 ?>
                                             </span>
-                                            <span
-                                                class="material-icons-round text-slate-400 selected-icon transition-transform">expand_more</span>
+                                            <span class="material-icons-round text-slate-400 selected-icon transition-transform">expand_more</span>
                                         </button>
-                                        <div
-                                            class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
+                                        <div class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
                                             <div class="p-1">
-                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'pending' ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
-                                                    data-value="pending">Pending</div>
-                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'ready_to_ship' ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
-                                                    data-value="ready_to_ship">Siap Dikirim / Menunggu Kurir</div>
-                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'shipped' ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
-                                                    data-value="shipped">Dalam Pengiriman</div>
-                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo ($order_data['status'] == 'completed' || $order_data['status'] == 'delivered') ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
-                                                    data-value="completed">Selesai / Diterima</div>
-                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'cancelled' ? 'bg-primary/10 text-primary font-bold' : ''; ?>"
-                                                    data-value="cancelled">Dibatalkan</div>
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'pending' ? 'bg-primary/10 text-primary font-bold' : ''; ?>" data-value="pending">Pending</div>
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'ready_to_ship' ? 'bg-primary/10 text-primary font-bold' : ''; ?>" data-value="ready_to_ship">Siap Dikirim / Menunggu Kurir</div>
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'shipped' ? 'bg-primary/10 text-primary font-bold' : ''; ?>" data-value="shipped">Dalam Pengiriman</div>
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo ($order_data['status'] == 'completed' || $order_data['status'] == 'delivered') ? 'bg-primary/10 text-primary font-bold' : ''; ?>" data-value="completed">Selesai / Diterima</div>
+                                                <div class="custom-option px-3 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?php echo $order_data['status'] == 'cancelled' ? 'bg-primary/10 text-primary font-bold' : ''; ?>" data-value="cancelled">Dibatalkan</div>
                                             </div>
                                         </div>
                                     </div>
-                                    <button type="submit"
-                                        class="w-full bg-primary text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors shadow-sm">Perbarui
-                                        Status</button>
+                                    <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors shadow-sm">Perbarui Status</button>
                                 </form>
                             </div>
                         </div>
@@ -500,7 +508,7 @@ $orders_result = $conn->query($orders_query);
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                                        <?php while ($item = mysqli_fetch_assoc($items_res)): ?>
+                                        <?php $product_subtotal = 0; while ($item = mysqli_fetch_assoc($items_res)): $product_subtotal += $item['subtotal']; ?>
                                             <tr>
                                                 <td class="px-6 py-4">
                                                     <div class="flex items-center gap-3 min-w-[200px]">
@@ -524,6 +532,15 @@ $orders_result = $conn->query($orders_query);
                                                 </td>
                                             </tr>
                                         <?php endwhile; ?>
+                                        <!-- Ongkos Kirim Row -->
+                                        <tr class="bg-white dark:bg-surface-dark border-t border-b border-slate-200 dark:border-slate-800">
+                                            <td colspan="3" class="px-6 py-4 text-right font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                                                Ongkos Kirim
+                                            </td>
+                                            <td class="px-6 py-4 text-right font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                                                Rp <?php echo number_format($order_data['total_amount'] - $product_subtotal, 0, ',', '.'); ?>
+                                            </td>
+                                        </tr>
                                         <tr class="bg-slate-50 dark:bg-slate-800/20">
                                             <td colspan="3"
                                                 class="px-6 py-4 text-right font-bold text-slate-900 dark:text-white whitespace-nowrap">
@@ -556,29 +573,29 @@ $orders_result = $conn->query($orders_query);
                         </a>
                     </div>
 
+                    <!-- Notification Area -->
+                    <?php if (isset($_SESSION['status_msg'])): ?>
+                        <div
+                            class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                            <span
+                                class="material-icons-round <?php echo $_SESSION['status_type'] == 'success' ? 'text-green-500' : 'text-red-500'; ?>">
+                                <?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?>
+                            </span>
+                            <div>
+                                <h3 class="font-medium text-slate-900 dark:text-white">
+                                    <?php echo $_SESSION['status_type'] == 'success' ? 'Berhasil' : 'Gagal'; ?>
+                                </h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">
+                                    <?php echo $_SESSION['status_msg']; ?>
+                                </p>
+                            </div>
+                        </div>
+                        <?php unset($_SESSION['status_msg']);
+                        unset($_SESSION['status_type']); ?>
+                    <?php endif; ?>
+
                     <div
                         class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 mb-6">
-
-                        <!-- Notification Area -->
-                        <?php if (isset($_SESSION['status_msg'])): ?>
-                            <div
-                                class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
-                                <span
-                                    class="material-icons-round <?php echo $_SESSION['status_type'] == 'success' ? 'text-green-500' : 'text-red-500'; ?>">
-                                    <?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?>
-                                </span>
-                                <div>
-                                    <h3 class="font-medium text-slate-900 dark:text-white">
-                                        <?php echo $_SESSION['status_type'] == 'success' ? 'Berhasil' : 'Gagal'; ?>
-                                    </h3>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400">
-                                        <?php echo $_SESSION['status_msg']; ?>
-                                    </p>
-                                </div>
-                            </div>
-                            <?php unset($_SESSION['status_msg']);
-                            unset($_SESSION['status_type']); ?>
-                        <?php endif; ?>
 
                         <div class="mb-8 w-full">
                             <div class="overflow-x-auto w-full">

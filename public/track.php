@@ -160,8 +160,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || ($order_number && $phone)) {
                                     </div>
                                 </div>
 
+                                <!-- Courier Info (Local) -->
+                                <?php if (empty($order['courier_company']) || in_array(strtolower($order['courier_company']), ['local', 'internal', 'pickup'])): ?>
+                                    <div class="relative">
+                                        <div
+                                            class="absolute -left-[21px] top-1 rounded-full bg-blue-500 border-4 border-white dark:border-slate-900 w-3.5 h-3.5">
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span
+                                                class="text-sm font-bold text-slate-900 dark:text-white uppercase">Kurir
+                                                Toko / Internal</span>
+                                            <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                                Pengiriman ditangani langsung oleh tim Lapak Bangsawan.
+                                            </p>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
                                 <!-- Loading State for External Tracking -->
-                                <?php if ($order['tracking_id']): ?>
+                                <?php if ($order['tracking_id'] && !empty($order['courier_company']) && !in_array(strtolower($order['courier_company']), ['local', 'internal', 'pickup'])): ?>
                                     <div id="loading-tracking" class="relative">
                                         <div
                                             class="absolute -left-[21px] top-1 rounded-full bg-slate-200 dark:bg-slate-700 border-4 border-white dark:border-slate-900 w-3.5 h-3.5 animate-pulse">
@@ -175,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || ($order_number && $phone)) {
                             </div>
                         </div>
 
-                        <?php if ($order['tracking_id']): ?>
+                        <?php if ($order['tracking_id'] && !empty($order['courier_company']) && !in_array(strtolower($order['courier_company']), ['local', 'internal', 'pickup'])): ?>
                             <script>
                                 document.addEventListener('DOMContentLoaded', function () {
                                     const orderNo = '<?= $order['order_number'] ?>'; // Must use Order Number

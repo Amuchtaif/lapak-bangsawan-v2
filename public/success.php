@@ -93,17 +93,56 @@ $items_q = $conn->query("SELECT product_name, weight, subtotal FROM order_items 
         <p class="text-slate-500 text-sm mb-6">Terima kasih telah berbelanja di Lapak Bangsawan.</p>
 
         <!-- Order Number Highlight -->
-        <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800 mb-6">
+        <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800 mb-6 relative group cursor-pointer transition-all hover:bg-blue-100 dark:hover:bg-blue-900/30"
+            onclick="copyOrderNumber('<?= $order_number ?>')">
             <p class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">Nomor Order
                 Anda</p>
-            <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight select-all text-primary">
-                <?= $order_number ?>
-            </h2>
-            <p class="text-[10px] text-slate-400 mt-2 italic flex items-center justify-center gap-1">
-                <span class="material-icons-round text-xs">info</span>
-                Simpan nomor ini untuk melacak status pesanan.
+            <div class="flex items-center justify-center gap-2">
+                <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight text-primary">
+                    <?= $order_number ?>
+                </h2>
+                <span class="material-icons-round text-slate-400 group-hover:text-primary transition-colors text-xl">content_copy</span>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-2 italic flex items-center justify-center gap-1" id="copy-feedback">
+                <span class="material-icons-round text-xs">touch_app</span>
+                Ketuk untuk menyalin
             </p>
         </div>
+
+        <script>
+            function copyOrderNumber(text) {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        const feedback = document.getElementById('copy-feedback');
+                        feedback.innerHTML = '<span class="material-icons-round text-xs text-green-500">check_circle</span> <span class="text-green-500 font-bold">Disalin!</span>';
+                        setTimeout(() => {
+                            feedback.innerHTML = '<span class="material-icons-round text-xs">touch_app</span> Ketuk untuk menyalin';
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy: ', err);
+                        alert('Gagal menyalin. Silakan salin manual.');
+                    });
+                } else {
+                    // Fallback
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        const feedback = document.getElementById('copy-feedback');
+                        feedback.innerHTML = '<span class="material-icons-round text-xs text-green-500">check_circle</span> <span class="text-green-500 font-bold">Disalin!</span>';
+                        setTimeout(() => {
+                            feedback.innerHTML = '<span class="material-icons-round text-xs">touch_app</span> Ketuk untuk menyalin';
+                        }, 2000);
+                    } catch (err) {
+                        console.error('Fallback verify failed', err);
+                        alert('Gagal menyalin manual.');
+                    }
+                    document.body.removeChild(textArea);
+                }
+            }
+        </script>
 
         <!-- Order Summary -->
         <div class="text-left mb-8">
