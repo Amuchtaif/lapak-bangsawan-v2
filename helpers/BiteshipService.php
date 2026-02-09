@@ -161,6 +161,7 @@ class BiteshipService
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Optional: if local issues with SSL
 
         if ($method === 'POST') {
             curl_setopt($ch, CURLOPT_POST, true);
@@ -172,6 +173,9 @@ class BiteshipService
             if ($data) {
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
             }
+        } elseif ($method === 'GET') {
+            // GET params usually in URL, but sometimes body? No, standard is URL.
+            // Biteship might adhere to standard.
         }
 
         $response = curl_exec($ch);
@@ -189,7 +193,28 @@ class BiteshipService
 
         $decoded = json_decode($response, true);
 
+        // Biteship Success usually means 200/201
+        // But the response body also usually contains 'success': true/false or 'options' etc
         if ($httpCode >= 200 && $httpCode < 300) {
+            // Sometimes Biteship returns error inside 200 OK? Let's assume standard REST.
+            // But check if decoded is valid
+            if($decoded === null) {
+                 return [
+                    'success' => false,
+                    'message' => 'Invalid JSON Response',
+                    'raw' => $response
+                ];
+            }
+            
+            // If API returns { "success": false, "error": "..." } even on 200
+            if (isset($decoded['success']) && $decoded['success'] === false) {
+                 return [
+                    'success' => false,
+                    'message' => $decoded['error'] ?? 'API Logical Error',
+                    'raw' => $decoded
+                ];
+            }
+
             return [
                 'success' => true,
                 'data' => $decoded
@@ -198,7 +223,7 @@ class BiteshipService
             return [
                 'success' => false,
                 'status_code' => $httpCode,
-                'message' => $decoded['error'] ?? 'Unknown API Error',
+                'message' => $decoded['error'] ?? $decoded['message'] ?? 'Unknown API Error',
                 'raw' => $decoded
             ];
         }
@@ -227,6 +252,86 @@ class BiteshipService
                 'latitude' => (float) $data[0]['lat'],
                 'longitude' => (float) $data[0]['lon']
             ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Attempt to find Biteship Area ID from Coordinates (Reverse Geocoding)
+     * @param float $lat
+     * @param float $lng
+     * @return string|null
+     */
+    public function retrieveAreaIdFromCoordinates($lat, $lng): ?string
+    {
+        // 1. Reverse Geocode via OSM
+        // Use zoom=14 to get District/City level focus, or 18 for full address
+        $url = "https://nominatim.openstreetmap.org/reverse?format=json&lat={$lat}&lon={$lng}&zoom=18&addressdetails=1";
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'LapakBangsawan/1.0 (contact@lapakbangsawan.com)');
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Increase timeout
+        $res = curl_exec($ch);
+        curl_close($ch);
+
+        $data = json_decode($res, true);
+        
+        if (!$data || !isset($data['address'])) {
+            // Debug: Log if OSM fails
+            file_put_contents('osm_debug.log', "OSM Failed for $lat,$lng: " . $res . PHP_EOL, FILE_APPEND);
+            return null;
+        }
+
+        $addr = $data['address'];
+        
+        // Debug: Log OSM Result
+        file_put_contents('osm_debug.log', "OSM Result: " . print_r($addr, true) . PHP_EOL, FILE_APPEND);
+        
+        // Refined Mapping for Indonesia
+        $kelurahan = $addr['village'] ?? $addr['suburb'] ?? $addr['hamlet'] ?? '';
+        $kecamatan = $addr['city_district'] ?? $addr['district'] ?? '';
+        $kota = $addr['city'] ?? $addr['town'] ?? $addr['municipality'] ?? $addr['regency'] ?? $addr['county'] ?? '';
+        
+        $country = $addr['country_code'] ?? 'id';
+        if ($country !== 'id') return null; // Only ID supported
+
+        // STRATEGY 1: Kecamatan + Kota (Most Reliable for Biteship)
+        // Example: "Pasar Minggu, Jakarta Selatan"
+        if ($kecamatan && $kota) {
+             $query = "$kecamatan, $kota";
+             $res = $this->searchArea($query);
+             if ($res['success'] && !empty($res['data']['areas'])) {
+                 return $res['data']['areas'][0]['id'];
+             }
+        }
+        
+        // STRATEGY 2: Kelurahan + Kota
+        if ($kelurahan && $kota) {
+             $query = "$kelurahan, $kota";
+             $res = $this->searchArea($query);
+             if ($res['success'] && !empty($res['data']['areas'])) {
+                 return $res['data']['areas'][0]['id'];
+             }
+        }
+
+        // STRATEGY 3: Kelurahan + Kecamatan
+        if ($kelurahan && $kecamatan) {
+             $query = "$kelurahan, $kecamatan";
+             $res = $this->searchArea($query);
+             if ($res['success'] && !empty($res['data']['areas'])) {
+                 return $res['data']['areas'][0]['id'];
+             }
+        }
+        
+        // STRATEGY 4: Just Kecamatan (May return multiple, take first)
+        if ($kecamatan) {
+             $res = $this->searchArea($kecamatan);
+             if ($res['success'] && !empty($res['data']['areas'])) {
+                 return $res['data']['areas'][0]['id'];
+             }
         }
 
         return null;

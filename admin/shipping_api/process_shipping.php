@@ -55,8 +55,42 @@ $biteship = new BiteshipService();
 $destination_area_id = $order['destination_area_id'] ?? '';
 
 if (empty($destination_area_id)) {
-    echo json_encode(['success' => false, 'message' => 'Destination Area ID is missing for this order.']);
-    exit;
+    // Fallback: Try to find Area ID using Postal Code or Address
+    $search_query = '';
+    
+    // 1. Try extracting Postal Code
+    if (preg_match('/\[Kode Pos: (\d+)\]/', $order['customer_address'], $matches)) {
+        $search_query = $matches[1];
+    } 
+    // 2. Try cleaning address (take text inside parentheses if exists, e.g. Kecamatan/Kota)
+    elseif (preg_match('/\((.*?)\)/', $order['customer_address'], $matches)) {
+        $search_query = $matches[1];
+    }
+    
+    // 3. Search using Query (Postal Code or Address Text)
+    if ($search_query && empty($destination_area_id)) {
+        $area_result = $biteship->searchArea($search_query);
+        if ($area_result['success'] && !empty($area_result['data']['areas'])) {
+            $destination_area_id = $area_result['data']['areas'][0]['id'];
+            $conn->query("UPDATE orders SET destination_area_id = '$destination_area_id' WHERE id = $order_id");
+        }
+    }
+
+    // 4. Fallback: Use Coordinates (Reverse Geocoding)
+    // If ID is STILL empty, try using lat/long
+    if (empty($destination_area_id) && $order['destination_latitude'] && $order['destination_longitude']) {
+        $foundAreaId = $biteship->retrieveAreaIdFromCoordinates($order['destination_latitude'], $order['destination_longitude']);
+        if ($foundAreaId) {
+             $destination_area_id = $foundAreaId;
+             $conn->query("UPDATE orders SET destination_area_id = '$destination_area_id' WHERE id = $order_id");
+        }
+    }
+    
+    // If still empty, then fail
+    if (empty($destination_area_id)) {
+        echo json_encode(['success' => false, 'message' => 'Destination Area ID is missing and auto-search failed. Please update address with a valid area.']);
+        exit;
+    }
 }
 
 $dest_lat = $order['destination_latitude'] ? (float) $order['destination_latitude'] : null;
@@ -81,27 +115,34 @@ if (!$dest_lat || !$dest_lng) {
     }
 }
 
-$payload = [
-    'shipper_contact_name' => 'Lapak Bangsawan',
-    'shipper_contact_phone' => '0859110022099',
-    'shipper_contact_email' => 'lapakbangsawan@gmail.com',
-    'origin_contact_name' => 'Lapak Bangsawan',
-    'origin_contact_phone' => '0859110022099',
-    'origin_address' => 'Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat',
-    'origin_area_id' => BITESHIP_ORIGIN_AREA_ID,
-    'origin_latitude' => BITESHIP_ORIGIN_LAT,
-    'origin_longitude' => BITESHIP_ORIGIN_LNG,
-    'origin_coordinate' => [
-        'latitude' => BITESHIP_ORIGIN_LAT,
-        'longitude' => BITESHIP_ORIGIN_LNG
-    ],
-    'destination_contact_name' => $order['customer_name'],
-    'destination_contact_phone' => $order['customer_phone'],
-    'destination_address' => $order['customer_address'],
-    'destination_area_id' => $destination_area_id,
-    'destination_latitude' => $dest_lat,
-    'destination_longitude' => $dest_lng,
-    'destination_coordinate' => [
+    // Extract Postal Code if present in address
+    $postal_code = '';
+    if (preg_match('/\[Kode Pos: (\d+)\]/', $order['customer_address'], $matches)) {
+        $postal_code = $matches[1];
+    }
+
+    $payload = [
+        'shipper_contact_name' => 'Lapak Bangsawan',
+        'shipper_contact_phone' => '0859110022099',
+        'shipper_contact_email' => 'lapakbangsawan@gmail.com',
+        'origin_contact_name' => 'Lapak Bangsawan',
+        'origin_contact_phone' => '0859110022099',
+        'origin_address' => 'Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat',
+        'origin_area_id' => BITESHIP_ORIGIN_AREA_ID,
+        'origin_latitude' => BITESHIP_ORIGIN_LAT,
+        'origin_longitude' => BITESHIP_ORIGIN_LNG,
+        'origin_coordinate' => [
+            'latitude' => BITESHIP_ORIGIN_LAT,
+            'longitude' => BITESHIP_ORIGIN_LNG
+        ],
+        'destination_contact_name' => $order['customer_name'],
+        'destination_contact_phone' => $order['customer_phone'],
+        'destination_address' => $order['customer_address'],
+        'destination_postal_code' => $postal_code, // Added Postal Code
+        'destination_area_id' => $destination_area_id,
+        'destination_latitude' => $dest_lat,
+        'destination_longitude' => $dest_lng,
+        'destination_coordinate' => [
         'latitude' => $dest_lat,
         'longitude' => $dest_lng
     ],
@@ -112,6 +153,22 @@ $payload = [
     'weight' => $total_weight_grams,
     'items' => $items
 ];
+
+// Add COD Parameters if Payment Method is 'cod'
+// Ensure case-insensitivity and trim
+$payment_method_normalized = strtolower(trim($order['payment_method'] ?? ''));
+
+// Add COD Parameters if Payment Method is 'cod'
+// Ensure case-insensitivity and trim
+$payment_method_normalized = strtolower(trim($order['payment_method'] ?? ''));
+
+if ($payment_method_normalized === 'cod') {
+    // Standard Biteship V1: cash_on_delivery is an integer at the root
+    $payload['cash_on_delivery'] = (int) $order['total_amount'];
+}
+
+// DEBUG: Log the payload request
+file_put_contents('biteship_request_log.txt', print_r($payload, true), FILE_APPEND);
 
 // 4. Call Biteship API
 $response = $biteship->createOrder($payload);

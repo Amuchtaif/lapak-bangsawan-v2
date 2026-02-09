@@ -943,3 +943,543 @@ Array
     [draft_order_id] => 
     [return_id] => 
 )
+Array
+(
+    [success] => 1
+    [message] => Order successfully created
+    [object] => order
+    [id] => 69898ae9aaef22f58fc6ed2c
+    [shipper] => Array
+        (
+            [name] => Lapak Bangsawan
+            [email] => lapakbangsawan@gmail.com
+            [phone] => 0859110022099
+            [organization] => Personal Account
+        )
+
+    [origin] => Array
+        (
+            [contact_name] => Lapak Bangsawan
+            [contact_phone] => 0859110022099
+            [coordinate] => Array
+                (
+                    [latitude] => -6.7448152867791
+                    [longitude] => 108.53552144352
+                )
+
+            [address] => Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat
+            [note] => -
+            [postal_code] => 45134
+            [collection_method] => pickup
+        )
+
+    [destination] => Array
+        (
+            [contact_name] => Andi Muchtaif
+            [contact_phone] => 089651804382
+            [address] => Jl Kalitanjung No52b Kota Cirebon (Pinned Location) [Kode Pos: 45135]
+            [note] => -
+            [proof_of_delivery] => Array
+                (
+                    [use] => 
+                    [fee] => 0
+                    [note] => 
+                    [link] => 
+                )
+
+            [cash_on_delivery] => Array
+                (
+                    [id] => 
+                    [amount] => 0
+                    [fee] => 0
+                    [amountCurrency] => IDR
+                    [feeCurrency] => IDR
+                    [note] => 
+                    [type] => 
+                    [status] => 
+                    [payment_status] => pending
+                    [payment_method] => cash
+                )
+
+            [coordinate] => Array
+                (
+                    [latitude] => -6.7458906
+                    [longitude] => 108.5353943
+                )
+
+            [postal_code] => 45143
+        )
+
+    [stops] => Array
+        (
+        )
+
+    [courier] => Array
+        (
+            [tracking_id] => 7UoXTBFFvZtxChZmfNEFKOAZ
+            [waybill_id] => WYB-1770621673516
+            [company] => jne
+            [name] => 
+            [phone] => 
+            [type] => reg
+            [link] => https://track.biteship.com/7UoXTBFFvZtxChZmfNEFKOAZ?environment=development
+            [insurance] => Array
+                (
+                    [amount] => 0
+                    [fee] => 0
+                    [note] => 
+                    [amount_currency] => IDR
+                    [fee_currency] => IDR
+                )
+
+            [routing_code] => ROUTEC123
+        )
+
+    [delivery] => Array
+        (
+            [datetime] => 2026-02-09T14:21+07:00
+            [note] => 
+            [type] => now
+            [distance] => 0.2
+            [distance_unit] => kilometer
+        )
+
+    [reference_id] => 
+    [items] => Array
+        (
+            [0] => Array
+                (
+                    [name] => Otak-otak ikan
+                    [description] => Otak-otak ikan
+                    [category] => others
+                    [sku] => 
+                    [value] => 23000
+                    [quantity] => 1
+                    [length] => 1
+                    [width] => 1
+                    [height] => 1
+                    [weight] => 1000
+                )
+
+        )
+
+    [extra] => Array
+        (
+        )
+
+    [currency] => IDR
+    [tax_lines] => Array
+        (
+        )
+
+    [price] => 9000
+    [note] => 
+    [status] => confirmed
+    [draft_order_id] => 
+    [return_id] => 
+)
+Array
+(
+    [success] => 1
+    [message] => Order successfully created
+    [object] => order
+    [id] => 69898d273e9c4d08837a9737
+    [shipper] => Array
+        (
+            [name] => Lapak Bangsawan
+            [email] => lapakbangsawan@gmail.com
+            [phone] => 0859110022099
+            [organization] => Personal Account
+        )
+
+    [origin] => Array
+        (
+            [contact_name] => Lapak Bangsawan
+            [contact_phone] => 0859110022099
+            [coordinate] => Array
+                (
+                    [latitude] => -6.7448152867791
+                    [longitude] => 108.53552144352
+                )
+
+            [address] => Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat
+            [note] => -
+            [postal_code] => 45134
+            [collection_method] => pickup
+        )
+
+    [destination] => Array
+        (
+            [contact_name] => Andi Muchtaif
+            [contact_phone] => 089651804382
+            [address] => Jl Kalitanjung No52b Kota Cirebon (Pinned Location) [Kode Pos: 45135]
+            [note] => -
+            [proof_of_delivery] => Array
+                (
+                    [use] => 
+                    [fee] => 0
+                    [note] => 
+                    [link] => 
+                )
+
+            [cash_on_delivery] => Array
+                (
+                    [id] => 
+                    [amount] => 0
+                    [fee] => 0
+                    [amountCurrency] => IDR
+                    [feeCurrency] => IDR
+                    [note] => 
+                    [type] => 
+                    [status] => 
+                    [payment_status] => pending
+                    [payment_method] => cash
+                )
+
+            [coordinate] => Array
+                (
+                    [latitude] => -6.7386823
+                    [longitude] => 108.5344551
+                )
+
+            [postal_code] => 45134
+        )
+
+    [stops] => Array
+        (
+        )
+
+    [courier] => Array
+        (
+            [tracking_id] => jBTHBiKb5NdKYWrwDAifhrWI
+            [waybill_id] => WYB-1770622247613
+            [company] => jne
+            [name] => 
+            [phone] => 
+            [type] => reg
+            [link] => https://track.biteship.com/jBTHBiKb5NdKYWrwDAifhrWI?environment=development
+            [insurance] => Array
+                (
+                    [amount] => 0
+                    [fee] => 0
+                    [note] => 
+                    [amount_currency] => IDR
+                    [fee_currency] => IDR
+                )
+
+            [routing_code] => ROUTEC123
+        )
+
+    [delivery] => Array
+        (
+            [datetime] => 2026-02-09T14:30+07:00
+            [note] => 
+            [type] => now
+            [distance] => 0.9
+            [distance_unit] => kilometer
+        )
+
+    [reference_id] => 
+    [items] => Array
+        (
+            [0] => Array
+                (
+                    [name] => Otak-otak ikan
+                    [description] => Otak-otak ikan
+                    [category] => others
+                    [sku] => 
+                    [value] => 23000
+                    [quantity] => 1
+                    [length] => 1
+                    [width] => 1
+                    [height] => 1
+                    [weight] => 1000
+                )
+
+        )
+
+    [extra] => Array
+        (
+        )
+
+    [currency] => IDR
+    [tax_lines] => Array
+        (
+        )
+
+    [price] => 9000
+    [note] => 
+    [status] => confirmed
+    [draft_order_id] => 
+    [return_id] => 
+)
+Array
+(
+    [success] => 1
+    [message] => Order successfully created
+    [object] => order
+    [id] => 69898e9a390fac5f6c09164d
+    [shipper] => Array
+        (
+            [name] => Lapak Bangsawan
+            [email] => lapakbangsawan@gmail.com
+            [phone] => 0859110022099
+            [organization] => Personal Account
+        )
+
+    [origin] => Array
+        (
+            [contact_name] => Lapak Bangsawan
+            [contact_phone] => 0859110022099
+            [coordinate] => Array
+                (
+                    [latitude] => -6.7448152867791
+                    [longitude] => 108.53552144352
+                )
+
+            [address] => Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat
+            [note] => -
+            [postal_code] => 45134
+            [collection_method] => pickup
+        )
+
+    [destination] => Array
+        (
+            [contact_name] => Andi Muchtaif
+            [contact_phone] => 089651804382
+            [address] => Jl Kalitanjung No52b Kota Cirebon (Pinned Location) [Kode Pos: 45135]
+            [note] => -
+            [proof_of_delivery] => Array
+                (
+                    [use] => 
+                    [fee] => 0
+                    [note] => 
+                    [link] => 
+                )
+
+            [cash_on_delivery] => Array
+                (
+                    [id] => 
+                    [amount] => 0
+                    [fee] => 0
+                    [amountCurrency] => IDR
+                    [feeCurrency] => IDR
+                    [note] => 
+                    [type] => 
+                    [status] => 
+                    [payment_status] => pending
+                    [payment_method] => cash
+                )
+
+            [coordinate] => Array
+                (
+                    [latitude] => -6.7386823
+                    [longitude] => 108.5344551
+                )
+
+            [postal_code] => 45134
+        )
+
+    [stops] => Array
+        (
+        )
+
+    [courier] => Array
+        (
+            [tracking_id] => Zv8B4on2clI77GPHif6YLRpZ
+            [waybill_id] => WYB-1770622618485
+            [company] => jne
+            [name] => 
+            [phone] => 
+            [type] => reg
+            [link] => https://track.biteship.com/Zv8B4on2clI77GPHif6YLRpZ?environment=development
+            [insurance] => Array
+                (
+                    [amount] => 0
+                    [fee] => 0
+                    [note] => 
+                    [amount_currency] => IDR
+                    [fee_currency] => IDR
+                )
+
+            [routing_code] => ROUTEC123
+        )
+
+    [delivery] => Array
+        (
+            [datetime] => 2026-02-09T14:36+07:00
+            [note] => 
+            [type] => now
+            [distance] => 0.9
+            [distance_unit] => kilometer
+        )
+
+    [reference_id] => 
+    [items] => Array
+        (
+            [0] => Array
+                (
+                    [name] => Otak-otak ikan
+                    [description] => Otak-otak ikan
+                    [category] => others
+                    [sku] => 
+                    [value] => 23000
+                    [quantity] => 1
+                    [length] => 1
+                    [width] => 1
+                    [height] => 1
+                    [weight] => 1000
+                )
+
+        )
+
+    [extra] => Array
+        (
+        )
+
+    [currency] => IDR
+    [tax_lines] => Array
+        (
+        )
+
+    [price] => 9000
+    [note] => 
+    [status] => confirmed
+    [draft_order_id] => 
+    [return_id] => 
+)
+Array
+(
+    [success] => 1
+    [message] => Order successfully created
+    [object] => order
+    [id] => 698990dccde2814f807a2e44
+    [shipper] => Array
+        (
+            [name] => Lapak Bangsawan
+            [email] => lapakbangsawan@gmail.com
+            [phone] => 0859110022099
+            [organization] => Personal Account
+        )
+
+    [origin] => Array
+        (
+            [contact_name] => Lapak Bangsawan
+            [contact_phone] => 0859110022099
+            [coordinate] => Array
+                (
+                    [latitude] => -6.7448152867791
+                    [longitude] => 108.53552144352
+                )
+
+            [address] => Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat
+            [note] => -
+            [postal_code] => 45134
+            [collection_method] => pickup
+        )
+
+    [destination] => Array
+        (
+            [contact_name] => Andi Muchtaif
+            [contact_phone] => 089651804382
+            [address] => Jl Kalitanjung No52b Kota Cirebon (Pinned Location) [Kode Pos: 45135]
+            [note] => -
+            [proof_of_delivery] => Array
+                (
+                    [use] => 
+                    [fee] => 0
+                    [note] => 
+                    [link] => 
+                )
+
+            [cash_on_delivery] => Array
+                (
+                    [id] => 
+                    [amount] => 0
+                    [fee] => 0
+                    [amountCurrency] => IDR
+                    [feeCurrency] => IDR
+                    [note] => 
+                    [type] => 
+                    [status] => 
+                    [payment_status] => pending
+                    [payment_method] => cash
+                )
+
+            [coordinate] => Array
+                (
+                    [latitude] => -6.7386823
+                    [longitude] => 108.5344551
+                )
+
+            [postal_code] => 45134
+        )
+
+    [stops] => Array
+        (
+        )
+
+    [courier] => Array
+        (
+            [tracking_id] => VFcN4ApJaFlVK4Z0Yyt9jhRd
+            [waybill_id] => WYB-1770623196313
+            [company] => jne
+            [name] => 
+            [phone] => 
+            [type] => reg
+            [link] => https://track.biteship.com/VFcN4ApJaFlVK4Z0Yyt9jhRd?environment=development
+            [insurance] => Array
+                (
+                    [amount] => 0
+                    [fee] => 0
+                    [note] => 
+                    [amount_currency] => IDR
+                    [fee_currency] => IDR
+                )
+
+            [routing_code] => ROUTEC123
+        )
+
+    [delivery] => Array
+        (
+            [datetime] => 2026-02-09T14:46+07:00
+            [note] => 
+            [type] => now
+            [distance] => 0.9
+            [distance_unit] => kilometer
+        )
+
+    [reference_id] => 
+    [items] => Array
+        (
+            [0] => Array
+                (
+                    [name] => Dimsum Gyoza
+                    [description] => Dimsum Gyoza
+                    [category] => others
+                    [sku] => 
+                    [value] => 23000
+                    [quantity] => 1
+                    [length] => 1
+                    [width] => 1
+                    [height] => 1
+                    [weight] => 1000
+                )
+
+        )
+
+    [extra] => Array
+        (
+        )
+
+    [currency] => IDR
+    [tax_lines] => Array
+        (
+        )
+
+    [price] => 9000
+    [note] => 
+    [status] => confirmed
+    [draft_order_id] => 
+    [return_id] => 
+)

@@ -1,0 +1,107 @@
+Array
+(
+    [shipper_contact_name] => Lapak Bangsawan
+    [shipper_contact_phone] => 0859110022099
+    [shipper_contact_email] => lapakbangsawan@gmail.com
+    [origin_contact_name] => Lapak Bangsawan
+    [origin_contact_phone] => 0859110022099
+    [origin_address] => Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat
+    [origin_area_id] => IDNP9IDNC105IDND171IDZ45171
+    [origin_latitude] => -6.7448152867791
+    [origin_longitude] => 108.53552144352
+    [origin_coordinate] => Array
+        (
+            [latitude] => -6.7448152867791
+            [longitude] => 108.53552144352
+        )
+
+    [destination_contact_name] => Andi Muchtaif
+    [destination_contact_phone] => 089651804382
+    [destination_address] => Jl Kalitanjung No52b Kota Cirebon (Pinned Location) [Kode Pos: 45135]
+    [destination_postal_code] => 45135
+    [destination_area_id] => IDNP9IDNC105IDND151IDZ45131
+    [destination_latitude] => -6.7386823
+    [destination_longitude] => 108.5344551
+    [destination_coordinate] => Array
+        (
+            [latitude] => -6.7386823
+            [longitude] => 108.5344551
+        )
+
+    [courier_company] => jne
+    [courier_type] => reg
+    [delivery_type] => now
+    [order_note] => 
+    [weight] => 1000
+    [items] => Array
+        (
+            [0] => Array
+                (
+                    [name] => Otak-otak ikan
+                    [description] => Otak-otak ikan
+                    [value] => 23000
+                    [quantity] => 1
+                    [weight] => 1000
+                )
+
+        )
+
+    [cash_on_delivery] => Array
+        (
+            [amount] => 32000
+            [type] => cash
+        )
+
+)
+Array
+(
+    [shipper_contact_name] => Lapak Bangsawan
+    [shipper_contact_phone] => 0859110022099
+    [shipper_contact_email] => lapakbangsawan@gmail.com
+    [origin_contact_name] => Lapak Bangsawan
+    [origin_contact_phone] => 0859110022099
+    [origin_address] => Jl. Wanagati, Karyamulya, Kesambi, Kota Cirebon, Jawa Barat
+    [origin_area_id] => IDNP9IDNC105IDND171IDZ45171
+    [origin_latitude] => -6.7448152867791
+    [origin_longitude] => 108.53552144352
+    [origin_coordinate] => Array
+        (
+            [latitude] => -6.7448152867791
+            [longitude] => 108.53552144352
+        )
+
+    [destination_contact_name] => Andi Muchtaif
+    [destination_contact_phone] => 089651804382
+    [destination_address] => Jl Kalitanjung No52b Kota Cirebon (Pinned Location) [Kode Pos: 45135]
+    [destination_postal_code] => 45135
+    [destination_area_id] => IDNP9IDNC105IDND151IDZ45131
+    [destination_latitude] => -6.7386823
+    [destination_longitude] => 108.5344551
+    [destination_coordinate] => Array
+        (
+            [latitude] => -6.7386823
+            [longitude] => 108.5344551
+        )
+
+    [courier_company] => jne
+    [courier_type] => reg
+    [delivery_type] => now
+    [order_note] => 
+    [weight] => 1000
+    [items] => Array
+        (
+            [0] => Array
+                (
+                    [name] => Dimsum Gyoza
+                    [description] => Dimsum Gyoza
+                    [value] => 23000
+                    [quantity] => 1
+                    [weight] => 1000
+                )
+
+        )
+
+    [cash_on_delivery] => 32000
+    [cod_amount] => 32000
+    [cod_type] => cash
+)

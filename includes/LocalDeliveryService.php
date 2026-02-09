@@ -20,8 +20,8 @@ class LocalDeliveryService
 
         return [
             'company' => 'local',
-            'courier_name' => 'Kurir Toko',
-            'courier_service_name' => 'Antar Langsung',
+            'courier_name' => 'Kurir Internal',
+            'courier_service_name' => 'Gratis Ongkir',
             'courier_service_code' => 'store_delivery',
             'type' => 'instant',
             'duration' => '1-3 Jam',

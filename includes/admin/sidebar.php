@@ -43,6 +43,11 @@ $username = $_SESSION['username'] ?? 'Admin User';
             <span class="material-icons-round">category</span>
             Kategori
         </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'partners.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
+            href="<?= BASE_URL ?>admin/partners">
+            <span class="material-icons-round">handshake</span>
+            Mitra Laba
+        </a>
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'form_input_target.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
             href="<?= BASE_URL ?>admin/form_input_target">
             <span class="material-icons-round">edit_calendar</span>
@@ -82,6 +87,11 @@ $username = $_SESSION['username'] ?? 'Admin User';
             href="<?= BASE_URL ?>admin/reports/profit_loss">
             <span class="material-icons-round">monetization_on</span>
             Laporan Laba Rugi
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'reports/consignment_report.php') !== false ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
+            href="<?= BASE_URL ?>admin/reports/consignment_report">
+            <span class="material-icons-round">assignment_ind</span>
+            Laporan Mitra Laba
         </a>
         <div class="pt-4 pb-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Manajemen</div>
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'wholesale_rules.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"

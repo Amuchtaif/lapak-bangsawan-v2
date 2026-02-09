@@ -455,11 +455,9 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
                                 <span class="material-icons-round text-primary text-sm">event</span>
                                 Waktu Transaksi
                             </h2>
-                            <input type="datetime-local" name="transaction_time"
-                                value="<?php echo date('Y-m-d\TH:i'); ?>"
-                                class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary text-sm transition-all">
-                            <p class="text-[10px] text-slate-400 mt-2">Atur tanggal dan waktu transaksi (default:
-                                sekarang).</p>
+                            <input type="datetime-local" id="transaction_time_input" name="transaction_time"
+                                class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary text-sm transition-all text-slate-500">
+                            <p class="text-[10px] text-slate-400 mt-2">Biarkan kosong untuk menggunakan waktu saat ini (Otomatis).</p>
                         </div>
 
                         <!-- Order Notes Card -->
@@ -481,16 +479,14 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
                             <h2
                                 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 uppercase tracking-wider">
                                 <span class="material-icons-round text-primary text-sm">loyalty</span>
-                                Diskon & Potongan Tambahan
+                                Diskon Manual
                             </h2>
                             <div class="space-y-2">
-                                <label class="block text-xs font-bold text-slate-500 uppercase">Diskon Manual
-                                    (Rupiah)</label>
+                                <label class="block text-xs font-bold text-slate-500 uppercase">Potongan Tambahan (Rp)</label>
                                 <div class="relative flex items-center group">
                                     <span
                                         class="absolute left-3 text-sm font-bold text-slate-400 group-focus-within:text-primary transition-colors">Rp</span>
                                     <input type="text" name="manual_discount" id="manual_discount_input" placeholder="0"
-                                        oninput="recalcTotal()"
                                         class="currency-input w-full pl-10 pr-4 py-2 rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-sm font-bold focus:ring-primary focus:border-primary transition-all">
                                 </div>
                             </div>
@@ -502,21 +498,21 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
                             <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-6">Ringkasan</h2>
 
                             <div class="flex justify-between items-center mb-2 text-sm">
-                                <span>Harga Normal</span>
-                                <span id="summary_subtotal" class="font-medium text-slate-700">Rp 0</span>
+                                <span>Subtotal</span>
+                                <span id="summary_subtotal" class="font-medium text-slate-700 dark:text-slate-300">Rp 0</span>
                             </div>
 
-                            <div class="flex justify-between items-center mb-2 text-sm text-green-600">
-                                <span>Diskon Sistem</span>
-                                <span id="summary_system_discount" class="font-medium">-Rp 0</span>
+                            <div id="row_system_discount" class="flex justify-between items-center mb-2 text-sm text-green-600 hidden">
+                                <span>Diskon Sistem (Grosir)</span>
+                                <span id="summary_system_discount" class="font-medium">- Rp 0</span>
+                            </div>
+
+                            <div id="row_manual_discount" class="flex justify-between items-center mb-2 text-sm text-amber-600 hidden">
+                                <span>Diskon Manual</span>
+                                <span id="summary_manual_discount" class="font-medium">- Rp 0</span>
                             </div>
 
                             <div class="border-t border-slate-100 dark:border-slate-800 my-4"></div>
-
-                            <div id="summary_display_text"
-                                class="text-xs text-slate-500 mb-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
-                                <!-- Price breakdown label -->
-                            </div>
 
                             <div class="flex justify-between items-end mb-8">
                                 <span class="text-slate-500 font-bold">Total Bayar</span>
@@ -788,41 +784,85 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
             for (let cat in categoryWeights) {
                 if (wholesaleRules[cat]) {
                     const weight = categoryWeights[cat];
-                    for (let rule of wholesaleRules[cat]) {
+                    // Make sure rules are sorted by min_weight desc
+                    const sortedRules = wholesaleRules[cat].sort((a, b) => b.min_weight - a.min_weight);
+                    
+                    for (let rule of sortedRules) {
                         if (weight >= rule.min_weight) {
                             systemDiscount += (weight * rule.discount_per_kg);
-                            break;
+                            break; // Apply highest tier only
                         }
                     }
                 }
             }
 
             const manualDiscountInput = document.getElementById('manual_discount_input');
-            const manualDiscount = parseFloat(manualDiscountInput.value) || 0;
+            const manualDiscountVal = manualDiscountInput.value.replace(/[^0-9]/g, '');
+            const manualDiscount = parseFloat(manualDiscountVal) || 0;
+            
             const finalTotal = subtotal - systemDiscount - manualDiscount;
 
             const formatter = new Intl.NumberFormat('id-ID', {
                 style: 'currency',
                 currency: 'IDR',
-                minimumFractionDigits: 0, maximumFractionDigits: 0
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
             });
 
+            // Update UI
             document.getElementById('summary_subtotal').innerText = formatter.format(subtotal);
-            document.getElementById('summary_system_discount').innerText = '-' + formatter.format(systemDiscount);
-            document.getElementById('summary_total').innerText = formatter.format(finalTotal);
 
-            // Detailed summary text
-            const summaryText = `Harga Normal: ${formatter.format(subtotal)}, ` +
-                `Diskon Sistem: ${formatter.format(systemDiscount)}, ` +
-                `Diskon Manual: ${formatter.format(manualDiscount)} (Input Admin), ` +
-                `Total: ${formatter.format(finalTotal)}`;
-            document.getElementById('summary_display_text').innerText = summaryText;
+            // System Discount Row
+            const rowSystem = document.getElementById('row_system_discount');
+            if (systemDiscount > 0) {
+                rowSystem.classList.remove('hidden');
+                document.getElementById('summary_system_discount').innerText = "- " + formatter.format(systemDiscount);
+            } else {
+                rowSystem.classList.add('hidden');
+            }
+
+            // Manual Discount Row
+            const rowManual = document.getElementById('row_manual_discount');
+            if (manualDiscount > 0) {
+                rowManual.classList.remove('hidden');
+                document.getElementById('summary_manual_discount').innerText = "- " + formatter.format(manualDiscount);
+            } else {
+                rowManual.classList.add('hidden');
+            }
+
+            document.getElementById('summary_total').innerText = formatter.format(finalTotal < 0 ? 0 : finalTotal);
+            
+            // Debug/Extra info if needed, otherwise clear
+            // document.getElementById('summary_display_text').innerText = ""; 
         }
+
+        // Auto update time
+        function updateTransactionTime() {
+             const input = document.getElementById('transaction_time_input');
+             if(!input.value) {
+                const now = new Date();
+                // Format to YYYY-MM-DDTHH:MM for datetime-local
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                input.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+             }
+        }
+        
+        // Run once on load
+        window.addEventListener('load', () => {
+            updateTransactionTime();
+        });
 
         // Init
         setCustomerType('walk-in');
         initCustomerSelect();
         addItem(); 
+        
+        // Manual Discount Listener
+        document.getElementById('manual_discount_input').addEventListener('input', recalcTotal); 
     </script>
 </body>
 

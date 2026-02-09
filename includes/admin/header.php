@@ -74,7 +74,7 @@
                                                     class="w-full h-full object-cover">
                                             <?php else: ?>
                                                 <span
-                                                    class="material-icons-round text-slate-400 text-lg w-full h-full flex items-center justify-center">image</span>
+                                                    class="material-icons-round text-slate-400 text-lg flex items-center justify-center w-full h-full">image</span>
                                             <?php endif; ?>
                                         </div>
                                         <div class="flex-1 min-w-0">

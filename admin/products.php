@@ -54,6 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $description = mysqli_real_escape_string($conn, $_POST['description']);
 
         $short_code = mysqli_real_escape_string($conn, $_POST['short_code']);
+        if (empty($short_code)) {
+            // Auto-generate short code if empty: SKU-[TIMESTAMP]-[RAND]
+            $short_code = 'SKU-' . date('ymd') . '-' . rand(100, 999);
+        }
         $image_path = '';
         if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
             $target_dir = "../assets/uploads/products/";
@@ -70,7 +74,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($weight <= 0)
                 $weight = 1000;
 
-            $sql = "INSERT INTO products (category_id, short_code, name, slug, description, price, buy_price, stock, unit, image, weight) VALUES ($category_id, '$short_code', '$name', '$slug', '$description', $price, $buy_price, $stock, '$unit', '$image_path', $weight)";
+            $product_type = mysqli_real_escape_string($conn, $_POST['product_type'] ?? 'internal');
+            $partner_id = ($product_type == 'consignment' && !empty($_POST['partner_id'])) ? intval($_POST['partner_id']) : 'NULL';
+
+            $sql = "INSERT INTO products (category_id, partner_id, product_type, short_code, name, slug, description, price, buy_price, stock, unit, image, weight) VALUES ($category_id, $partner_id, '$product_type', '$short_code', '$name', '$slug', '$description', $price, $buy_price, $stock, '$unit', '$image_path', $weight)";
             if ($conn->query($sql)) {
                 $_SESSION['status_msg'] = "Product added successfully.";
                 $_SESSION['status_type'] = "success";
@@ -85,7 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($weight <= 0)
                 $weight = 1000;
 
-            $sql = "UPDATE products SET category_id=$category_id, short_code='$short_code', name='$name', slug='$slug', description='$description', price=$price, buy_price=$buy_price, stock=$stock, unit='$unit', weight=$weight";
+            $product_type = mysqli_real_escape_string($conn, $_POST['product_type'] ?? 'internal');
+            $partner_id = ($product_type == 'consignment' && !empty($_POST['partner_id'])) ? intval($_POST['partner_id']) : 'NULL';
+
+            $sql = "UPDATE products SET category_id=$category_id, partner_id=$partner_id, product_type='$product_type', short_code='$short_code', name='$name', slug='$slug', description='$description', price=$price, buy_price=$buy_price, stock=$stock, unit='$unit', weight=$weight";
             if ($image_path)
                 $sql .= ", image='$image_path'";
             $sql .= " WHERE id=$id";
@@ -164,6 +174,14 @@ $cat_res = $conn->query("SELECT * FROM categories ORDER BY name ASC");
 $categories = [];
 while ($c = mysqli_fetch_assoc($cat_res))
     $categories[] = $c;
+
+// Fetch Partners
+$partner_res = $conn->query("SELECT * FROM partners WHERE status='active' ORDER BY name ASC");
+$partners = [];
+if($partner_res) {
+    while ($p = mysqli_fetch_assoc($partner_res))
+        $partners[] = $p;
+}
 
 // Statistics for Overview Cards
 $stat_total = $conn->query("SELECT COUNT(*) as c FROM products")->fetch_assoc()['c'];
@@ -358,11 +376,31 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                         </div>
                                     </div>
                                 </div>
+                                <!-- Product Type & Partner Selection -->
+                                <div class="col-span-1 md:col-span-2 lg:col-span-1">
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tipe Produk</label>
+                                    <select name="product_type" id="product-type-select" onchange="togglePartnerSelect()" class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-primary focus:border-primary mb-4 p-2.5">
+                                        <option value="internal" <?php echo (isset($edit_row) && ($edit_row['product_type'] ?? 'internal') == 'internal') ? 'selected' : ''; ?>>Internal (Milik Sendiri)</option>
+                                        <option value="consignment" <?php echo (isset($edit_row) && ($edit_row['product_type'] ?? '') == 'consignment') ? 'selected' : ''; ?>>Mitra Laba (Konsinyasi)</option>
+                                    </select>
+
+                                    <div id="partner-select-container" class="<?php echo (isset($edit_row) && ($edit_row['product_type'] ?? '') == 'consignment') ? '' : 'hidden'; ?>">
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Pilih Mitra</label>
+                                        <select name="partner_id" class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-primary focus:border-primary mb-4 p-2.5">
+                                            <option value="">-- Pilih Mitra --</option>
+                                            <?php foreach ($partners as $p): ?>
+                                                <option value="<?php echo $p['id']; ?>" <?php echo (isset($edit_row) && ($edit_row['partner_id'] ?? 0) == $p['id']) ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($p['name']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <div>
                                     <div class="grid grid-cols-2 gap-4 mt-2">
                                         <div>
-                                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Harga
-                                                Beli</label>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1" id="label-buy-price">Harga Beli / Mitra</label>
                                             <div class="relative flex items-center group">
                                                 <span
                                                     class="absolute left-4 text-sm font-bold text-slate-400 group-focus-within:text-primary transition-colors">Rp</span>
@@ -385,11 +423,16 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                             </div>
                                         </div>
                                     </div>
+                                    <!-- Live Profit Calculator -->
+                                    <div class="mt-2 text-right">
+                                        <span class="text-xs text-slate-400">Estimasi Laba:</span>
+                                        <span id="profit-display" class="font-bold text-green-600 dark:text-green-400">Rp 0</span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label
                                         class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Stok</label>
-                                    <input type="number" step="0.01" name="stock" id="stock-input" required
+                                    <input type="number" step="0.5" name="stock" id="stock-input" required
                                         value="<?php echo $edit_row['stock'] ?? ''; ?>"
                                         class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-primary focus:border-primary">
                                     <p id="stock-hint" class="text-xs text-slate-500 mt-1 hidden">For Frozen Food, stock
@@ -711,6 +754,17 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                                 </td>
                                                 <td class="px-6 py-4 font-medium text-slate-900 dark:text-white">
                                                     <?php echo htmlspecialchars($row['name']); ?>
+                                                    <div class="mt-1">
+                                                        <?php if (($row['product_type'] ?? 'internal') == 'consignment'): ?>
+                                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-500">
+                                                                Mitra Laba
+                                                            </span>
+                                                        <?php else: ?>
+                                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400">
+                                                                Internal
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    </div>
                                                 </td>
                                                 <td class="px-6 py-4"><?php echo htmlspecialchars($row['category_name']); ?>
                                                 </td>
@@ -937,6 +991,52 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
             // or just rely on the fact that we can re-query the select.
         });
     </script>
-</body>
 
+    <script>
+        function togglePartnerSelect() {
+            const type = document.getElementById('product-type-select').value;
+            const container = document.getElementById('partner-select-container');
+            const labelBuy = document.getElementById('label-buy-price');
+            
+            if (type === 'consignment') {
+                container.classList.remove('hidden');
+                labelBuy.innerText = 'Harga Mitra (Modal)';
+            } else {
+                container.classList.add('hidden');
+                labelBuy.innerText = 'Harga Beli (Modal)';
+            }
+        }
+
+        // Live Profit Calculation
+        const buyInput = document.getElementById('buy-price-input');
+        const sellInput = document.getElementById('price-input');
+        const profitDisplay = document.getElementById('profit-display');
+
+        function calculateProfit() {
+            let buy = buyInput.value.replace(/[^0-9]/g, '') || 0;
+            let sell = sellInput.value.replace(/[^0-9]/g, '') || 0;
+            let profit = parseInt(sell) - parseInt(buy);
+            
+            // Format currency
+            let formatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(profit);
+            
+            profitDisplay.innerText = formatted;
+            
+            if (profit < 0) {
+                profitDisplay.classList.remove('text-green-600', 'dark:text-green-400');
+                profitDisplay.classList.add('text-red-500');
+            } else {
+                profitDisplay.classList.add('text-green-600', 'dark:text-green-400');
+                profitDisplay.classList.remove('text-red-500');
+            }
+        }
+
+        if (buyInput && sellInput) {
+            buyInput.addEventListener('input', calculateProfit);
+            sellInput.addEventListener('input', calculateProfit);
+            // Initial call
+            calculateProfit();
+        }
+    </script>
+</body>
 </html>

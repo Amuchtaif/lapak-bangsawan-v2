@@ -126,6 +126,15 @@ $order_token = bin2hex(random_bytes(16));
                                     class="hidden absolute z-50 w-full mt-1 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-800 rounded-lg shadow-xl max-h-60 overflow-y-auto">
                                 </div>
                             </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                    Kode Pos</label>
+                                <input type="text" name="postal_code" id="postal-code" required maxlength="5" pattern="\d{5}"
+                                    placeholder="Ex: 45132"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                    class="w-full md:w-1/3 rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">
+                            </div>
                         </div>
 
                         <!-- Shipping Rates Container -->
@@ -322,8 +331,12 @@ $order_token = bin2hex(random_bytes(16));
             const courier = document.querySelector('input[name="courier_option"]:checked');
 
             if (!areaId) {
-                alert('Silakan pilih Kota/Kecamatan yang valid dari daftar pencarian.');
-                return;
+                const lat = document.getElementById('dest-lat').value;
+                const lng = document.getElementById('dest-lng').value;
+                if (!lat || !lng) {
+                    alert('Silakan pilih Kota/Kecamatan yang valid dari daftar pencarian atau gunakan lokasi saya.');
+                    return;
+                }
             }
 
             if (!courier) {
@@ -346,7 +359,7 @@ $order_token = bin2hex(random_bytes(16));
                 name: formData.get('name'),
                 email: formData.get('email'),
                 phone: formData.get('phone'),
-                address: formData.get('address') + ' (' + formData.get('destination_area_text') + ')',
+                address: formData.get('address') + ' (' + formData.get('destination_area_text') + ') [Kode Pos: ' + formData.get('postal_code') + ']',
                 destination_area_id: formData.get('destination_area_id'),
                 courier_company: formData.get('courier_company'),
                 courier_type: formData.get('courier_type'),
@@ -381,7 +394,7 @@ $order_token = bin2hex(random_bytes(16));
                             confirmButtonText: 'OK'
                         }).then(() => {
                             // Redirect to success page for COD
-                            window.location.href = 'success.php?order_id=' + result.order_id;
+                            window.location.href = BASE_URL + 'success?order_id=' + result.order_id;
                         });
                     } else if (result.payment_method === 'transfer') {
                         Swal.fire({
@@ -455,6 +468,20 @@ $order_token = bin2hex(random_bytes(16));
             }, 500);
         });
 
+        const postalInput = document.getElementById('postal-code');
+        
+        // Listener for Postal Code
+        postalInput.addEventListener('input', () => {
+            const areaId = document.getElementById('destination-area-id').value;
+            const lat = document.getElementById('dest-lat').value;
+            const lng = document.getElementById('dest-lng').value;
+            
+            // Only re-check rates if postal code is valid (5 digits) AND we have location data
+            if (postalInput.value.length === 5 && (areaId || (lat && lng))) {
+                checkRates(areaId, lat, lng);
+            }
+        });
+
         window.selectArea = (id, name, lat, lng) => {
             document.getElementById('destination-area-id').value = id;
             document.getElementById('destination-area-text').value = name;
@@ -462,10 +489,16 @@ $order_token = bin2hex(random_bytes(16));
             document.getElementById('dest-lng').value = (lng && lng !== 'null' && lng !== 'undefined') ? lng : '';
             areaSearchInput.value = name;
             areaResults.classList.add('hidden');
+            
+            // Trigger checkRates immediately!
+            // Postal code is optional now, but send current value if any
             checkRates(id, lat, lng);
         };
 
         async function checkRates(areaId, lat, lng) {
+            const postalCode = document.getElementById('postal-code').value;
+            // No longer blocking if postal code is missing
+
             const ratesSection = document.getElementById('shipping-rates-section');
             const ratesList = document.getElementById('shipping-rates-list');
             const destLat = (lat && lat !== 'null' && lat !== 'undefined') ? lat : document.getElementById('dest-lat').value;
@@ -486,6 +519,7 @@ $order_token = bin2hex(random_bytes(16));
                     body: JSON.stringify({
                         area_id: areaId,
                         area_text: document.getElementById('destination-area-text').value,
+                        postal_code: postalCode,
                         items: cart,
                         couriers: 'paxel,jne,jnt,sicepat,gojek,grab,anteraja,borzo,lalamove',
                         dest_lat: destLat,
@@ -515,6 +549,16 @@ $order_token = bin2hex(random_bytes(16));
                         </div>
                     `;
                 }
+                
+                if(!data.success) {
+                     html += `
+                        <div class="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-3">
+                            ${data.message || 'Gagal memuat ongkir.'}
+                        </div>
+                    `;
+                    ratesList.innerHTML = html;
+                    return;
+                }
 
                 if (data.warning_msg) {
                     html += `
@@ -525,7 +569,7 @@ $order_token = bin2hex(random_bytes(16));
                     `;
                 }
 
-                if (data.success && data.pricing && data.pricing.length > 0) {
+                if (data.pricing && data.pricing.length > 0) {
                     html += data.pricing.map(rate => `
                         <label class="cursor-pointer relative rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-all has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:ring-1 has-[:checked]:ring-primary">
                             <div class="flex items-center gap-3">
@@ -533,7 +577,7 @@ $order_token = bin2hex(random_bytes(16));
                                     class="text-primary focus:ring-primary size-5" 
                                     onchange="updateTotal(${rate.price}, '${rate.courier_name}')">
                                 <div class="flex flex-col">
-                                    <span class="font-bold text-slate-900 dark:text-white uppercase">${rate.courier_name} - ${rate.courier_service_name}</span>
+                                    <span class="font-bold text-slate-900 dark:text-white uppercase">${rate.company} - ${rate.courier_service_name}</span>
                                     <span class="text-[10px] text-slate-500">Estimasi: ${rate.duration}</span>
                                 </div>
                             </div>
@@ -549,7 +593,7 @@ $order_token = bin2hex(random_bytes(16));
                 } else {
                     ratesList.innerHTML = `
                         <div class="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 p-4 rounded-lg text-red-600 text-sm italic">
-                            Maaf, tidak ada kurir tersedia untuk rute ini.
+                            Maaf, tidak ada kurir tersedia untuk rute ini. Coba cek kembali Kode Pos Anda.
                         </div>
                     `;
                 }
@@ -569,14 +613,26 @@ $order_token = bin2hex(random_bytes(16));
             document.querySelectorAll('input[name="courier_company"]').forEach(i => i.checked = false);
             document.querySelectorAll('input[name="courier_type"]').forEach(i => i.checked = false);
             document.querySelectorAll('input[name="courier_price"]').forEach(i => i.checked = false);
-
-            const cInput = document.getElementById(`c-${company}-${service}`);
-            const tInput = document.getElementById(`t-${company}-${service}`);
-            const pInput = document.getElementById(`p-${company}-${service}`);
-
-            if (cInput) cInput.checked = true;
-            if (tInput) tInput.checked = true;
-            if (pInput) pInput.checked = true;
+            
+            // Try to match safely by escaping or finding partial
+            // In API response construction above, IDs are sanitized? Ideally yes.
+            // Simplified here: Just rely on name attributes if IDs fail, but let's try IDs:
+            const safeService = service.replace(/[^a-zA-Z0-9-_]/g, '');
+            const safeCompany = company.replace(/[^a-zA-Z0-9-_]/g, '');
+            // Actually the ID construction in map loop was: id="c-${rate.company}-${rate.courier_service_name}"
+            // Service name might have spaces.
+            
+            // Better approach: Find inputs by value matching
+             const cInput = document.querySelector(`input[name="courier_company"][value="${company}"]`);
+             // Type/Service matching is harder as value might be code or name.
+             // But we set them specific to this loop instance.
+             
+             // Re-finding based on the clicked radio's parent label context is safest?
+             // No, let's just use the hidden inputs next to the radio.
+             const parentLabel = document.querySelector(`input[name="courier_option"][value="${courierOption}"]`).closest('label');
+             parentLabel.querySelector('input[name="courier_company"]').checked = true;
+             parentLabel.querySelector('input[name="courier_type"]').checked = true;
+             parentLabel.querySelector('input[name="courier_price"]').checked = true;
 
             updateTotalDisplay();
         };

@@ -1,15 +1,15 @@
 <?php
 // configlinux
-$host = "localhost";
-$user = "andi";
-$pass = "passwordbaru";
-$db_name = "lapak_bangsawan";
+// $host = "localhost";
+// $user = "andi";
+// $pass = "passwordbaru";
+// $db_name = "lapak_bangsawan";
 
 // config windows
-// $host = "localhost";
-// $user = "root";
-// $pass = "";
-// $db_name = "lapak_bangsawan";
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db_name = "lapak_bangsawan";
 
 // Create connection
 $conn = new mysqli($host, $user, $pass);

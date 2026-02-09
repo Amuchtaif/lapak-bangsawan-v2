@@ -186,7 +186,7 @@ while ($p = $products_res->fetch_assoc())
                                     <label
                                         class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Jumlah
                                         Penyesuaian</label>
-                                    <input type="number" step="0.01" name="qty_adjusted" required
+                                    <input type="number" step="0.5" name="qty_adjusted" required
                                         placeholder="Misal: -2.5"
                                         class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-primary focus:border-primary">
                                     <p class="text-xs text-slate-500 mt-1">Gunakan tanda (-) untuk pengurangan stok

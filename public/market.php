@@ -415,6 +415,9 @@ $best_sellers = $conn->query($best_seller_query);
                                             <?php echo htmlspecialchars($bs_product['name']); ?>
                                         </h3>
                                     </div>
+                                    <p class="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-2 sm:mb-4 line-clamp-2" title="<?php echo htmlspecialchars($bs_product['description']); ?>">
+                                        <?php echo htmlspecialchars($bs_product['description']); ?>
+                                    </p>
                                     <!-- Sold Count -->
                                     <p
                                         class="text-xs text-amber-600 dark:text-amber-400 font-medium mb-3 flex items-center gap-1">
