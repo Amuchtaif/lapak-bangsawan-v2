@@ -101,3 +101,16 @@ OSM Result: Array
     [country_code] => id
 )
 
+OSM Result: Array
+(
+    [residential] => The Premiere
+    [village] => Karyamulya
+    [city_district] => Kesambi
+    [city] => Kota Cirebon
+    [region] => Jawa
+    [ISO3166-2-lvl3] => ID-JW
+    [postcode] => 45135
+    [country] => Indonesia
+    [country_code] => id
+)
+

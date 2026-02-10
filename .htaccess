@@ -1,6 +1,10 @@
-<IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /lapak-bangsawan/
+    
+    # 1. Base Path Configuration
+    # OPTIONAL: If your hosting requires it, uncomment and set the correct path
+    # Example for root: RewriteBase /
+    # Example for subfolder: RewriteBase /folder-name/
+    # RewriteBase /
 
     Options -MultiViews
 
@@ -9,13 +13,12 @@
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # 1. Handle root clean URLs mapping to public/
-    # Example: /checkout -> public/checkout.php
-    RewriteCond %{DOCUMENT_ROOT}/lapak-bangsawan/public/$1.php -f
-    RewriteRule ^([^/]+)$ public/$1.php [L,QSA]
-
-    # 2. Handle sub-path clean URLs inside public/
-    # Example: /public/checkout -> public/checkout.php
+    # 2. Handle generic extensions (remove .php)
+    # Allows access to files like about.php via /about
     RewriteCond %{REQUEST_FILENAME}.php -f
     RewriteRule ^(.*)$ $1.php [L,QSA]
-</IfModule>
+
+    # 3. Main Routing to public/ folder
+    # Maps /home to public/home.php, /checkout to public/checkout.php
+    # This rule fires if the request is NOT a generic file in the root
+    RewriteRule ^([^/]+)/?$ public/$1.php [L,QSA]

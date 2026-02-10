@@ -5,13 +5,20 @@
 define('ROOT_PATH', dirname(__DIR__) . '/');
 
 // 2. Define Base URL (Web Address) - Auto Detect
+// IMPORTANT: If auto-detect fails (redirects to wrong URL), uncomment and set manually below:
+// define('BASE_URL', 'https://yourdomain.com/'); 
+
 if (!defined('BASE_URL')) {
     $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https://" : "http://";
     $host = $_SERVER['HTTP_HOST'];
     $base_dir = str_replace('\\', '/', dirname(__DIR__));
     $doc_root = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']);
     $base_path = str_ireplace($doc_root, '', $base_dir);
-    $final_base = $protocol . $host . '/' . ltrim($base_path, '/') . '/';
+    
+    // Ensure base_path starts with /
+    $base_path = '/' . ltrim($base_path, '/');
+    
+    $final_base = $protocol . $host . $base_path . '/';
     define('BASE_URL', preg_replace('/([^:])(\/{2,})/', '$1/', $final_base));
 }
 
