@@ -46,8 +46,21 @@ class ShippingHelper {
      * Calculate local delivery cost based on settings
      */
     public static function calculateLocalCost($distance, $pricePerKm) {
-        $cost = $distance * $pricePerKm;
-        return ceil($cost); // Round up as requested
+        // User requested tiered pricing for easier change (kembalian):
+        // - Under 1.5 km: 1000
+        // - 1.5 - 1.9 km: 1500
+        // - 2.0 km and above: increment by 500 per 0.5 km (assuming 1000/km base)
+        
+        if ($distance < 1.5) {
+            return 1000;
+        }
+
+        // Logic: Increment by half of pricePerKm for every 0.5km step
+        $halfKmPrice = $pricePerKm / 2;
+        $steps = floor($distance / 0.5);
+        $cost = $steps * $halfKmPrice;
+
+        return (int)max(1000, $cost);
     }
 }
 ?>
