@@ -100,19 +100,17 @@ $debugInfo = [
 
 // 4. Hybrid Logic Implementation
 // INTERNAL COURIER (Priority 1)
-if ($canCalculateDistance && $distance < 2.0) {
-    $localService = new LocalDeliveryService();
-    $localRate = $localService->getRate($distance);
-    
-    if ($localRate) {
-        $pricing[] = $localRate;
-        $recommendation = [
-            'type' => 'instant',
-            'title' => 'Kurir Internal (Free Ongkir)',
-            'message' => 'Jarak Anda sangat dekat (< 2km). Kami antar langsung gratis!'
-        ];
-        $debugInfo['source'] = 'internal_priority';
-    }
+$localService = new LocalDeliveryService();
+$localRate = $localService->getRate($distance);
+
+if ($localRate) {
+    $pricing[] = $localRate;
+    $recommendation = [
+        'type' => 'instant',
+        'title' => 'Kurir Internal',
+        'message' => 'Jarak Anda masih dalam jangkauan kurir toko. Kami siap antar!'
+    ];
+    $debugInfo['source'] = 'internal_priority';
 }
 
 // BITESHP API (Always Check as Backup/Alternative)

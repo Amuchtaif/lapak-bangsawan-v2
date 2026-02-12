@@ -2,27 +2,13 @@
 header('Content-Type: application/json');
 require_once '../config/database.php';
 
+// Load Helper
+require_once '../helpers/ShippingHelper.php';
+
 // Store Location (Base Coordinates) - Example: Cirebon
+// These could also be moved to settings_pengiriman if desired
 define('STORE_LAT', -6.732021);
 define('STORE_LNG', 108.552316);
-define('MAX_LOCAL_DELIVERY_KM', 10); // Max distance for local courier
-
-// Haversine Formula Implementation
-function calculateHaversine($lat1, $lon1, $lat2, $lon2) {
-    $earthRadius = 6371; // km
-
-    $dLat = deg2rad($lat2 - $lat1);
-    $dLon = deg2rad($lon2 - $lon1);
-
-    $a = sin($dLat / 2) * sin($dLat / 2) +
-         cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-         sin($dLon / 2) * sin($dLon / 2);
-
-    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-    $distance = $earthRadius * $c;
-
-    return round($distance, 2); // Return distance with 2 decimal precision
-}
 
 // Handle POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -43,26 +29,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // 1. Calculate Distance
-    $distance = calculateHaversine(STORE_LAT, STORE_LNG, $latitude, $longitude);
+    // 1. Fetch Dynamic Settings
+    $settings = ShippingHelper::getLocalShippingSettings($conn);
+    $max_distance = $settings['max_distance_local'];
+    $price_per_km = $settings['price_per_km_local'];
 
-    // 2. Save Coordinates to Database (if customer_id is provided)
-    // Assuming table 'customers' or 'customer_addresses' has lat/lng columns.
-    // For this example, we will update the 'customers' table if columns exist, 
-    // or just demonstrate the prepared statement logic.
-    
-    // NOTE: You might need to add these columns to your database:
-    // ALTER TABLE customers ADD COLUMN latitude DECIMAL(10, 8), ADD COLUMN longitude DECIMAL(11, 8);
-    
+    // 2. Calculate Distance
+    $distance = ShippingHelper::calculateDistance(STORE_LAT, STORE_LNG, $latitude, $longitude);
+
+    // 3. Save Coordinates to Database (if customer_id is provided)
     if ($customerId && isset($conn)) {
-        // Check if columns exist first to avoid error in this generic script, 
-        // or just try-catch. We'll assume the user will add them or they exist.
-        // We use Prepared Statement as requested.
-        
         $sql = "UPDATE customers SET latitude = ?, longitude = ? WHERE id = ?";
-        
-        // We need to check if columns exist, otherwise this will fail. 
-        // For reliability in this 'help' task, I'll wrap in try-catch or silence specific error.
         try {
             $stmt = $conn->prepare($sql);
             if ($stmt) {
@@ -71,16 +48,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->close();
             }
         } catch (Exception $e) {
-            // Ignore DB error for column missing in this demo, logs would be better
+            // Ignore DB error for column missing in this demo
         }
     }
 
-    // 3. Determine Shipping Options
+    // 4. Determine Shipping Options
     $shippingOptions = [];
 
     // Option A: Local Courier (Hybrid Logic)
-    if ($distance <= MAX_LOCAL_DELIVERY_KM) {
-        $cost = 5000 + ($distance * 1000); // Base 5000 + 1000 per km
+    if ($distance <= $max_distance) {
+        $cost = ShippingHelper::calculateLocalCost($distance, $price_per_km);
         $shippingOptions[] = [
             'code' => 'LOCAL_INSTANT',
             'name' => 'Kurir Langsung (Instant)',
