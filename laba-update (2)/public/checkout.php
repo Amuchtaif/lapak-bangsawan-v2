@@ -1,0 +1,717 @@
+<?php require_once dirname(__DIR__) . '/config/init.php'; ?>
+<!DOCTYPE html>
+<?php
+// Generate Order Token for Idempotency
+$order_token = bin2hex(random_bytes(16));
+?>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Pembayaran - Lapak Bangsawan</title>
+    <link rel="icon" href="<?= BASE_URL ?>assets/images/favicon-laba.png" type="image/x-icon">
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                        "card-dark": "#1e2736",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    animation: {
+                        "pulse-subtle": "pulse-subtle 3s ease-in-out infinite",
+                    },
+                    keyframes: {
+                        "pulse-subtle": {
+                            "0%, 100%": { opacity: "1" },
+                            "50%": { opacity: "0.8" },
+                        }
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased flex flex-col min-h-screen">
+
+    <?php include ROOT_PATH . "includes/public_header.php"; ?>
+
+    <main class="flex-grow w-full max-w-4xl lg:max-w-7xl mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold mb-6">Pembayaran</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12">
+            <!-- Form -->
+            <div class="lg:col-span-8 space-y-8">
+                <!-- Contact & Shipping -->
+                <div
+                    class="bg-white dark:bg-card-dark p-6 lg:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                        <span
+                            class="flex items-center justify-center size-8 rounded-full bg-primary/10 text-primary text-sm">1</span>
+                        Informasi Kontak
+                    </h2>
+                    <form id="checkout-form" class="space-y-6">
+                        <!-- Idempotency Token -->
+                        <input type="hidden" name="order_token" value="<?php echo $order_token; ?>">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                    Nama Lengkap</label>
+                                <input type="text" name="name" required
+                                    class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Email
+                                    (Opsional)</label>
+                                <input type="email" name="email"
+                                    class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                    Nomor WhatsApp</label>
+                                <input type="tel" name="phone" required placeholder="e.g. 08123456789"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                    class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">
+                                <p class="text-xs text-slate-500 mt-1.5">Kami akan mengirimkan update pesanan ke sini.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                    Alamat Lengkap</label>
+                                <textarea name="address" required rows="2" placeholder="Nama Jalan, No. Rumah, RT/RW"
+                                    class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all p-3"></textarea>
+                            </div>
+
+                            <div class="relative" id="area-search-container">
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                    Kota / Kecamatan</label>
+                                <input type="text" id="area-search-input" required autocomplete="off"
+                                    placeholder="Ketik minimal 3 karakter untuk mencari..."
+                                    class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">
+                                
+                                <button type="button" id="btn-geolocation"
+                                    class="mt-2 text-sm text-primary font-bold flex items-center gap-1 hover:underline">
+                                    <span class="material-symbols-outlined text-lg">my_location</span>
+                                    Gunakan Lokasi Saya
+                                </button>
+
+                                <input type="hidden" name="destination_area_id" id="destination-area-id">
+                                <input type="hidden" name="destination_area_text" id="destination-area-text">
+                                <input type="hidden" name="dest_lat" id="dest-lat">
+                                <input type="hidden" name="dest_lng" id="dest-lng">
+
+                                <!-- Search Results -->
+                                <div id="area-results"
+                                    class="hidden absolute z-50 w-full mt-1 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-800 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                    Kode Pos</label>
+                                <input type="text" name="postal_code" id="postal-code" maxlength="5" pattern="\d{5}"
+                                    placeholder="Ex: 45132"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                    class="w-full md:w-1/3 rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">
+                            </div>
+                        </div>
+
+                        <!-- Shipping Rates Container -->
+                        <div id="shipping-rates-section"
+                            class="hidden space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">
+                                Pilih Kurir Pengiriman</label>
+                            <div id="shipping-rates-list" class="grid grid-cols-1 gap-3">
+                                <!-- Rates will be injected here -->
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                Catatan Pesanan (Opsional)</label>
+                            <textarea name="order_notes" rows="2"
+                                placeholder="Contoh: Tolong dikirim sore hari, atau kemasan jangan dipress"
+                                class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all p-3"></textarea>
+                        </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div
+                    class="bg-white dark:bg-card-dark p-6 lg:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                        <span
+                            class="flex items-center justify-center size-8 rounded-full bg-primary/10 text-primary text-sm">2</span>
+                        Metode Pembayaran
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <label
+                            class="cursor-pointer relative rounded-xl border p-4 flex flex-col gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:ring-1 has-[:checked]:ring-primary">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="payment_method" value="transfer"
+                                    class="text-primary focus:ring-primary size-5" checked
+                                    onchange="togglePaymentInfo()">
+                                <span class="font-bold text-slate-900 dark:text-white">Transfer Bank</span>
+                            </div>
+                            <div class="text-xs text-slate-500 pl-8">Bayar melalui transfer BSI</div>
+                        </label>
+                        <label
+                            class="cursor-pointer relative rounded-xl border p-4 flex flex-col gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:ring-1 has-[:checked]:ring-primary">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="payment_method" value="cod"
+                                    class="text-primary focus:ring-primary size-5" onchange="togglePaymentInfo()">
+                                <span class="font-bold text-slate-900 dark:text-white">COD</span>
+                            </div>
+                            <div class="text-xs text-slate-500 pl-8">Bayar di tempat saat barang sampai</div>
+                        </label>
+                    </div>
+                </div>
+
+
+                </form>
+            </div>
+
+            <!-- Order Preview -->
+            <div class="lg:col-span-4">
+                <div
+                    class="bg-slate-50 dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 sticky top-24">
+                    <h2 class="text-lg font-bold mb-4">Ringkasan Pesanan</h2>
+                    <div id="order-items" class="space-y-4 mb-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                    </div>
+
+                    <div class="border-t border-slate-200 dark:border-slate-600 pt-4 space-y-3">
+                        <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                            <span>Subtotal</span>
+                            <span id="order-subtotal" class="font-medium">Rp 0</span>
+                        </div>
+                        <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                            <span>Biaya Pengiriman</span>
+                            <span id="order-shipping" class="font-medium">Rp 0</span>
+                        </div>
+                        <div class="border-t border-slate-200 dark:border-slate-600 my-2"></div>
+                        <div class="flex justify-between items-end">
+                            <span class="font-bold text-lg">Total</span>
+                            <span id="order-total" class="font-black text-2xl">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <button form="checkout-form" type="submit" id="submit-btn"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-green-500/20 hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2">
+                            <span id="btn-text">Selesaikan Pesanan</span>
+                            <span id="btn-spinner"
+                                class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const BASE_URL = '<?= BASE_URL ?>';
+        const getImageUrl = (path) => {
+            if (!path) return '';
+            if (path.startsWith('http') || path.startsWith('//')) return path;
+            return BASE_URL + path;
+        };
+
+        // Load Cart and Elements
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const itemsContainer = document.getElementById('order-items');
+        const totalEl = document.getElementById('order-total');
+        const subtotalEl = document.getElementById('order-subtotal');
+
+        if (cart.length === 0) {
+            alert("Keranjang Anda kosong!");
+            window.location.href = 'market';
+        }
+
+        let baseTotal = 0;
+        let shippingCost = 0;
+        let total = 0; // Local var for subtotal display reference if needed, or just use baseTotal
+
+        cart.forEach(item => {
+            baseTotal += item.total_price;
+            total += item.total_price;
+            const itemImg = getImageUrl(item.image);
+            itemsContainer.innerHTML += `
+               <div class="flex gap-4">
+                    <div class="size-16 shrink-0 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 overflow-hidden flex items-center justify-center">
+                        ${itemImg ? `<img src="${itemImg}" alt="${item.name}" class="w-full h-full object-cover">` : '<span class="material-symbols-outlined text-slate-400">image</span>'}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-sm text-slate-900 dark:text-white line-clamp-2 leading-tight mb-1">${item.name}</h4>
+                        <div class="flex justify-between items-end">
+                             <p class="text-xs text-slate-500">${item.weight} <span class="lowercase">${item.unit || 'kg'}</span></p>
+                             <span class="font-bold text-sm">Rp ${new Intl.NumberFormat('id-ID').format(item.total_price)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        const formattedSubtotal = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+        if (subtotalEl) subtotalEl.innerText = formattedSubtotal;
+
+        // Fetch dynamic totals for discounts
+        fetch(BASE_URL + 'public/api_calculate_total.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: cart })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.total !== undefined) {
+                    totalEl.innerText = data.total_formatted;
+                    baseTotal = data.total; // Correctly initialize baseTotal here
+
+                    // Show discounts if any
+                    let discountHtml = '';
+                    if (data.total_discount > 0) {
+                        data.discounts_detail.forEach(d => {
+                            discountHtml += `
+                            <div class="flex justify-between text-green-600 font-bold text-sm">
+                                <span>${d.label}</span>
+                                <span>${d.amount_formatted}</span>
+                            </div>
+                        `;
+                        });
+                    }
+
+                    // Inject before the divider
+                    const divider = document.querySelector('.border-t.border-slate-200.dark\\:border-slate-600.my-2');
+                    if (divider) {
+                        // Remove old ones
+                        divider.parentElement.querySelectorAll('.text-green-600').forEach(el => el.remove());
+                        divider.insertAdjacentHTML('beforebegin', discountHtml);
+                    }
+                }
+            });
+
+        // Payment Toggle
+        function togglePaymentInfo() {
+            const method = document.querySelector('input[name="payment_method"]:checked').value;
+            const submitBtnText = document.getElementById('btn-text');
+            if (method === 'transfer') {
+                if (submitBtnText) submitBtnText.innerText = 'Buat Pesanan & Bayar';
+            } else {
+                if (submitBtnText) submitBtnText.innerText = 'Buat Pesanan (COD)';
+            }
+        }
+        // Initialize
+        togglePaymentInfo();
+
+        // Removed late declarations
+
+        // Handle Submit
+        document.getElementById('checkout-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Validate Area and Courier
+            const areaId = document.getElementById('destination-area-id').value;
+            const courier = document.querySelector('input[name="courier_option"]:checked');
+
+            if (!areaId) {
+                const lat = document.getElementById('dest-lat').value;
+                const lng = document.getElementById('dest-lng').value;
+                if (!lat || !lng) {
+                    alert('Silakan pilih Kota/Kecamatan yang valid dari daftar pencarian atau gunakan lokasi saya.');
+                    return;
+                }
+            }
+
+            if (!courier) {
+                alert('Silakan pilih kurir pengiriman.');
+                return;
+            }
+
+            // UI Protections
+            const submitBtn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnSpinner = document.getElementById('btn-spinner');
+
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            btnText.innerText = 'Memproses...';
+            btnSpinner.classList.remove('hidden');
+
+            const formData = new FormData(e.target);
+            const data = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                address: formData.get('address') + ' (' + formData.get('destination_area_text') + ') [Kode Pos: ' + formData.get('postal_code') + ']',
+                destination_area_id: formData.get('destination_area_id'),
+                courier_company: formData.get('courier_company'),
+                courier_type: formData.get('courier_type'),
+                courier_price: parseFloat(formData.get('courier_price')),
+                order_notes: formData.get('order_notes'),
+                payment_method: formData.get('payment_method'),
+                order_token: formData.get('order_token'),
+                items: cart,
+                total: baseTotal + shippingCost,
+                shipping_cost: shippingCost,
+                dest_lat: document.getElementById('dest-lat').value,
+                dest_lng: document.getElementById('dest-lng').value
+            };
+
+            try {
+                const response = await fetch('<?= BASE_URL ?>public/save_order.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    localStorage.removeItem('cart');
+
+                    if (result.payment_method === 'cod') {
+                        Swal.fire({
+                            title: 'Pesanan COD Berhasil!',
+                            text: 'Admin akan segera memproses pesanan Anda.',
+                            icon: 'success',
+                            confirmButtonColor: '#0d59f2',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            // Redirect to success page for COD
+                            window.location.href = BASE_URL + 'success?order_id=' + result.order_id;
+                        });
+                    } else if (result.payment_method === 'transfer') {
+                        Swal.fire({
+                            title: 'Pesanan Dibuat!',
+                            text: 'Silakan lakukan pembayaran untuk menyelesaikan pesanan.',
+                            icon: 'info',
+                            confirmButtonColor: '#0d59f2',
+                            confirmButtonText: 'Bayar Sekarang'
+                        }).then(() => {
+                            window.location.href = result.redirect_url;
+                        });
+                    }
+                } else {
+                    alert('Gagal: ' + result.message);
+                    // Reset button on failure
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                    btnText.innerText = 'Selesaikan Pesanan';
+                    btnSpinner.classList.add('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan. Silakan coba lagi.');
+                // Reset button on error
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                btnText.innerText = 'Selesaikan Pesanan';
+                btnSpinner.classList.add('hidden');
+            }
+        });
+
+        // --- Biteship Logic ---
+
+        const areaSearchInput = document.getElementById('area-search-input');
+        const areaResults = document.getElementById('area-results');
+        let searchTimeout;
+
+        areaSearchInput.addEventListener('input', () => {
+            const query = areaSearchInput.value.trim();
+            clearTimeout(searchTimeout);
+
+            if (query.length < 3) {
+                areaResults.classList.add('hidden');
+                return;
+            }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch('<?= BASE_URL ?>public/api/search_area.php?q=' + encodeURIComponent(query));
+                    const data = await res.json();
+
+                    if (data.success && data.areas.length > 0) {
+                        areaResults.innerHTML = data.areas.map(area => {
+                            const lat = area.latitude || '';
+                            const lng = area.longitude || '';
+                            return `
+                                <div class="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-sm border-b border-slate-100 dark:border-slate-800 last:border-0"
+                                    onclick="selectArea('${area.id}', '${area.name}', '${lat}', '${lng}')">
+                                    ${area.name}
+                                </div>
+                            `;
+                        }).join('');
+                        areaResults.classList.remove('hidden');
+                    } else {
+                        areaResults.innerHTML = '<div class="p-4 text-center text-slate-500 text-sm">Tidak ditemukan.</div>';
+                        areaResults.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    console.error('Search error:', err);
+                }
+            }, 500);
+        });
+
+        const postalInput = document.getElementById('postal-code');
+        
+        // Listener for Postal Code
+        postalInput.addEventListener('input', () => {
+            const areaId = document.getElementById('destination-area-id').value;
+            const lat = document.getElementById('dest-lat').value;
+            const lng = document.getElementById('dest-lng').value;
+            
+            // Only re-check rates if postal code is valid (5 digits) AND we have location data
+            if (postalInput.value.length === 5 && (areaId || (lat && lng))) {
+                checkRates(areaId, lat, lng);
+            }
+        });
+
+        window.selectArea = (id, name, lat, lng) => {
+            document.getElementById('destination-area-id').value = id;
+            document.getElementById('destination-area-text').value = name;
+            document.getElementById('dest-lat').value = (lat && lat !== 'null' && lat !== 'undefined') ? lat : '';
+            document.getElementById('dest-lng').value = (lng && lng !== 'null' && lng !== 'undefined') ? lng : '';
+            areaSearchInput.value = name;
+            areaResults.classList.add('hidden');
+            
+            // Trigger checkRates immediately!
+            // Postal code is optional now, but send current value if any
+            checkRates(id, lat, lng);
+        };
+
+        async function checkRates(areaId, lat, lng) {
+            const postalCode = document.getElementById('postal-code').value;
+            // No longer blocking if postal code is missing
+
+            const ratesSection = document.getElementById('shipping-rates-section');
+            const ratesList = document.getElementById('shipping-rates-list');
+            const destLat = (lat && lat !== 'null' && lat !== 'undefined') ? lat : document.getElementById('dest-lat').value;
+            const destLng = (lng && lng !== 'null' && lng !== 'undefined') ? lng : document.getElementById('dest-lng').value;
+
+            ratesSection.classList.remove('hidden');
+            ratesList.innerHTML = `
+                <div class="col-span-full py-8 flex flex-col items-center justify-center text-slate-500">
+                    <span class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-3"></span>
+                    <p class="text-sm">Mencari kurir tersedia...</p>
+                </div>
+            `;
+
+            try {
+                const res = await fetch('<?= BASE_URL ?>public/api/check_rates.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        area_id: areaId,
+                        area_text: document.getElementById('destination-area-text').value,
+                        postal_code: postalCode,
+                        items: cart,
+                        couriers: 'paxel,jne,jnt,sicepat,gojek,grab,anteraja,borzo,lalamove',
+                        dest_lat: destLat,
+                        dest_lng: destLng
+                    })
+                });
+                const data = await res.json();
+
+                let html = '';
+                if (data.recommendation) {
+                    const rec = data.recommendation;
+                    const bgClass = rec.type === 'instant' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/50' :
+                        (rec.type === 'cold' ? 'bg-cyan-50 dark:bg-cyan-900/20 border-cyan-200 dark:border-cyan-900/50' :
+                            'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-900/50');
+                    const textClass = rec.type === 'instant' ? 'text-blue-700 dark:text-blue-400' :
+                        (rec.type === 'cold' ? 'text-cyan-700 dark:text-cyan-400' :
+                            'text-purple-700 dark:text-purple-400');
+                    const icon = rec.type === 'instant' ? 'bolt' : (rec.type === 'cold' ? 'ac_unit' : 'local_shipping');
+
+                    html += `
+                        <div class="${bgClass} border p-4 rounded-xl flex items-start gap-3 mb-4 animate-pulse-subtle">
+                            <span class="material-symbols-outlined ${textClass}">${icon}</span>
+                            <div>
+                                <h4 class="font-bold text-sm ${textClass} mb-0.5">${rec.title}</h4>
+                                <p class="text-[11px] ${textClass} opacity-90 leading-relaxed">${rec.message}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                if(!data.success) {
+                     html += `
+                        <div class="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-3">
+                            ${data.message || 'Gagal memuat ongkir.'}
+                        </div>
+                    `;
+                    ratesList.innerHTML = html;
+                    return;
+                }
+
+                if (data.warning_msg) {
+                    html += `
+                        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/50 p-3 rounded-lg flex items-start gap-2 mb-2">
+                            <span class="material-symbols-outlined text-amber-500 text-sm mt-0.5">warning</span>
+                            <p class="text-[11px] text-amber-700 dark:text-amber-400 font-medium leading-tight">${data.warning_msg}</p>
+                        </div>
+                    `;
+                }
+
+                if (data.pricing && data.pricing.length > 0) {
+                    html += data.pricing.map(rate => `
+                        <label class="cursor-pointer relative rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-all has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:ring-1 has-[:checked]:ring-primary">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="courier_option" value="${rate.company}|${rate.courier_service_name}|${rate.price}"
+                                    class="text-primary focus:ring-primary size-5" 
+                                    onchange="updateTotal(${rate.price}, '${rate.courier_name}')">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-slate-900 dark:text-white uppercase">${rate.company} - ${rate.courier_service_name}</span>
+                                    <span class="text-[10px] text-slate-500">Estimasi: ${rate.duration}</span>
+                                </div>
+                            </div>
+                            <span class="font-bold text-slate-900 dark:text-white">Rp ${new Intl.NumberFormat('id-ID').format(rate.price)}</span>
+                            
+                            <!-- Hidden inputs for legacy form processing if needed -->
+                            <input type="radio" name="courier_company" value="${rate.company}" class="hidden" id="c-${rate.company}-${rate.courier_service_name}">
+                            <input type="radio" name="courier_type" value="${rate.type || rate.courier_service_code || rate.courier_service_name}" class="hidden" id="t-${rate.company}-${rate.courier_service_name}">
+                            <input type="radio" name="courier_price" value="${rate.price}" class="hidden" id="p-${rate.company}-${rate.courier_service_name}">
+                        </label>
+                    `).join('');
+                    ratesList.innerHTML = html;
+                } else {
+                    ratesList.innerHTML = `
+                        <div class="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 p-4 rounded-lg text-red-600 text-sm italic">
+                            Maaf, tidak ada kurir tersedia untuk rute ini. Coba cek kembali Kode Pos Anda.
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error('Rates error:', err);
+                ratesList.innerHTML = '<p class="text-sm text-red-500">Gagal memuat kurir. Silakan coba lagi.</p>';
+            }
+        }
+
+        window.updateTotal = (cost, courierName) => {
+            shippingCost = parseInt(cost);
+
+            // Sync hidden legacy inputs
+            const courierOption = document.querySelector('input[name="courier_option"]:checked').value;
+            const [company, service, price] = courierOption.split('|');
+
+            document.querySelectorAll('input[name="courier_company"]').forEach(i => i.checked = false);
+            document.querySelectorAll('input[name="courier_type"]').forEach(i => i.checked = false);
+            document.querySelectorAll('input[name="courier_price"]').forEach(i => i.checked = false);
+            
+            // Try to match safely by escaping or finding partial
+            // In API response construction above, IDs are sanitized? Ideally yes.
+            // Simplified here: Just rely on name attributes if IDs fail, but let's try IDs:
+            const safeService = service.replace(/[^a-zA-Z0-9-_]/g, '');
+            const safeCompany = company.replace(/[^a-zA-Z0-9-_]/g, '');
+            // Actually the ID construction in map loop was: id="c-${rate.company}-${rate.courier_service_name}"
+            // Service name might have spaces.
+            
+            // Better approach: Find inputs by value matching
+             const cInput = document.querySelector(`input[name="courier_company"][value="${company}"]`);
+             // Type/Service matching is harder as value might be code or name.
+             // But we set them specific to this loop instance.
+             
+             // Re-finding based on the clicked radio's parent label context is safest?
+             // No, let's just use the hidden inputs next to the radio.
+             const parentLabel = document.querySelector(`input[name="courier_option"][value="${courierOption}"]`).closest('label');
+             parentLabel.querySelector('input[name="courier_company"]').checked = true;
+             parentLabel.querySelector('input[name="courier_type"]').checked = true;
+             parentLabel.querySelector('input[name="courier_price"]').checked = true;
+
+            updateTotalDisplay();
+        };
+
+        function updateTotalDisplay() {
+            const shippingEl = document.getElementById('order-shipping');
+            const totalDisplay = document.getElementById('order-total');
+
+            const formatter = new Intl.NumberFormat('id-ID');
+
+            shippingEl.innerText = 'Rp ' + formatter.format(shippingCost);
+            shippingEl.classList.remove('text-green-600');
+
+            const finalTotal = baseTotal + shippingCost;
+            totalDisplay.innerText = 'Rp ' + formatter.format(finalTotal);
+        }
+
+
+        // Geolocation Logic
+        const btnGeo = document.getElementById('btn-geolocation');
+        btnGeo.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                alert('Browser Anda tidak mendukung Geolocation.');
+                return;
+            }
+
+            btnGeo.innerHTML = '<span class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></span> Mencari lokasi...';
+            btnGeo.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    document.getElementById('dest-lat').value = lat;
+                    document.getElementById('dest-lng').value = lng;
+                    
+                    // Optional: Reverse Geocoding could go here if needed to fill the text input
+                    areaSearchInput.value = "Lokasi Saya (" + lat.toFixed(4) + ", " + lng.toFixed(4) + ")";
+                    document.getElementById('destination-area-text').value = "Pinned Location";
+                    // For area_id, we might leave it empty or set a flag. 
+                    // But check_rates.php needs area_id usually for Biteship fallback. 
+                    // If we have coords, we prioritize coords in our logic.
+                    // However, Biteship might still need an area_id. 
+                    // For now, let's assume we proceed with empty area_id if we have coords, 
+                    // OR we force user to still select area for Biteship accuracy if needed.
+                    // But let's try to just trigger checkRates with what we have.
+                    
+                    checkRates('', lat, lng);
+
+                    btnGeo.innerHTML = '<span class="material-symbols-outlined text-lg">check</span> Lokasi ditemukan';
+                    btnGeo.classList.remove('text-primary');
+                    btnGeo.classList.add('text-green-600');
+                    setTimeout(() => {
+                        btnGeo.innerHTML = '<span class="material-symbols-outlined text-lg">my_location</span> Gunakan Lokasi Saya';
+                        btnGeo.classList.add('text-primary');
+                        btnGeo.classList.remove('text-green-600');
+                        btnGeo.disabled = false;
+                    }, 3000);
+                },
+                (error) => {
+                    console.error(error);
+                    alert('Gagal mengambil lokasi: ' + error.message);
+                    btnGeo.innerHTML = '<span class="material-symbols-outlined text-lg">my_location</span> Gunakan Lokasi Saya';
+                    btnGeo.disabled = false;
+                }
+            );
+        });
+
+        // Close search when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!document.getElementById('area-search-container').contains(e.target)) {
+                areaResults.classList.add('hidden');
+            }
+        });
+
+        // Initialize
+        togglePaymentInfo();
+    </script>
+</body>
+
+</html>
