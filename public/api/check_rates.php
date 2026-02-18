@@ -1,112 +1,209 @@
 <?php
 header('Content-Type: application/json');
-require_once dirname(dirname(__DIR__)) . "/config/init.php";
+require_once dirname(__DIR__, 2) . "/config/init.php";
+require_once ROOT_PATH . "helpers/BiteshipService.php";
+require_once ROOT_PATH . "includes/DistanceCalculator.php";
 require_once ROOT_PATH . "includes/LocalDeliveryService.php";
-require_once ROOT_PATH . "includes/cart_helper.php";
-require_once ROOT_PATH . "includes/BiteshipService.php";
 
 $input = json_decode(file_get_contents('php://input'), true);
-
-if (!$input || !isset($input['items'])) {
-    echo json_encode(['success' => false, 'message' => 'Input tidak valid.']);
-    exit;
-}
-
-$items = $input['items'];
-$destinationAreaId = $input['area_id'] ?? '';
-$postalCode = $input['postal_code'] ?? '';
+$area_id = $input['area_id'] ?? '';
+$postal_code = $input['postal_code'] ?? '';
+$items = $input['items'] ?? [];
 $dest_lat = $input['dest_lat'] ?? null;
 $dest_lng = $input['dest_lng'] ?? null;
 
-// 1. Calculate Total Weight (Grams)
-$totalWeight = getCartTotalWeight($items);
+// Ensure they are numeric or null
+$dest_lat = (is_numeric($dest_lat)) ? (float) $dest_lat : null;
+$dest_lng = (is_numeric($dest_lng)) ? (float) $dest_lng : null;
 
-// 2. Determine Distance if Coordinates exist
+// 1. Validation
+if (empty($items)) {
+    echo json_encode(['success' => false, 'message' => 'Missing items']);
+    exit;
+}
+
+// Postal Code Validation (Optional now)
+if (!empty($postal_code) && !preg_match('/^\d{5}$/', $postal_code)) {
+    // Just reset it if invalid, don't block
+    $postal_code = ''; 
+}
+
+// 2. Geocoding Fallback if coordinates missing
+$biteship = new BiteshipService();
+
+if (!$dest_lat || !$dest_lng) {
+    if (!empty($area_id)) {
+         // If we have area_id, we might rely on Biteship, but we need distance for Hybrid Logic.
+         // Biteship Check Rates provides coordinates in response sometimes? No.
+         // We need coords. Try geocoding area name if present.
+         $areaText = $input['area_text'] ?? $input['area_name'] ?? '';
+         if (!empty($areaText)) {
+             $coords = $biteship->getCoordinatesFromArea($areaText);
+             if ($coords) {
+                 $dest_lat = $coords['latitude'];
+                 $dest_lng = $coords['longitude'];
+             }
+         }
+    }
+}
+
+// If still no coordinates, we cannot determine distance logic reliably.
+// We will default to Biteship (assuming > 2km or unable to verify local) OR fail.
+// Let's default to trying Biteship to be safe, but local delivery won't be an option.
+$canCalculateDistance = ($dest_lat && $dest_lng && defined('BITESHIP_ORIGIN_LAT') && defined('BITESHIP_ORIGIN_LNG'));
 $distance = null;
-$canCalculateDistance = false;
-$STORE_LAT = -6.732021;
-$STORE_LNG = 108.552316;
 
-if ($dest_lat && $dest_lng) {
-    // Haversine Formula
-    $earthRadius = 6371;
-    $dLat = deg2rad($dest_lat - $STORE_LAT);
-    $dLng = deg2rad($dest_lng - $STORE_LNG);
-    $a = sin($dLat / 2) * sin($dLat / 2) +
-        cos(deg2rad($STORE_LAT)) * cos(deg2rad($dest_lat)) *
-        sin($dLng / 2) * sin($dLng / 2);
-    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-    $distance = $earthRadius * $c;
-    $canCalculateDistance = true;
+if ($canCalculateDistance) {
+    $distance = DistanceCalculator::haversine(
+        BITESHIP_ORIGIN_LAT,
+        BITESHIP_ORIGIN_LNG,
+        $dest_lat,
+        $dest_lng
+    );
+}
+
+// 3. Prepare Items & Total Weight
+$totalWeight = getCartTotalWeight($items); // Returns grams
+$biteshipItems = [];
+
+foreach ($items as $item) {
+    $qty = floatval($item['weight'] ?? 1); // For food items, weight is often the qty unit
+    $unit = $item['unit'] ?? 'kg';
+    
+    // Calculate individual weight in grams
+    if ($unit === 'kg') {
+         $weightInGrams = $qty * 1000;
+    } else {
+         // Assuming item['weight'] is just quantity for pcs, need item_weight from DB if possible,
+         // but here we just use what we have or default to 1kg per item if unknown?
+         // check_rates.php logic previously used ($qty * ($item['item_weight'] ?? 1000))
+         // let's stick to safe default
+         $weightInGrams = $qty * ($item['item_weight'] ?? 1000); 
+    }
+
+    $biteshipItems[] = [
+        'name' => $item['name'],
+        'description' => $item['name'] . ' (' . $qty . ' ' . $unit . ')',
+        'value' => (int) $item['price'],
+        'quantity' => 1, // Treat as packet quantity 1 with total weight
+        'weight' => (int) $weightInGrams,
+        'category' => 'food'
+    ];
 }
 
 $pricing = [];
 $recommendation = null;
 $debugInfo = [
-    'weight' => $totalWeight,
-    'distance' => $distance,
-    'can_calculate' => $canCalculateDistance
+    'distance' => $distance, 
+    'source' => 'unknown'
 ];
 
 // 4. Hybrid Logic Implementation
 // INTERNAL COURIER (Priority 1)
-$max_local_dist = (float) get_setting('shipping_max_distance', 15.0);
-if ($canCalculateDistance && $distance <= $max_local_dist) {
-    $localService = new LocalDeliveryService();
-    $localRate = $localService->getRate($distance);
-    
-    if ($localRate) {
-        $pricing[] = $localRate;
-        
-        if ($distance < 1.0) {
-            $recommendation = [
-                'type' => 'instant',
-                'title' => 'Kurir Internal (Free Ongkir)',
-                'message' => 'Jarak Anda sangat dekat (< 1km). Kami antar langsung gratis!'
-            ];
-        } else {
-            $recommendation = [
-                'type' => 'instant',
-                'title' => 'Kurir Internal Toko',
-                'message' => 'Tersedia kurir toko untuk jarak ' . round($distance, 1) . ' km. Lebih cepat & terpercaya!'
-            ];
-        }
-        $debugInfo['source'] = 'internal_priority';
-    }
+$localService = new LocalDeliveryService();
+$localRate = $localService->getRate($distance);
+
+if ($localRate) {
+    $pricing[] = $localRate;
+    $recommendation = [
+        'type' => 'instant',
+        'title' => 'Kurir Internal',
+        'message' => 'Jarak Anda masih dalam jangkauan kurir toko. Kami siap antar!'
+    ];
+    $debugInfo['source'] = 'internal_priority';
 }
 
-// BITESHIP API (Backup/Alternative)
-$biteship = new BiteshipService();
-$extraParams = [];
+// BITESHP API (Always Check as Backup/Alternative)
+// Even if distance < 2km, we want to show other options in case internal is busy
+// Config params
+$couriers = $input['couriers'] ?? 'paxel,jne,jnt,sicepat,gojek,grab,anteraja,borzo,lalamove';
+$extraParams = [
+    'origin_contact_name' => BITESHIP_ORIGIN_CONTACT_NAME,
+    'origin_contact_phone' => BITESHIP_ORIGIN_CONTACT_PHONE,
+    'destination_contact_name' => $input['name'] ?? 'Customer',
+    'destination_contact_phone' => $input['phone'] ?? '08123456789',
+    'destination_postal_code' => $postal_code // Official param for accuracy
+];
 
 try {
     $biteshipResult = $biteship->checkRates(
-        'IDR',
+        $area_id,
         $totalWeight,
-        $destinationAreaId,
+        $biteshipItems,
+        BITESHIP_ORIGIN_AREA_ID,
+        $couriers,
+        BITESHIP_ORIGIN_LAT,
+        BITESHIP_ORIGIN_LNG,
         $dest_lat,
         $dest_lng,
         $extraParams
     );
 
     if ($biteshipResult['success'] && !empty($biteshipResult['data']['pricing'])) {
+        // Translate duration to Indonesian
+        foreach ($biteshipResult['data']['pricing'] as &$rate) {
+            if (isset($rate['duration'])) {
+                $rate['duration'] = AppHelper::translateDuration($rate['duration']);
+            }
+        }
+        
+        // Merge Biteship rates into pricing array
+        // If internal courier exists, it's already at index 0 (top)
         $pricing = array_merge($pricing, $biteshipResult['data']['pricing']);
-        if(empty($debugInfo['source'])) $debugInfo['source'] = 'biteship_api';
+        
+        if(empty($debugInfo['source'])) {
+             $debugInfo['source'] = 'biteship_api';
+        } else {
+             $debugInfo['source'] .= '_and_biteship';
+        }
+    } else {
+        // API Error Handling - Return empty pricing instead of crash
+        // Log error internally if possible
+        $debugInfo['error'] = $biteshipResult['message'] ?? 'Unknown API Error';
     }
 } catch (Exception $e) {
+    // Catch Curl/Connection Exceptions
     $debugInfo['error'] = $e->getMessage();
 }
 
-// Translate Duration to Indonesian
-foreach ($pricing as &$rate) {
-    if (isset($rate['duration'])) {
-        $search = ['hours', 'hour', 'days', 'day', 'mins', 'min'];
-        $replace = ['jam', 'jam', 'hari', 'hari', 'menit', 'menit'];
-        $rate['duration'] = str_ireplace($search, $replace, $rate['duration']);
+// 5. Generate Recommendations if using Biteship (and pricing found)
+if (!empty($pricing) && $debugInfo['source'] === 'biteship_api') {
+    $hasInstant = false;
+    $hasCold = false;
+    $hasNextDay = false;
+    
+    foreach ($pricing as $rate) {
+        $type = strtolower($rate['service_type'] ?? $rate['type'] ?? '');
+        $company = strtolower($rate['company'] ?? '');
+        $serviceName = strtolower($rate['courier_service_name'] ?? '');
+
+        if ($type === 'instant' || $type === 'same_day') $hasInstant = true;
+        if ($company === 'paxel' && (strpos($serviceName, 'cold') !== false || strpos($serviceName, 'beku') !== false)) $hasCold = true;
+        if (strpos($serviceName, 'next day') !== false || $type === 'next_day') $hasNextDay = true;
+    }
+
+    if ($hasInstant && ($distance === null || $distance < 15)) {
+        $recommendation = [
+            'type' => 'instant',
+            'title' => 'Rekomendasi Instan',
+            'message' => 'Gunakan kurir Instan untuk kualitas terbaik.' . ($distance !== null ? ' (Jarak ±' . round($distance, 1) . ' km)' : '')
+        ];
+    } elseif ($hasCold) {
+        $recommendation = [
+            'type' => 'cold',
+            'title' => 'Rekomendasi Paxel Cold',
+            'message' => 'Sangat disarankan untuk produk Frozen Food jarah jauh.'
+        ];
+    } elseif ($hasNextDay) {
+        $recommendation = [
+            'type' => 'next_day',
+            'title' => 'Rekomendasi Next Day',
+            'message' => 'Pilihan hemat dan cepat untuk luar kota.'
+        ];
     }
 }
 
-// Final Response
+// 6. Final Response
 echo json_encode([
     'success' => true,
     'pricing' => $pricing,

@@ -27,26 +27,57 @@ $order_token = bin2hex(random_bytes(16));
                 extend: {
                     colors: {
                         "primary": "#0d59f2",
+                        "primary-dark": "#0b4ecf",
                         "background-light": "#f5f6f8",
                         "background-dark": "#101622",
                         "card-dark": "#1e2736",
+                    },
+                    boxShadow: {
+                        'premium': '0 10px 30px -10px rgba(13, 89, 242, 0.15)',
                     },
                     fontFamily: {
                         "display": ["Inter", "sans-serif"]
                     },
                     animation: {
                         "pulse-subtle": "pulse-subtle 3s ease-in-out infinite",
+                        "slide-up": "slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
                     },
                     keyframes: {
                         "pulse-subtle": {
                             "0%, 100%": { opacity: "1" },
                             "50%": { opacity: "0.8" },
+                        },
+                        "slide-up": {
+                            "0%": { transform: "translateY(100%)" },
+                            "100%": { transform: "translateY(0)" },
                         }
                     }
                 },
             },
         }
     </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+        
+        @media (max-width: 768px) {
+            .mobile-bottom-bar {
+                box-shadow: 0 -10px 20px -5px rgba(0,0,0,0.1);
+            }
+        }
+        
+        .step-active { @apply ring-4 ring-primary/20 scale-110; }
+        
+        input:focus, textarea:focus {
+            @apply ring-2 ring-primary/20 border-primary !important;
+        }
+
+        .rate-card-selected {
+            @apply border-primary bg-primary/5 ring-1 ring-primary shadow-sm;
+        }
+    </style>
 </head>
 
 <body
@@ -54,19 +85,24 @@ $order_token = bin2hex(random_bytes(16));
 
     <?php include ROOT_PATH . "includes/public_header.php"; ?>
 
-    <main class="flex-grow w-full max-w-4xl lg:max-w-7xl mx-auto px-4 py-8">
-        <h1 class="text-2xl font-bold mb-6">Pembayaran</h1>
+    <main class="flex-grow w-full max-w-4xl lg:max-w-7xl mx-auto px-4 py-6 md:py-10 pb-32 md:pb-10">
+        <div class="flex items-center gap-2 mb-6 md:mb-8">
+            <a href="cart" class="text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <h1 class="text-2xl md:text-3xl font-black tracking-tight">Checkout</h1>
+        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 lg:gap-12">
             <!-- Form -->
             <div class="lg:col-span-8 space-y-8">
                 <!-- Contact & Shipping -->
                 <div
-                    class="bg-white dark:bg-card-dark p-6 lg:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                    class="bg-white dark:bg-card-dark p-5 md:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-premium group">
+                    <h2 class="text-lg md:text-xl font-bold mb-6 flex items-center gap-3">
                         <span
-                            class="flex items-center justify-center size-8 rounded-full bg-primary/10 text-primary text-sm">1</span>
-                        Informasi Kontak
+                            class="flex items-center justify-center size-8 md:size-9 rounded-xl bg-primary text-white text-sm shadow-lg shadow-primary/30">1</span>
+                        Informasi Pengiriman
                     </h2>
                     <form id="checkout-form" class="space-y-6">
                         <!-- Idempotency Token -->
@@ -157,10 +193,10 @@ $order_token = bin2hex(random_bytes(16));
 
                 <!-- Payment Method -->
                 <div
-                    class="bg-white dark:bg-card-dark p-6 lg:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                    class="bg-white dark:bg-card-dark p-5 md:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-premium">
+                    <h2 class="text-lg md:text-xl font-bold mb-6 flex items-center gap-3">
                         <span
-                            class="flex items-center justify-center size-8 rounded-full bg-primary/10 text-primary text-sm">2</span>
+                            class="flex items-center justify-center size-8 md:size-9 rounded-xl bg-primary text-white text-sm shadow-lg shadow-primary/30">2</span>
                         Metode Pembayaran
                     </h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -191,33 +227,38 @@ $order_token = bin2hex(random_bytes(16));
             </div>
 
             <!-- Order Preview -->
-            <div class="lg:col-span-4">
+            <div class="lg:col-span-4 h-fit">
                 <div
-                    class="bg-slate-50 dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 sticky top-24">
-                    <h2 class="text-lg font-bold mb-4">Ringkasan Pesanan</h2>
-                    <div id="order-items" class="space-y-4 mb-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                    class="bg-white dark:bg-card-dark p-6 rounded-2xl border border-slate-200 dark:border-slate-800 sticky top-24 shadow-sm">
+                    <h2 class="text-lg font-bold mb-5 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">shopping_basket</span>
+                        Ringkasan Pesanan
+                    </h2>
+                    <div id="order-items" class="space-y-4 mb-6 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
                     </div>
 
-                    <div class="border-t border-slate-200 dark:border-slate-600 pt-4 space-y-3">
-                        <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl space-y-3 mb-6">
+                        <div class="flex justify-between text-sm text-slate-600 dark:text-slate-400">
                             <span>Subtotal</span>
-                            <span id="order-subtotal" class="font-medium">Rp 0</span>
+                            <span id="order-subtotal" class="font-semibold text-slate-900 dark:text-white">Rp 0</span>
                         </div>
-                        <div class="flex justify-between text-slate-600 dark:text-slate-400">
+                        <div class="flex justify-between text-sm text-slate-600 dark:text-slate-400">
                             <span>Biaya Pengiriman</span>
-                            <span id="order-shipping" class="font-medium">Rp 0</span>
+                            <span id="order-shipping" class="font-semibold text-slate-900 dark:text-white">Rp 0</span>
                         </div>
-                        <div class="border-t border-slate-200 dark:border-slate-600 my-2"></div>
-                        <div class="flex justify-between items-end">
-                            <span class="font-bold text-lg">Total</span>
-                            <span id="order-total" class="font-black text-2xl">Rp 0</span>
+                        <div class="border-t border-slate-200 dark:border-slate-700 mt-2 pt-2">
+                            <div class="flex justify-between items-end">
+                                <span class="text-sm font-medium">Total Tagihan</span>
+                                <span id="order-total" class="font-black text-2xl text-primary">Rp 0</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mt-8">
+                    <div class="hidden md:block">
                         <button form="checkout-form" type="submit" id="submit-btn"
-                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-green-500/20 hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2">
-                            <span id="btn-text">Selesaikan Pesanan</span>
+                            class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-6 rounded-xl shadow-xl shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0 transition-all flex justify-center items-center gap-2 group">
+                            <span id="btn-text">Bayar Sekarang</span>
+                            <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                             <span id="btn-spinner"
                                 class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
                         </button>
@@ -226,6 +267,22 @@ $order_token = bin2hex(random_bytes(16));
             </div>
         </div>
     </main>
+
+    <!-- Mobile Sticky Bottom Bar -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 z-[60] animate-slide-up">
+        <div class="bg-white dark:bg-card-dark border-t border-slate-200 dark:border-slate-800 p-4 pb-safe-area flex items-center justify-between gap-4 mobile-bottom-bar rounded-t-3xl">
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Total Tagihan</span>
+                <span id="mobile-total" class="text-xl font-black text-primary">Rp 0</span>
+            </div>
+            <button form="checkout-form" type="submit" id="mobile-submit-btn"
+                class="flex-1 bg-primary hover:bg-primary-dark text-white font-bold py-3.5 px-6 rounded-xl shadow-xl shadow-primary/20 flex justify-center items-center gap-2">
+                <span id="mobile-btn-text">Bayar</span>
+                <span id="mobile-btn-spinner"
+                    class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+            </button>
+        </div>
+    </div>
 
     <script>
         const BASE_URL = '<?= BASE_URL ?>';
@@ -311,10 +368,14 @@ $order_token = bin2hex(random_bytes(16));
         function togglePaymentInfo() {
             const method = document.querySelector('input[name="payment_method"]:checked').value;
             const submitBtnText = document.getElementById('btn-text');
+            const mobileBtnText = document.getElementById('mobile-btn-text');
+            
             if (method === 'transfer') {
-                if (submitBtnText) submitBtnText.innerText = 'Buat Pesanan & Bayar';
+                if (submitBtnText) submitBtnText.innerText = 'Bayar Sekarang';
+                if (mobileBtnText) mobileBtnText.innerText = 'Bayar';
             } else {
                 if (submitBtnText) submitBtnText.innerText = 'Buat Pesanan (COD)';
+                if (mobileBtnText) mobileBtnText.innerText = 'Pesan COD';
             }
         }
         // Initialize
@@ -348,11 +409,22 @@ $order_token = bin2hex(random_bytes(16));
             const submitBtn = document.getElementById('submit-btn');
             const btnText = document.getElementById('btn-text');
             const btnSpinner = document.getElementById('btn-spinner');
+            
+            const mobileSubmitBtn = document.getElementById('mobile-submit-btn');
+            const mobileBtnText = document.getElementById('mobile-btn-text');
+            const mobileBtnSpinner = document.getElementById('mobile-btn-spinner');
 
-            submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
-            btnText.innerText = 'Memproses...';
-            btnSpinner.classList.remove('hidden');
+            [submitBtn, mobileSubmitBtn].forEach(btn => {
+                if(btn) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-75', 'cursor-not-allowed');
+                }
+            });
+            
+            if(btnText) btnText.innerText = 'Memproses...';
+            if(btnSpinner) btnSpinner.classList.remove('hidden');
+            if(mobileBtnText) mobileBtnText.innerText = '...';
+            if(mobileBtnSpinner) mobileBtnSpinner.classList.remove('hidden');
 
             const formData = new FormData(e.target);
             const data = {
@@ -451,9 +523,12 @@ $order_token = bin2hex(random_bytes(16));
                             const lat = area.latitude || '';
                             const lng = area.longitude || '';
                             return `
-                                <div class="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-sm border-b border-slate-100 dark:border-slate-800 last:border-0"
+                                <div class="p-4 hover:bg-primary/5 cursor-pointer text-sm border-b border-slate-100 dark:border-slate-800 last:border-0 flex items-center gap-3 group/item transition-colors"
                                     onclick="selectArea('${area.id}', '${area.name}', '${lat}', '${lng}')">
-                                    ${area.name}
+                                    <div class="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover/item:text-primary group-hover/item:bg-primary/10 transition-colors">
+                                        <span class="material-symbols-outlined text-xl">location_on</span>
+                                    </div>
+                                    <span class="font-medium text-slate-700 dark:text-slate-300 group-hover/item:text-primary transition-colors">${area.name}</span>
                                 </div>
                             `;
                         }).join('');
@@ -531,25 +606,20 @@ $order_token = bin2hex(random_bytes(16));
                 let html = '';
                 if (data.recommendation) {
                     const rec = data.recommendation;
-                    const bgClass = rec.type === 'instant' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/30' :
-                        (rec.type === 'cold' ? 'bg-cyan-50 dark:bg-cyan-900/10 border-cyan-200 dark:border-cyan-900/30' :
-                            'bg-purple-50 dark:bg-purple-900/10 border-purple-200 dark:border-purple-900/30');
+                    const bgClass = rec.type === 'instant' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/50' :
+                        (rec.type === 'cold' ? 'bg-cyan-50 dark:bg-cyan-900/20 border-cyan-200 dark:border-cyan-900/50' :
+                            'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-900/50');
                     const textClass = rec.type === 'instant' ? 'text-blue-700 dark:text-blue-400' :
                         (rec.type === 'cold' ? 'text-cyan-700 dark:text-cyan-400' :
                             'text-purple-700 dark:text-purple-400');
                     const icon = rec.type === 'instant' ? 'bolt' : (rec.type === 'cold' ? 'ac_unit' : 'local_shipping');
 
                     html += `
-                        <div class="${bgClass} border-2 p-4 rounded-2xl flex items-start gap-3 mb-6 relative overflow-hidden animate-in fade-in zoom-in duration-500">
-                            <div class="absolute -top-1 -right-1 opacity-10 rotate-12">
-                                <span class="material-symbols-outlined text-6xl">${icon}</span>
-                            </div>
-                            <div class="relative z-10 size-10 rounded-xl bg-white/80 dark:bg-slate-900/50 shadow-sm flex items-center justify-center shrink-0 border border-white dark:border-slate-800">
-                                <span class="material-symbols-outlined text-2xl ${textClass}">${icon}</span>
-                            </div>
-                            <div class="relative z-10 flex-1">
-                                <h4 class="font-black text-xs sm:text-sm ${textClass} uppercase tracking-wider mb-1">${rec.title}</h4>
-                                <p class="text-[11px] ${textClass} font-semibold leading-relaxed opacity-90">${rec.message}</p>
+                        <div class="${bgClass} border p-4 rounded-xl flex items-start gap-3 mb-4 animate-pulse-subtle">
+                            <span class="material-symbols-outlined ${textClass}">${icon}</span>
+                            <div>
+                                <h4 class="font-bold text-sm ${textClass} mb-0.5">${rec.title}</h4>
+                                <p class="text-[11px] ${textClass} opacity-90 leading-relaxed">${rec.message}</p>
                             </div>
                         </div>
                     `;
@@ -575,29 +645,30 @@ $order_token = bin2hex(random_bytes(16));
                 }
 
                 if (data.pricing && data.pricing.length > 0) {
-                    html += data.pricing.map(rate => `
-                        <label class="group cursor-pointer relative rounded-2xl border-2 border-slate-100 dark:border-slate-800 p-4 flex gap-3 sm:gap-4 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all has-[:checked]:border-primary has-[:checked]:bg-primary/5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <div class="flex items-center">
-                                <input type="radio" name="courier_option" value="${rate.company}|${rate.courier_service_name}|${rate.price}"
-                                    class="text-primary focus:ring-primary size-5 border-slate-300 dark:border-slate-600 dark:bg-slate-900" 
-                                    onchange="updateTotal(${rate.price}, '${rate.courier_name}')">
+                    html += data.pricing.map(rate => {
+                        const isInternal = rate.company === 'local';
+                        const icon = isInternal ? 'local_shipping' : 'package_2';
+                        const iconBg = isInternal ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-500';
+                        
+                        return `
+                        <label class="cursor-pointer relative rounded-2xl border border-slate-200 dark:border-slate-800 p-4 grid grid-cols-[auto_1fr_auto] items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all group has-[:checked]:border-primary has-[:checked]:bg-primary/[0.03] has-[:checked]:ring-1 has-[:checked]:ring-primary/50">
+                            <div class="flex items-center justify-center size-10 rounded-xl ${iconBg} transition-colors group-hover:scale-110">
+                                <span class="material-symbols-outlined text-[22px] font-variation-fill">${icon}</span>
                             </div>
-                            <div class="flex-1 flex justify-between items-center gap-2 min-w-0">
-                                <div class="min-w-0">
-                                    <p class="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-0.5">${rate.company}</p>
-                                    <h5 class="font-black text-sm sm:text-base text-slate-900 dark:text-white leading-tight truncate sm:whitespace-normal">
-                                        ${rate.courier_service_code ? (rate.courier_service_code === 'store_delivery' ? 'Pengiriman Internal' : rate.courier_service_name) : rate.courier_service_name}
-                                    </h5>
-                                    <div class="flex items-center gap-1.5 mt-1">
-                                        <span class="material-symbols-outlined text-[14px] text-slate-400">schedule</span>
-                                        <span class="text-[10px] sm:text-[11px] text-slate-500">Estimasi: ${rate.duration}</span>
-                                    </div>
+                            <div class="flex flex-col min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-slate-900 dark:text-white uppercase text-xs md:text-sm truncate">${rate.company} ${rate.courier_service_name}</span>
+                                    ${isInternal ? `<span class="bg-primary/10 text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase">Tercepat • ${rate.distance ? rate.distance.toFixed(1) : '?'} KM</span>` : ''}
                                 </div>
-                                <div class="text-right shrink-0">
-                                    <p class="font-black text-slate-900 dark:text-white text-sm sm:text-lg">
-                                        Rp${new Intl.NumberFormat('id-ID').format(rate.price)}
-                                    </p>
-                                </div>
+                                <span class="text-[10px] md:text-xs text-slate-500 font-medium">${rate.duration}</span>
+                            </div>
+                            <div class="flex flex-col items-end gap-1">
+                                <span class="font-black text-slate-900 dark:text-white text-sm md:text-base whitespace-nowrap">
+                                    ${rate.price === 0 ? '<span class="text-green-600">GRATIS</span>' : 'Rp ' + new Intl.NumberFormat('id-ID').format(rate.price)}
+                                </span>
+                                <input type="radio" name="courier_option" value="${rate.company}|${rate.courier_service_name}|${rate.price}"
+                                    class="text-primary focus:ring-primary size-5 rounded-full border-slate-300" 
+                                    onchange="updateTotal(${rate.price}, '${rate.courier_name}')">
                             </div>
                             
                             <!-- Hidden inputs for legacy form processing -->
@@ -605,7 +676,8 @@ $order_token = bin2hex(random_bytes(16));
                             <input type="radio" name="courier_type" value="${rate.type || rate.courier_service_code || rate.courier_service_name}" class="hidden">
                             <input type="radio" name="courier_price" value="${rate.price}" class="hidden">
                         </label>
-                    `).join('');
+                        `;
+                    }).join('');
                     ratesList.innerHTML = html;
                 } else {
                     ratesList.innerHTML = `
@@ -657,15 +729,25 @@ $order_token = bin2hex(random_bytes(16));
         function updateTotalDisplay() {
             const shippingEl = document.getElementById('order-shipping');
             const totalDisplay = document.getElementById('order-total');
+            const mobileTotalDisplay = document.getElementById('mobile-total');
 
             const formatter = new Intl.NumberFormat('id-ID');
 
-            shippingEl.innerText = 'Rp ' + formatter.format(shippingCost);
-            shippingEl.classList.remove('text-green-600');
+            if (shippingEl) {
+                shippingEl.innerText = shippingCost === 0 ? 'Gratis' : 'Rp ' + formatter.format(shippingCost);
+                if (shippingCost === 0 && shippingCost !== null) shippingEl.classList.add('text-green-600');
+                else shippingEl.classList.remove('text-green-600');
+            }
 
             const finalTotal = baseTotal + shippingCost;
-            totalDisplay.innerText = 'Rp ' + formatter.format(finalTotal);
+            const formattedTotal = 'Rp ' + formatter.format(finalTotal);
+            
+            if(totalDisplay) totalDisplay.innerText = formattedTotal;
+            if(mobileTotalDisplay) mobileTotalDisplay.innerText = formattedTotal;
         }
+
+        // Initialize total display
+        updateTotalDisplay();
 
 
         // Geolocation Logic

@@ -30,6 +30,16 @@ class AppHelper {
         
         return isset(self::$settings[$key]) ? self::$settings[$key] : $default;
     }
+
+    /**
+     * Translate English duration (from Biteship) to Indonesian
+     */
+    public static function translateDuration($duration) {
+        if (empty($duration)) return $duration;
+        $search = ['hours', 'hour', 'days', 'day', 'mins', 'min'];
+        $replace = ['Jam', 'Jam', 'Hari', 'Hari', 'Menit', 'Menit'];
+        return str_ireplace($search, $replace, $duration);
+    }
 }
 
 // Global convenience function

@@ -238,35 +238,26 @@ $orders_result = $conn->query($orders_query);
                                         <div>
                                             <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">
                                                 Alamat Tujuan</p>
-                                            <p class="text-sm text-slate-900 dark:text-white mb-2">
+                                            <p class="text-sm text-slate-900 dark:text-white flex items-center gap-2">
                                                 <?php echo htmlspecialchars($order_data['customer_address']); ?>
                                             </p>
                                         </div>
 
                                         <?php if (!empty($order_data['destination_latitude']) && !empty($order_data['destination_longitude'])): ?>
-                                            <div>
-                                                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">
-                                                    Pinned Lokasi (Maps)</p>
-                                                <div class="flex flex-wrap gap-2">
-                                                    <a href="https://www.google.com/maps?q=<?php echo $order_data['destination_latitude']; ?>,<?php echo $order_data['destination_longitude']; ?>"
-                                                        target="_blank"
-                                                        class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
-                                                        <span class="material-icons-round text-sm">location_on</span>
-                                                        Peta
-                                                    </a>
-                                                    <?php
-                                                    $order_ref = $order_data['order_number'] ?? str_pad($order_data['id'], 5, '0', STR_PAD_LEFT);
-                                                    $maps_url = "https://www.google.com/maps?q=" . $order_data['destination_latitude'] . "," . $order_data['destination_longitude'];
-                                                    $wa_text = urlencode("Lokasi Pengiriman Pesanan #$order_ref:\n$maps_url");
-                                                    ?>
-                                                    <a href="https://wa.me/?text=<?php echo $wa_text; ?>"
-                                                        target="_blank"
-                                                        class="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg text-xs font-bold hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
-                                                        <span class="material-icons-round text-sm">share</span>
-                                                        Share WA
-                                                    </a>
-                                                </div>
+                                        <div>
+                                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">
+                                                Titik Lokasi (Pinned)</p>
+                                            <div class="flex flex-col gap-2">
+                                                <a href="https://www.google.com/maps?q=<?php echo $order_data['destination_latitude']; ?>,<?php echo $order_data['destination_longitude']; ?>" target="_blank" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-2 w-fit transition-colors shadow-sm">
+                                                    <span class="material-icons-round text-sm">place</span>
+                                                    Lihat di Google Maps
+                                                </a>
+                                                <a href="https://wa.me/?text=<?php echo urlencode("Lokasi Pengiriman Order #" . ($order_data['order_number'] ?? str_pad($order_data['id'], 5, '0', STR_PAD_LEFT)) . ": https://www.google.com/maps?q=" . $order_data['destination_latitude'] . "," . $order_data['destination_longitude']); ?>" target="_blank" class="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-2 w-fit transition-colors shadow-sm">
+                                                    <span class="material-icons-round text-sm">share</span>
+                                                    Share ke WhatsApp
+                                                </a>
                                             </div>
+                                        </div>
                                         <?php endif; ?>
 
                                         <?php if (!empty($order_data['order_notes'])): ?>

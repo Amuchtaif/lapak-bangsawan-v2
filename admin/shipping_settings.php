@@ -1,25 +1,41 @@
 <?php
 require("auth_session.php");
 require_once dirname(__DIR__) . "/config/init.php";
+require_once ROOT_PATH . "helpers/ShippingHelper.php";
 
-$userId = $_SESSION['user_id'];
 $success_msg = '';
 $error_msg = '';
 
-// Update Site Settings for Shipping
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_shipping'])) {
-    $max_dist = mysqli_real_escape_string($conn, $_POST['shipping_max_distance']);
-    $rate_km = mysqli_real_escape_string($conn, $_POST['shipping_rate_per_km']);
-    
-    $conn->query("INSERT INTO site_settings (setting_key, setting_value) VALUES ('shipping_max_distance', '$max_dist') ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
-    $conn->query("INSERT INTO site_settings (setting_key, setting_value) VALUES ('shipping_rate_per_km', '$rate_km') ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
-    
-    $success_msg = "Pengaturan pengiriman berhasil diperbarui.";
-}
+// Fetch current setting
+$settings = ShippingHelper::getLocalShippingSettings($conn);
 
-// Fetch current shipping settings
-$shipping_max_distance = get_setting('shipping_max_distance', '15');
-$shipping_rate_per_km = get_setting('shipping_rate_per_km', '1000');
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_settings'])) {
+    $max_distance = filter_var($_POST['max_distance_local'], FILTER_VALIDATE_FLOAT);
+    $price_per_km = filter_var($_POST['price_per_km_local'], FILTER_VALIDATE_FLOAT);
+    $free_distance = filter_var($_POST['free_distance_local'], FILTER_VALIDATE_FLOAT);
+
+    if ($max_distance === false || $price_per_km === false || $free_distance === false) {
+        $error_msg = "Batas jarak dan tarif harus berupa angka.";
+    } else {
+        // Use Prepared Statement for security
+        $stmt = $conn->prepare("UPDATE settings_pengiriman SET max_distance_local = ?, price_per_km_local = ?, free_distance_local = ? WHERE id = 1");
+        if (!$stmt) {
+             $error_msg = "Gagal menyiapkan query: " . $conn->error;
+        } else {
+            $stmt->bind_param("ddd", $max_distance, $price_per_km, $free_distance);
+            if ($stmt->execute()) {
+                $success_msg = "Pengaturan pengiriman berhasil diperbarui.";
+                // Update local variable for display
+                $settings['max_distance_local'] = $max_distance;
+                $settings['price_per_km_local'] = $price_per_km;
+                $settings['free_distance_local'] = $free_distance;
+            } else {
+                $error_msg = "Gagal memperbarui pengaturan: " . $stmt->error;
+            }
+            $stmt->close();
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html class="light" lang="id">
@@ -27,7 +43,7 @@ $shipping_rate_per_km = get_setting('shipping_rate_per_km', '1000');
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Pengaturan Kurir - Lapak Bangsawan</title>
+    <title>Pengaturan Pengiriman - Lapak Bangsawan</title>
     <link rel="icon" href="<?= BASE_URL ?>assets/images/favicon-laba.png" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
@@ -57,7 +73,7 @@ $shipping_rate_per_km = get_setting('shipping_rate_per_km', '1000');
     <?php include ROOT_PATH . "includes/admin/sidebar.php"; ?>
 
     <main class="flex-1 flex flex-col h-full relative overflow-hidden">
-        <?php $page_title = "Pengaturan Kurir";
+        <?php $page_title = "Pengaturan Pengiriman";
         include ROOT_PATH . "includes/admin/header.php"; ?>
 
         <div class="flex-1 overflow-auto p-6">
@@ -87,65 +103,99 @@ $shipping_rate_per_km = get_setting('shipping_rate_per_km', '1000');
                 <div
                     class="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 md:p-8">
                     <div class="flex items-center gap-3 mb-6">
-                        <div class="size-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                        <div class="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-primary">
                             <span class="material-icons-round">local_shipping</span>
                         </div>
                         <div>
-                            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Pengaturan Kurir Lokal</h2>
-                            <p class="text-xs text-slate-500">Konfigurasi jangkauan dan tarif pengantaran internal toko.</p>
+                            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Konfigurasi Kurir Lokal</h2>
+                            <p class="text-sm text-slate-500">Atur batasan jarak, tarif, dan bonus pengiriman internal.</p>
                         </div>
                     </div>
 
                     <form action="" method="POST" class="space-y-6">
-                        <input type="hidden" name="update_shipping" value="1">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Jarak Maksimal Pengiriman (Km)</label>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    Batas Jarak Maksimal (KM)
+                                </label>
                                 <div class="relative">
-                                    <input type="number" step="0.1" name="shipping_max_distance"
-                                        value="<?php echo htmlspecialchars($shipping_max_distance); ?>"
-                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary pl-4 pr-12 py-2.5">
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">Km</span>
+                                    <input type="number" step="0.1" name="max_distance_local"
+                                        value="<?php echo htmlspecialchars($settings['max_distance_local']); ?>"
+                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary pr-12">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400 text-sm">
+                                        KM
+                                    </div>
                                 </div>
-                                <p class="text-xs text-slate-500 mt-2">Pesanan di luar jarak ini tidak akan menampilkan opsi kurir internal.</p>
+                                <p class="mt-1 text-xs text-slate-500">Opsi kurir lokal hanya muncul jika jarak pembeli di bawah angka ini.</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    Gratis Ongkir Di Bawah (KM)
+                                </label>
+                                <div class="relative">
+                                    <input type="number" step="0.1" name="free_distance_local"
+                                        value="<?php echo htmlspecialchars($settings['free_distance_local'] ?? 1.0); ?>"
+                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary pr-12">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400 text-sm">
+                                        KM
+                                    </div>
+                                </div>
+                                <p class="mt-1 text-xs text-slate-500">Contoh: Isi 1 untuk gratis ongkir jika jarak < 1 KM.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    Tarif per Kilometer (Rp)
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 text-sm">
+                                        Rp
+                                    </div>
+                                    <input type="number" name="price_per_km_local"
+                                        value="<?php echo htmlspecialchars($settings['price_per_km_local']); ?>"
+                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary pl-10">
+                                </div>
+                                <p class="mt-1 text-xs text-slate-500">Biaya dihitung otomatis: Jarak &times; Tarif (Tingkat 500m).</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300 mb-1">Simulasi Gratis:</h4>
+                                <p class="text-sm text-blue-800 dark:text-blue-400">
+                                    Jarak <span class="font-semibold"><?php echo ($settings['free_distance_local'] ?? 1.0) - 0.1; ?> KM</span> = 
+                                    <span class="font-bold underline text-green-600 dark:text-green-400 text-base">GRATIS</span>
+                                </p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tarif per Kilometer (IDR)</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">Rp</span>
-                                    <input type="number" name="shipping_rate_per_km"
-                                        value="<?php echo htmlspecialchars($shipping_rate_per_km); ?>"
-                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary pl-10 pr-4 py-2.5">
-                                </div>
-                                <p class="text-xs text-slate-500 mt-2">Biaya per kilometer (floor). Jarak < 1km akan otomatis gratis.</p>
+                                <h4 class="text-sm font-bold text-blue-900 dark:text-blue-300 mb-1">Simulasi Berbayar (Contoh 2.5 KM):</h4>
+                                <p class="text-sm text-blue-800 dark:text-blue-400">
+                                    Ongkir: <span class="font-bold underline">Rp <?php 
+                                        $sim_dist = 2.5;
+                                        $sim_price = $settings['price_per_km_local'];
+                                        $sim_half = $sim_price / 2;
+                                        $sim_steps = floor($sim_dist / 0.5);
+                                        echo number_format(max($sim_price, $sim_steps * $sim_half), 0, ',', '.'); 
+                                    ?></span>
+                                </p>
                             </div>
                         </div>
 
                         <div class="flex justify-end pt-4">
-                            <button type="submit"
-                                class="bg-primary hover:bg-blue-700 text-white font-bold py-2.5 px-8 rounded-lg transition-all shadow-lg shadow-blue-500/20 active:scale-95">
+                            <button type="submit" name="save_settings"
+                                class="bg-primary hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-lg transition-colors shadow-lg shadow-blue-500/20 flex items-center gap-2">
+                                <span class="material-icons-round text-sm">save</span>
                                 Simpan Pengaturan
                             </button>
                         </div>
                     </form>
                 </div>
-
-                <div class="mt-8 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl p-6">
-                    <h3 class="text-sm font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
-                        <span class="material-icons-round text-lg">info</span>
-                        Cara Kerja Kalkulasi:
-                    </h3>
-                    <ul class="text-xs text-blue-700 dark:text-blue-400 space-y-2 list-disc pl-5">
-                        <li>Sistem menggunakan koordinat GPS (Latitude/Longitude) untuk menghitung jarak lurus (Haversine).</li>
-                        <li><b>Gratis Ongkir:</b> Jika jarak di bawah 1.0 km, biaya otomatis Rp 0.</li>
-                        <li><b>Berbayar:</b> Jika jarak &ge; 1.0 km, biaya dihitung berdasarkan pembulatan ke bawah (floor) dikali tarif.</li>
-                        <li>Contoh: Jarak 1.8 km dengan tarif 1.000 &rarr; floor(1.8) * 1.000 = Rp 1.000.</li>
-                    </ul>
-                </div>
             </div>
             <?php include ROOT_PATH . "includes/admin/footer.php"; ?>
         </div>
     </main>
+
     <script>
         // Auto-close alerts after 5 seconds
         setTimeout(() => {

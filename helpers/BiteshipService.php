@@ -236,7 +236,11 @@ class BiteshipService
      */
     public function getCoordinatesFromArea($areaName): ?array
     {
-        $url = "https://nominatim.openstreetmap.org/search?q=" . urlencode($areaName) . "&format=json&limit=1";
+        // Clean address for better geocoding: remove postal code at the end (e.g. ". 45173" or " 45173")
+        $cleanArea = preg_replace('/\.\s*\d{5}$/', '', trim($areaName));
+        $cleanArea = preg_replace('/\s\d{5}$/', '', $cleanArea);
+        
+        $url = "https://nominatim.openstreetmap.org/search?q=" . urlencode($cleanArea) . "&format=json&limit=1";
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);

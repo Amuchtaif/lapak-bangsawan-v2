@@ -107,7 +107,7 @@ $username = $_SESSION['username'] ?? 'Admin User';
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'settings.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
             href="<?= BASE_URL ?>admin/settings">
             <span class="material-icons-round">settings</span>
-            Pengaturan Profil
+            Pengaturan
         </a>
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'shipping_settings.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
             href="<?= BASE_URL ?>admin/shipping_settings">
@@ -131,6 +131,9 @@ $username = $_SESSION['username'] ?? 'Admin User';
                 <p class="text-sm font-medium text-slate-900 dark:text-white truncate">
                     <?php
                     // Fetch User Details if possible, otherwise use session
+                    // We'll rely on session or query if needed, but for now let's assume session username
+                    // If we want full_name we should update auth_session.php or login.php to store it, OR fetch it here.
+                    // For simplicity and robustness, let's fetch it if $conn is available (which it usually is in admin pages)
                     if (isset($conn) && isset($_SESSION['user_id'])) {
                         $uid = $_SESSION['user_id'];
                         $u_res = $conn->query("SELECT full_name FROM users WHERE id=$uid");

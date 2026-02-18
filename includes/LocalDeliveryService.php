@@ -2,51 +2,46 @@
 
 class LocalDeliveryService
 {
-    private $ratePerKm;
-    private $maxDistance;
-
-    public function __construct()
-    {
-        // Use global helper function if available, else fallback
-        if (function_exists('get_setting')) {
-            $this->ratePerKm = (int) get_setting('shipping_rate_per_km', 1000);
-            $this->maxDistance = (float) get_setting('shipping_max_distance', 15.0);
-        } else {
-            $this->ratePerKm = 1000;
-            $this->maxDistance = 15.0;
-        }
-    }
+    private $baseRate = 10000; // Base rate in IDR
+    private $ratePerKm = 2000; // Rate per km in IDR
+    private $maxDistance = 100; // Max distance in km for local delivery (TEMP: set high for testing)
 
     /**
-     * Calculate rate based on distance
-     * Returns array or null if out of range
+     * Calculate local delivery rates based on distance.
+     *
+     * @param float $distance Distance in kilometers
+     * @return array|null Returns array of rate details or null if out of range
      */
     public function getRate($distance)
     {
-        if ($distance > $this->maxDistance) {
+        global $conn;
+        require_once ROOT_PATH . "helpers/ShippingHelper.php";
+
+        $settings = ShippingHelper::getLocalShippingSettings($conn);
+        $max_distance = $settings['max_distance_local'];
+        $price_per_km = $settings['price_per_km_local'];
+        $free_distance = $settings['free_distance_local'] ?? 1.0;
+
+        if ($distance === null || !is_numeric($distance)) {
+            return null; // Cannot determine distance
+        }
+
+        if ($distance > $max_distance) {
             return null; // Too far for local delivery
         }
 
-        // Logic: Free under 1km, then rate per km
-        $price = 0;
-        $serviceName = 'Gratis Ongkir';
-        $description = 'Gratis Ongkir! Jarak dekat (di bawah 1 km).';
-
-        if ($distance >= 1.0) {
-            $price = floor($distance) * $this->ratePerKm;
-            $serviceName = 'Pengiriman Lokal';
-            $description = 'Diantar langsung oleh kurir toko.';
-        }
+        $cost = ShippingHelper::calculateLocalCost($distance, $price_per_km, $free_distance);
 
         return [
             'company' => 'local',
-            'courier_name' => 'Internal Toko',
-            'courier_service_name' => $serviceName,
+            'courier_name' => 'Kurir Internal',
+            'courier_service_name' => 'Pengiriman Lokal',
             'courier_service_code' => 'store_delivery',
             'type' => 'instant',
             'duration' => '1-3 Jam',
-            'price' => $price,
-            'description' => $description
+            'price' => (int)$cost,
+            'distance' => $distance,
+            'description' => 'Diantar langsung oleh kurir toko.'
         ];
     }
 }
