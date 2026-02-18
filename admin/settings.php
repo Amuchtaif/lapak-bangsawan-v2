@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if (empty($error_msg)) {
         if ($conn->query($sql)) {
-            $success_msg = "Pengaturan berhasil disimpan.";
+            $success_msg = "Pengaturan profil berhasil disimpan.";
             // Refresh user data
             $user['full_name'] = $full_name;
             $user['username'] = $username;

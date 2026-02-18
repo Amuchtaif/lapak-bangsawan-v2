@@ -100,17 +100,27 @@ $debugInfo = [
 
 // 4. Hybrid Logic Implementation
 // INTERNAL COURIER (Priority 1)
-if ($canCalculateDistance && $distance < 2.0) {
+$max_local_dist = (float) get_setting('shipping_max_distance', 15.0);
+if ($canCalculateDistance && $distance <= $max_local_dist) {
     $localService = new LocalDeliveryService();
     $localRate = $localService->getRate($distance);
     
     if ($localRate) {
         $pricing[] = $localRate;
-        $recommendation = [
-            'type' => 'instant',
-            'title' => 'Kurir Internal (Free Ongkir)',
-            'message' => 'Jarak Anda sangat dekat (< 2km). Kami antar langsung gratis!'
-        ];
+        
+        if ($distance < 1.0) {
+            $recommendation = [
+                'type' => 'instant',
+                'title' => 'Kurir Internal (Free Ongkir)',
+                'message' => 'Jarak Anda sangat dekat (< 1km). Kami antar langsung gratis!'
+            ];
+        } else {
+            $recommendation = [
+                'type' => 'instant',
+                'title' => 'Kurir Internal Toko',
+                'message' => 'Tersedia kurir toko untuk jarak ' . round($distance, 1) . ' km. Lebih cepat & terpercaya!'
+            ];
+        }
         $debugInfo['source'] = 'internal_priority';
     }
 }
@@ -195,6 +205,16 @@ if (!empty($pricing) && $debugInfo['source'] === 'biteship_api') {
             'title' => 'Rekomendasi Next Day',
             'message' => 'Pilihan hemat dan cepat untuk luar kota.'
         ];
+    }
+}
+
+
+// Translate Duration to Indonesian for consistency
+foreach ($pricing as &$rate) {
+    if (isset($rate['duration'])) {
+        $search = ['hours', 'hour', 'days', 'day', 'mins', 'min'];
+        $replace = ['jam', 'jam', 'hari', 'hari', 'menit', 'menit'];
+        $rate['duration'] = str_ireplace($search, $replace, $rate['duration']);
     }
 }
 

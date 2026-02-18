@@ -531,20 +531,25 @@ $order_token = bin2hex(random_bytes(16));
                 let html = '';
                 if (data.recommendation) {
                     const rec = data.recommendation;
-                    const bgClass = rec.type === 'instant' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/50' :
-                        (rec.type === 'cold' ? 'bg-cyan-50 dark:bg-cyan-900/20 border-cyan-200 dark:border-cyan-900/50' :
-                            'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-900/50');
+                    const bgClass = rec.type === 'instant' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/30' :
+                        (rec.type === 'cold' ? 'bg-cyan-50 dark:bg-cyan-900/10 border-cyan-200 dark:border-cyan-900/30' :
+                            'bg-purple-50 dark:bg-purple-900/10 border-purple-200 dark:border-purple-900/30');
                     const textClass = rec.type === 'instant' ? 'text-blue-700 dark:text-blue-400' :
                         (rec.type === 'cold' ? 'text-cyan-700 dark:text-cyan-400' :
                             'text-purple-700 dark:text-purple-400');
                     const icon = rec.type === 'instant' ? 'bolt' : (rec.type === 'cold' ? 'ac_unit' : 'local_shipping');
 
                     html += `
-                        <div class="${bgClass} border p-4 rounded-xl flex items-start gap-3 mb-4 animate-pulse-subtle">
-                            <span class="material-symbols-outlined ${textClass}">${icon}</span>
-                            <div>
-                                <h4 class="font-bold text-sm ${textClass} mb-0.5">${rec.title}</h4>
-                                <p class="text-[11px] ${textClass} opacity-90 leading-relaxed">${rec.message}</p>
+                        <div class="${bgClass} border-2 p-4 rounded-2xl flex items-start gap-3 mb-6 relative overflow-hidden animate-in fade-in zoom-in duration-500">
+                            <div class="absolute -top-1 -right-1 opacity-10 rotate-12">
+                                <span class="material-symbols-outlined text-6xl">${icon}</span>
+                            </div>
+                            <div class="relative z-10 size-10 rounded-xl bg-white/80 dark:bg-slate-900/50 shadow-sm flex items-center justify-center shrink-0 border border-white dark:border-slate-800">
+                                <span class="material-symbols-outlined text-2xl ${textClass}">${icon}</span>
+                            </div>
+                            <div class="relative z-10 flex-1">
+                                <h4 class="font-black text-xs sm:text-sm ${textClass} uppercase tracking-wider mb-1">${rec.title}</h4>
+                                <p class="text-[11px] ${textClass} font-semibold leading-relaxed opacity-90">${rec.message}</p>
                             </div>
                         </div>
                     `;
@@ -571,22 +576,34 @@ $order_token = bin2hex(random_bytes(16));
 
                 if (data.pricing && data.pricing.length > 0) {
                     html += data.pricing.map(rate => `
-                        <label class="cursor-pointer relative rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-all has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:ring-1 has-[:checked]:ring-primary">
-                            <div class="flex items-center gap-3">
+                        <label class="group cursor-pointer relative rounded-2xl border-2 border-slate-100 dark:border-slate-800 p-4 flex gap-3 sm:gap-4 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all has-[:checked]:border-primary has-[:checked]:bg-primary/5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div class="flex items-center">
                                 <input type="radio" name="courier_option" value="${rate.company}|${rate.courier_service_name}|${rate.price}"
-                                    class="text-primary focus:ring-primary size-5" 
+                                    class="text-primary focus:ring-primary size-5 border-slate-300 dark:border-slate-600 dark:bg-slate-900" 
                                     onchange="updateTotal(${rate.price}, '${rate.courier_name}')">
-                                <div class="flex flex-col">
-                                    <span class="font-bold text-slate-900 dark:text-white uppercase">${rate.company} - ${rate.courier_service_name}</span>
-                                    <span class="text-[10px] text-slate-500">Estimasi: ${rate.duration}</span>
+                            </div>
+                            <div class="flex-1 flex justify-between items-center gap-2 min-w-0">
+                                <div class="min-w-0">
+                                    <p class="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-0.5">${rate.company}</p>
+                                    <h5 class="font-black text-sm sm:text-base text-slate-900 dark:text-white leading-tight truncate sm:whitespace-normal">
+                                        ${rate.courier_service_code ? (rate.courier_service_code === 'store_delivery' ? 'Pengiriman Internal' : rate.courier_service_name) : rate.courier_service_name}
+                                    </h5>
+                                    <div class="flex items-center gap-1.5 mt-1">
+                                        <span class="material-symbols-outlined text-[14px] text-slate-400">schedule</span>
+                                        <span class="text-[10px] sm:text-[11px] text-slate-500">Estimasi: ${rate.duration}</span>
+                                    </div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <p class="font-black text-slate-900 dark:text-white text-sm sm:text-lg">
+                                        Rp${new Intl.NumberFormat('id-ID').format(rate.price)}
+                                    </p>
                                 </div>
                             </div>
-                            <span class="font-bold text-slate-900 dark:text-white">Rp ${new Intl.NumberFormat('id-ID').format(rate.price)}</span>
                             
-                            <!-- Hidden inputs for legacy form processing if needed -->
-                            <input type="radio" name="courier_company" value="${rate.company}" class="hidden" id="c-${rate.company}-${rate.courier_service_name}">
-                            <input type="radio" name="courier_type" value="${rate.type || rate.courier_service_code || rate.courier_service_name}" class="hidden" id="t-${rate.company}-${rate.courier_service_name}">
-                            <input type="radio" name="courier_price" value="${rate.price}" class="hidden" id="p-${rate.company}-${rate.courier_service_name}">
+                            <!-- Hidden inputs for legacy form processing -->
+                            <input type="radio" name="courier_company" value="${rate.company}" class="hidden">
+                            <input type="radio" name="courier_type" value="${rate.type || rate.courier_service_code || rate.courier_service_name}" class="hidden">
+                            <input type="radio" name="courier_price" value="${rate.price}" class="hidden">
                         </label>
                     `).join('');
                     ratesList.innerHTML = html;

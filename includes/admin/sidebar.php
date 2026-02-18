@@ -107,7 +107,12 @@ $username = $_SESSION['username'] ?? 'Admin User';
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'settings.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
             href="<?= BASE_URL ?>admin/settings">
             <span class="material-icons-round">settings</span>
-            Pengaturan
+            Pengaturan Profil
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'shipping_settings.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
+            href="<?= BASE_URL ?>admin/shipping_settings">
+            <span class="material-icons-round">local_shipping</span>
+            Pengaturan Kurir
         </a>
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo strpos($_SERVER['PHP_SELF'], 'landingpage') !== false ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
             href="<?= BASE_URL ?>admin/landingpage">
