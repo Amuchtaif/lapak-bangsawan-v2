@@ -8,18 +8,21 @@ define('STORE_LNG', 108.552316);
 
 // Fetch settings from DB
 $max_local_km = (float) get_setting('shipping_max_distance', 15.0);
-$rate_per_km = (int) get_setting('shipping_rate_per_km', 2000);
+$rate_per_km = (int) get_setting('shipping_rate_per_km', 1000);
 
-// Haversine Formula Implementation
-function calculateHaversine($lat1, $lon1, $lat2, $lon2) {
-    $earthRadius = 6371; // km
+/**
+ * Haversine Formula to calculate distance between two coordinates in KM
+ */
+function calculateHaversine($lat1, $lng1, $lat2, $lng2)
+{
+    $earthRadius = 6371; // Earth radius in kilometers
 
     $dLat = deg2rad($lat2 - $lat1);
-    $dLon = deg2rad($lon2 - $lon1);
+    $dLng = deg2rad($lng2 - $lng1);
 
     $a = sin($dLat / 2) * sin($dLat / 2) +
-         cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-         sin($dLon / 2) * sin($dLon / 2);
+        cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+        sin($dLng / 2) * sin($dLng / 2);
 
     $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
     $distance = $earthRadius * $c;
@@ -29,20 +32,14 @@ function calculateHaversine($lat1, $lon1, $lat2, $lon2) {
 
 // Handle POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get JSON input
     $input = json_decode(file_get_contents('php://input'), true);
 
-    if (!$input) {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid JSON input']);
-        exit;
-    }
+    $latitude = $input['latitude'] ?? null;
+    $longitude = $input['longitude'] ?? null;
+    $customerId = $input['customer_id'] ?? null;
 
-    $latitude = filter_var($input['latitude'], FILTER_VALIDATE_FLOAT);
-    $longitude = filter_var($input['longitude'], FILTER_VALIDATE_FLOAT);
-    $customerId = isset($input['customer_id']) ? filter_var($input['customer_id'], FILTER_VALIDATE_INT) : null;
-
-    if ($latitude === false || $longitude === false) {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid coordinates']);
+    if ($latitude === null || $longitude === null) {
+        echo json_encode(['success' => false, 'message' => 'Coordinates missing']);
         exit;
     }
 
@@ -50,18 +47,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $distance = calculateHaversine(STORE_LAT, STORE_LNG, $latitude, $longitude);
 
     // 2. Save Coordinates to Database (if customer_id is provided)
-    // Assuming table 'customers' or 'customer_addresses' has lat/lng columns.
     if ($customerId && isset($conn)) {
         $sql = "UPDATE customers SET latitude = ?, longitude = ? WHERE id = ?";
         try {
             $stmt = $conn->prepare($sql);
-            if ($stmt) {
-                $stmt->bind_param("ddi", $latitude, $longitude, $customerId);
-                $stmt->execute();
-                $stmt->close();
-            }
+            $stmt->bind_param("ddi", $latitude, $longitude, $customerId);
+            $stmt->execute();
         } catch (Exception $e) {
-            // Ignore DB error for column missing in this demo
+            // Silently fail or log error
         }
     }
 
@@ -81,44 +74,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $shippingOptions[] = [
             'code' => 'LOCAL_INSTANT',
             'name' => $name,
+            'service' => 'Sesuai Jarak',
+            'cost' => $cost,
             'etd' => '1-3 Jam',
-            'price' => $cost,
-            'distance' => $distance
+            'type' => 'local'
         ];
     }
 
-    // Option B: Standard Courier (Mocked or API integrated)
-    // Always available (e.g. JNE, J&T)
-    // In a real scenario, call Biteship API here.
+    // Option B: Regular/Logistics (Fallback or Alternative)
+    // You could integrate Biteship or other APIs here
     $shippingOptions[] = [
-        'code' => 'JNE_REG',
-        'name' => 'JNE Reguler',
-        'etd' => '1-2 Hari',
-        'price' => 15000, // Flat rate example
-        'distance' => $distance
-    ];
-    
-    $shippingOptions[] = [
-        'code' => 'JNT_EZ',
-        'name' => 'J&T EZ',
-        'etd' => '1-3 Hari',
-        'price' => 18000, // Flat rate example
-        'distance' => $distance
+        'code' => 'REGULAR',
+        'name' => 'Kurir Ekspedisi',
+        'service' => 'Standar',
+        'cost' => 15000, // Example flat rate or dynamic
+        'etd' => '2-4 Hari',
+        'type' => 'logistic'
     ];
 
-    // Return Response
     echo json_encode([
-        'status' => 'success',
+        'success' => true,
         'distance' => $distance,
-        'unit' => 'km',
-        'store_location' => ['lat' => STORE_LAT, 'lng' => STORE_LNG],
-        'customer_location' => ['lat' => $latitude, 'lng' => $longitude],
         'options' => $shippingOptions
     ]);
-    exit;
+} else {
+    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
 }
-
-// Method Not Allowed
-http_response_code(405);
-echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
-?>

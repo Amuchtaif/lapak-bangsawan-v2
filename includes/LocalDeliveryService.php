@@ -2,21 +2,24 @@
 
 class LocalDeliveryService
 {
-    private $baseRate = 0; // Base rate in IDR
-    private $ratePerKm; // Rate per km in IDR
-    private $maxDistance; // Max distance in km for local delivery
+    private $ratePerKm;
+    private $maxDistance;
 
     public function __construct()
     {
-        $this->ratePerKm = (int) get_setting('shipping_rate_per_km', 2000);
-        $this->maxDistance = (float) get_setting('shipping_max_distance', 15.0);
+        // Use global helper function if available, else fallback
+        if (function_exists('get_setting')) {
+            $this->ratePerKm = (int) get_setting('shipping_rate_per_km', 1000);
+            $this->maxDistance = (float) get_setting('shipping_max_distance', 15.0);
+        } else {
+            $this->ratePerKm = 1000;
+            $this->maxDistance = 15.0;
+        }
     }
 
     /**
-     * Calculate local delivery rates based on distance.
-     *
-     * @param float $distance Distance in kilometers
-     * @return array|null Returns array of rate details or null if out of range
+     * Calculate rate based on distance
+     * Returns array or null if out of range
      */
     public function getRate($distance)
     {
@@ -24,7 +27,7 @@ class LocalDeliveryService
             return null; // Too far for local delivery
         }
 
-        // Logic: Free under 1km, then 2000 per km
+        // Logic: Free under 1km, then rate per km
         $price = 0;
         $serviceName = 'Gratis Ongkir';
         $description = 'Gratis Ongkir! Jarak dekat (di bawah 1 km).';
@@ -37,7 +40,7 @@ class LocalDeliveryService
 
         return [
             'company' => 'local',
-            'courier_name' => 'Kurir Internal',
+            'courier_name' => 'Internal Toko',
             'courier_service_name' => $serviceName,
             'courier_service_code' => 'store_delivery',
             'type' => 'instant',

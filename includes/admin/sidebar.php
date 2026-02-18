@@ -131,9 +131,6 @@ $username = $_SESSION['username'] ?? 'Admin User';
                 <p class="text-sm font-medium text-slate-900 dark:text-white truncate">
                     <?php
                     // Fetch User Details if possible, otherwise use session
-                    // We'll rely on session or query if needed, but for now let's assume session username
-                    // If we want full_name we should update auth_session.php or login.php to store it, OR fetch it here.
-                    // For simplicity and robustness, let's fetch it if $conn is available (which it usually is in admin pages)
                     if (isset($conn) && isset($_SESSION['user_id'])) {
                         $uid = $_SESSION['user_id'];
                         $u_res = $conn->query("SELECT full_name FROM users WHERE id=$uid");

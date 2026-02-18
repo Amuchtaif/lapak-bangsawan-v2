@@ -146,6 +146,16 @@ $shipping_rate_per_km = get_setting('shipping_rate_per_km', '1000');
             <?php include ROOT_PATH . "includes/admin/footer.php"; ?>
         </div>
     </main>
+    <script>
+        // Auto-close alerts after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.auto-close-alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+    </script>
 </body>
 
 </html>
