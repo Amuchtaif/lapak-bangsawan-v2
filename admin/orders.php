@@ -153,7 +153,13 @@ $orders_result = $conn->query($orders_query);
                             <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Pesanan
                                 #<?php echo htmlspecialchars($order_data['order_number'] ?? str_pad($order_data['id'], 5, '0', STR_PAD_LEFT)); ?>
                             </h2>
-                            <div class="flex gap-2">
+                            <div class="flex gap-2 flex-wrap">
+                                <!-- Cetak Nota -->
+                                <a href="print_nota?id=<?php echo $order_data['id']; ?>" target="_blank"
+                                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2 shadow-sm shadow-emerald-500/30">
+                                    <span class="material-icons-round text-sm">receipt_long</span> Cetak Nota
+                                </a>
+
                                 <?php if ($order_data['status'] !== 'cancelled' && $order_data['status'] !== 'completed'): ?>
                                     <button onclick="cancelOrder(<?php echo $order_data['id']; ?>)"
                                         class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2 shadow-sm shadow-red-500/30">
