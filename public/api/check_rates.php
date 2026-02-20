@@ -30,26 +30,62 @@ if (!empty($postal_code) && !preg_match('/^\d{5}$/', $postal_code)) {
 
 // 2. Geocoding Fallback if coordinates missing
 $biteship = new BiteshipService();
+$geocodeSource = 'provided'; // Track how we got coordinates
 
 if (!$dest_lat || !$dest_lng) {
-    if (!empty($area_id)) {
-         // If we have area_id, we might rely on Biteship, but we need distance for Hybrid Logic.
-         // Biteship Check Rates provides coordinates in response sometimes? No.
-         // We need coords. Try geocoding area name if present.
-         $areaText = $input['area_text'] ?? $input['area_name'] ?? '';
-         if (!empty($areaText)) {
-             $coords = $biteship->getCoordinatesFromArea($areaText);
-             if ($coords) {
-                 $dest_lat = $coords['latitude'];
-                 $dest_lng = $coords['longitude'];
-             }
-         }
+    $geocodeSource = 'none';
+    $areaText = $input['area_text'] ?? $input['area_name'] ?? '';
+    
+    // Strategy 1: Geocode via Nominatim/OSM using area text
+    if (!empty($areaText)) {
+        $coords = $biteship->getCoordinatesFromArea($areaText);
+        if ($coords) {
+            $dest_lat = $coords['latitude'];
+            $dest_lng = $coords['longitude'];
+            $geocodeSource = 'nominatim_area_text';
+        }
     }
+
+    // Strategy 2: If still no coords, try a simplified query (remove postal code suffix, keep kecamatan/kota only)
+    if ((!$dest_lat || !$dest_lng) && !empty($areaText)) {
+        // Biteship area text format: "Kelurahan, Kecamatan, Kota, Provinsi. 45173"
+        // Try extracting just "Kecamatan, Kota" part for better geocoding
+        $parts = explode(',', preg_replace('/\.\s*\d{5}$/', '', $areaText));
+        if (count($parts) >= 3) {
+            // Try "Kecamatan, Kota" (parts 1 and 2, 0-indexed)
+            $simplifiedQuery = trim($parts[1]) . ', ' . trim($parts[2]);
+            $coords = $biteship->getCoordinatesFromArea($simplifiedQuery);
+            if ($coords) {
+                $dest_lat = $coords['latitude'];
+                $dest_lng = $coords['longitude'];
+                $geocodeSource = 'nominatim_simplified';
+            }
+        }
+    }
+
+    // Strategy 3: If still no coords, try just the kota/kabupaten part
+    if ((!$dest_lat || !$dest_lng) && !empty($areaText)) {
+        $parts = explode(',', preg_replace('/\.\s*\d{5}$/', '', $areaText));
+        if (count($parts) >= 3) {
+            $kotaQuery = trim($parts[2]); // Usually "Kota Cirebon" or "Kab. Kuningan"
+            $coords = $biteship->getCoordinatesFromArea($kotaQuery);
+            if ($coords) {
+                $dest_lat = $coords['latitude'];
+                $dest_lng = $coords['longitude'];
+                $geocodeSource = 'nominatim_kota';
+            }
+        }
+    }
+
+    // Debug log for geocoding issues
+    @file_put_contents(
+        ROOT_PATH . 'logs/geocode_debug.log',
+        date('Y-m-d H:i:s') . " | area_text: {$areaText} | area_id: {$area_id} | result: {$geocodeSource} | lat: {$dest_lat} | lng: {$dest_lng}\n",
+        FILE_APPEND
+    );
 }
 
-// If still no coordinates, we cannot determine distance logic reliably.
-// We will default to Biteship (assuming > 2km or unable to verify local) OR fail.
-// Let's default to trying Biteship to be safe, but local delivery won't be an option.
+// Calculate distance
 $canCalculateDistance = ($dest_lat && $dest_lng && defined('BITESHIP_ORIGIN_LAT') && defined('BITESHIP_ORIGIN_LNG'));
 $distance = null;
 
@@ -95,7 +131,9 @@ $pricing = [];
 $recommendation = null;
 $debugInfo = [
     'distance' => $distance, 
-    'source' => 'unknown'
+    'source' => 'unknown',
+    'geocode_source' => $geocodeSource ?? 'provided',
+    'has_coords' => ($dest_lat && $dest_lng) ? true : false
 ];
 
 // 4. Hybrid Logic Implementation
@@ -105,10 +143,11 @@ $localRate = $localService->getRate($distance);
 
 if ($localRate) {
     $pricing[] = $localRate;
+    $distanceText = ($distance !== null) ? ' (Jarak ±' . round($distance, 1) . ' km dari toko)' : '';
     $recommendation = [
         'type' => 'instant',
         'title' => 'Kurir Internal',
-        'message' => 'Jarak Anda masih dalam jangkauan kurir toko. Kami siap antar!'
+        'message' => 'Jarak Anda masih dalam jangkauan kurir toko.' . $distanceText . ' Kami siap antar!'
     ];
     $debugInfo['source'] = 'internal_priority';
 }

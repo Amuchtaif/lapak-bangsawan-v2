@@ -57,10 +57,10 @@ class ShippingHelper {
             return 0;
         }
 
-        // Tiered / Step logic for easier change (kembalian):
-        // Increment by half of pricePerKm for every 0.5km step
+        // Use ceiling to round up to next 0.5km
+        // This provides a buffer for road distance without over-inflating calculating
+        $steps = ceil($distance / 0.5);
         $halfKmPrice = $pricePerKm / 2;
-        $steps = floor($distance / 0.5);
         $cost = $steps * $halfKmPrice;
 
         // Minimum cost if above free distance is at least the price per KM (or at least 1000)

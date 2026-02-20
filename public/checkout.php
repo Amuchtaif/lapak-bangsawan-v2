@@ -557,17 +557,37 @@ $order_token = bin2hex(random_bytes(16));
             }
         });
 
-        window.selectArea = (id, name, lat, lng) => {
+        window.selectArea = async (id, name, lat, lng) => {
             document.getElementById('destination-area-id').value = id;
             document.getElementById('destination-area-text').value = name;
-            document.getElementById('dest-lat').value = (lat && lat !== 'null' && lat !== 'undefined') ? lat : '';
-            document.getElementById('dest-lng').value = (lng && lng !== 'null' && lng !== 'undefined') ? lng : '';
             areaSearchInput.value = name;
             areaResults.classList.add('hidden');
+
+            // If Biteship didn't provide coordinates, try geocoding via Nominatim
+            let finalLat = (lat && lat !== 'null' && lat !== 'undefined' && lat !== '') ? lat : '';
+            let finalLng = (lng && lng !== 'null' && lng !== 'undefined' && lng !== '') ? lng : '';
+
+            if (!finalLat || !finalLng) {
+                try {
+                    // Clean the area name: remove postal code suffix
+                    const cleanName = name.replace(/\.\s*\d{5}$/, '').trim();
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanName)}&format=json&limit=1&countrycodes=id`);
+                    const data = await res.json();
+                    if (data && data.length > 0 && data[0].lat && data[0].lon) {
+                        finalLat = data[0].lat;
+                        finalLng = data[0].lon;
+                        console.log('Geocoded coordinates:', finalLat, finalLng, 'from:', cleanName);
+                    }
+                } catch (err) {
+                    console.warn('Frontend geocoding failed:', err);
+                }
+            }
+
+            document.getElementById('dest-lat').value = finalLat;
+            document.getElementById('dest-lng').value = finalLng;
             
             // Trigger checkRates immediately!
-            // Postal code is optional now, but send current value if any
-            checkRates(id, lat, lng);
+            checkRates(id, finalLat, finalLng);
         };
 
         async function checkRates(areaId, lat, lng) {

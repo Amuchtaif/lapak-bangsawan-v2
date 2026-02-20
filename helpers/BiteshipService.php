@@ -240,15 +240,26 @@ class BiteshipService
         $cleanArea = preg_replace('/\.\s*\d{5}$/', '', trim($areaName));
         $cleanArea = preg_replace('/\s\d{5}$/', '', $cleanArea);
         
-        $url = "https://nominatim.openstreetmap.org/search?q=" . urlencode($cleanArea) . "&format=json&limit=1";
+        $url = "https://nominatim.openstreetmap.org/search?q=" . urlencode($cleanArea) . "&format=json&limit=1&countrycodes=id";
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_USERAGENT, 'LapakBangsawan/1.0 (contact@lapakbangsawan.com)'); // Required by OSM
-        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
         $res = curl_exec($ch);
+        $curlError = curl_error($ch);
         curl_close($ch);
+
+        if ($curlError) {
+            @file_put_contents(
+                (defined('ROOT_PATH') ? ROOT_PATH : dirname(__DIR__) . '/') . 'logs/geocode_debug.log',
+                date('Y-m-d H:i:s') . " | Nominatim cURL error: {$curlError} | query: {$cleanArea}\n",
+                FILE_APPEND
+            );
+            return null;
+        }
 
         $data = json_decode($res, true);
         if (!empty($data) && isset($data[0]['lat'], $data[0]['lon'])) {
