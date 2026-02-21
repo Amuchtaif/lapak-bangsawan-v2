@@ -35,21 +35,44 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
     exit();
 }
 
-// Fetch Orders with Pagination
+// Fetch Orders with Pagination & Filter
 $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
 if (!in_array($limit, [5, 10, 20]))
     $limit = 10;
+
+$filter_status = isset($_GET['status']) ? mysqli_real_escape_string($conn, $_GET['status']) : '';
+$where_clause = "";
+if (!empty($filter_status)) {
+    if ($filter_status == 'completed') {
+        $where_clause = "WHERE status IN ('completed', 'delivered')";
+    } elseif ($filter_status == 'shipped') {
+        $where_clause = "WHERE status IN ('shipped', 'confirmed')";
+    } else {
+        $where_clause = "WHERE status = '$filter_status'";
+    }
+}
 
 $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $start = ($page > 1) ? ($page * $limit) - $limit : 0;
 
 // Get total records
-$total_result = $conn->query("SELECT COUNT(*) as count FROM orders");
+$total_result = $conn->query("SELECT COUNT(*) as count FROM orders $where_clause");
 $total_row = $total_result->fetch_assoc();
 $total_orders = $total_row['count'];
 $total_pages = ceil($total_orders / $limit);
 
-$orders_query = "SELECT * FROM orders ORDER BY created_at DESC LIMIT $start, $limit";
+// Get counts for each status group
+$counts_query = "SELECT 
+    COUNT(*) as all_count,
+    SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) as pending_count,
+    SUM(CASE WHEN status='ready_to_ship' THEN 1 ELSE 0 END) as ready_count,
+    SUM(CASE WHEN status IN ('shipped', 'confirmed') THEN 1 ELSE 0 END) as shipped_count,
+    SUM(CASE WHEN status IN ('completed', 'delivered') THEN 1 ELSE 0 END) as completed_count,
+    SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) as cancelled_count
+FROM orders";
+$st_counts = $conn->query($counts_query)->fetch_assoc();
+
+$orders_query = "SELECT * FROM orders $where_clause ORDER BY created_at DESC LIMIT $start, $limit";
 $orders_result = $conn->query($orders_query);
 ?>
 <!DOCTYPE html>
@@ -617,8 +640,53 @@ $orders_result = $conn->query($orders_query);
                         unset($_SESSION['status_type']); ?>
                     <?php endif; ?>
 
-                    <div
-                        class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 mb-6">
+                    <!-- Compact Filter Card -->
+                    <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 mb-2">
+                        <div class="flex flex-col md:flex-row md:items-center gap-4">
+                            <div class="flex items-center gap-2 text-slate-900 dark:text-white shrink-0">
+                                <span class="material-icons-round text-primary text-xl">filter_list</span>
+                                <h3 class="font-bold text-xs uppercase tracking-wider">Filter</h3>
+                            </div>
+                            
+                            <!-- Compact Status Filter Tabs -->
+                            <div class="flex flex-wrap items-center gap-2">
+                                <?php
+                                $filter_items = [
+                                    '' => ['label' => 'Semua', 'count' => $st_counts['all_count'], 'icon' => 'list_alt', 'color' => 'blue'],
+                                    'pending' => ['label' => 'Pending', 'count' => $st_counts['pending_count'] ?? 0, 'icon' => 'schedule', 'color' => 'amber'],
+                                    'ready_to_ship' => ['label' => 'Siap', 'count' => $st_counts['ready_count'] ?? 0, 'icon' => 'inventory_2', 'color' => 'yellow'],
+                                    'shipped' => ['label' => 'Kirim', 'count' => $st_counts['shipped_count'] ?? 0, 'icon' => 'local_shipping', 'color' => 'indigo'],
+                                    'completed' => ['label' => 'Selesai', 'count' => $st_counts['completed_count'] ?? 0, 'icon' => 'check_circle', 'color' => 'green'],
+                                    'cancelled' => ['label' => 'Batal', 'count' => $st_counts['cancelled_count'] ?? 0, 'icon' => 'cancel', 'color' => 'red']
+                                ];
+
+                                foreach ($filter_items as $val => $info):
+                                    $isActive = ($filter_status === $val);
+                                    $color = $info['color'];
+                                    
+                                    $bgClass = $isActive ? "bg-$color-50 border-$color-200 text-$color-700 dark:bg-$color-900/10 dark:border-$color-800 dark:text-$color-400 ring-1 ring-$color-500/10" : "bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700/50";
+                                    $iconClass = $isActive ? "text-$color-600" : "text-slate-400 group-hover:text-slate-500";
+                                    $countClass = $isActive ? "text-$color-700 dark:text-$color-300" : "text-slate-600 dark:text-slate-200";
+                                ?>
+                                <a href="?status=<?php echo $val; ?>&limit=<?php echo $limit; ?>" 
+                                   class="group flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300 border <?php echo $bgClass; ?>">
+                                    <span class="material-icons-round text-base <?php echo $iconClass; ?>">
+                                        <?php echo $info['icon']; ?>
+                                    </span>
+                                    <div class="flex items-center gap-1.5 leading-none">
+                                        <span class="text-[10px] font-bold uppercase tracking-tight"><?php echo $info['label']; ?></span>
+                                        <span class="text-[10px] font-black opacity-60 <?php echo $countClass; ?>">
+                                            (<?php echo number_format($info['count'], 0); ?>)
+                                        </span>
+                                    </div>
+                                </a>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order List Card -->
+                    <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 mb-6">
 
                         <div class="mb-8 w-full">
                             <div class="overflow-x-auto w-full">
@@ -659,8 +727,10 @@ $orders_result = $conn->query($orders_query);
                                                     <div class="flex flex-col">
                                                         <span
                                                             class="text-sm font-medium text-slate-900 dark:text-white"><?php echo htmlspecialchars($order['customer_name']); ?></span>
-                                                        <span
-                                                            class="text-xs text-slate-500"><?php echo htmlspecialchars($order['customer_phone']); ?></span>
+                                                        <?php if (!empty($order['customer_phone']) && $order['customer_phone'] !== '0' && $order['customer_phone'] !== '-'): ?>
+                                                            <span
+                                                                class="text-xs text-slate-500"><?php echo htmlspecialchars($order['customer_phone']); ?></span>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </td>
                                                 <td class="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">
@@ -749,25 +819,25 @@ $orders_result = $conn->query($orders_query);
 
                                 <div class="flex gap-2">
                                     <?php if ($page > 1): ?>
-                                        <a href="?page=<?php echo $page - 1; ?>&limit=<?php echo $limit; ?>"
+                                        <a href="?page=<?php echo $page - 1; ?>&limit=<?php echo $limit; ?>&status=<?php echo $filter_status; ?>"
                                             class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Sebelumnya</a>
-                                    <?php else: ?>
+                                     <?php else: ?>
                                         <button disabled
                                             class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-300 cursor-not-allowed">Sebelumnya</button>
-                                    <?php endif; ?>
+                                     <?php endif; ?>
 
-                                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                                        <a href="?page=<?php echo $i; ?>&limit=<?php echo $limit; ?>"
+                                     <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                                        <a href="?page=<?php echo $i; ?>&limit=<?php echo $limit; ?>&status=<?php echo $filter_status; ?>"
                                             class="px-3 py-1 text-xs border <?php echo $i == $page ? 'border-primary bg-primary text-white' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'; ?> rounded transition-colors"><?php echo $i; ?></a>
-                                    <?php endfor; ?>
+                                     <?php endfor; ?>
 
-                                    <?php if ($page < $total_pages): ?>
-                                        <a href="?page=<?php echo $page + 1; ?>&limit=<?php echo $limit; ?>"
+                                     <?php if ($page < $total_pages): ?>
+                                        <a href="?page=<?php echo $page + 1; ?>&limit=<?php echo $limit; ?>&status=<?php echo $filter_status; ?>"
                                             class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Selanjutnya</a>
-                                    <?php else: ?>
+                                     <?php else: ?>
                                         <button disabled
                                             class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-300 cursor-not-allowed">Selanjutnya</button>
-                                    <?php endif; ?>
+                                     <?php endif; ?>
                                 </div>
                             </div>
                         <?php endif; ?>

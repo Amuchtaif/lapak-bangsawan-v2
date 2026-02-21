@@ -12,7 +12,7 @@ $pending_query = "SELECT COUNT(*) as c FROM orders WHERE status IN ('pending')";
 $pending_orders = mysqli_fetch_assoc(mysqli_query($conn, $pending_query))['c'];
 
 // Total Customers
-$customer_query = "SELECT COUNT(DISTINCT customer_phone) as c FROM orders";
+$customer_query = "SELECT COUNT(*) as c FROM customers";
 $total_customers = mysqli_fetch_assoc(mysqli_query($conn, $customer_query))['c'];
 
 // Total Products
@@ -210,8 +210,6 @@ $new_prod_percentage = ($total_products > 0) ? round(($new_prod_count / $total_p
                         <div class="mt-2 flex items-baseline gap-2">
                             <span
                                 class="text-3xl font-bold text-slate-900 dark:text-white"><?php echo $total_customers; ?></span>
-                            <span
-                                class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Aktif</span>
                         </div>
                         <div class="mt-4 flex items-center text-sm">
                             <a href="customers" class="text-blue-500 font-medium hover:underline cursor-pointer">Lihat
