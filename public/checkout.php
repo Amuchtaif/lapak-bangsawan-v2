@@ -147,9 +147,9 @@ $order_token = bin2hex(random_bytes(16));
                                     class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">
                                 
                                 <button type="button" id="btn-geolocation"
-                                    class="mt-2 text-sm text-primary font-bold flex items-center gap-1 hover:underline">
-                                    <span class="material-symbols-outlined text-lg">my_location</span>
-                                    Gunakan Lokasi Saya
+                                    class="mt-2.5 text-xs md:text-sm text-primary font-bold flex items-center gap-2 px-3 py-2 -ml-3 rounded-xl hover:bg-primary/5 transition-all active:scale-95 group/geo w-fit">
+                                    <span class="material-symbols-outlined text-[20px] group-hover/geo:rotate-90 transition-transform duration-500">my_location</span>
+                                    <span>Gunakan Lokasi Saya</span>
                                 </button>
 
                                 <input type="hidden" name="destination_area_id" id="destination-area-id">
@@ -665,6 +665,21 @@ $order_token = bin2hex(random_bytes(16));
                 }
 
                 if (data.pricing && data.pricing.length > 0) {
+                    const hasLocal = data.pricing.some(r => r.company === 'local');
+                    
+                    if (hasLocal) {
+                        html += `
+                        <div class="mb-3 p-4 bg-primary/5 border border-primary/10 rounded-xl flex items-start gap-3 shadow-sm border-l-4">
+                            <span class="material-symbols-outlined text-primary text-xl">info</span>
+                            <div class="text-[11px] md:text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                                <p class="font-bold text-primary mb-1 text-sm">Jadwal Pengiriman Kurir Lokal:</p>
+                                <p>• Pesanan lewat jam <strong>17:00 (5 sore)</strong> akan dikirim <strong>besok jam 09:00</strong>.</p>
+                                <p>• Pesanan lewat jam <strong>09:00 (9 pagi)</strong> akan dikirim <strong>hari ini jam 17:00</strong>.</p>
+                            </div>
+                        </div>
+                        `;
+                    }
+
                     html += data.pricing.map(rate => {
                         const isInternal = rate.company === 'local';
                         const icon = isInternal ? 'local_shipping' : 'package_2';
@@ -678,7 +693,6 @@ $order_token = bin2hex(random_bytes(16));
                             <div class="flex flex-col min-w-0">
                                 <div class="flex items-center gap-2">
                                     <span class="font-bold text-slate-900 dark:text-white uppercase text-xs md:text-sm truncate">${rate.company} ${rate.courier_service_name}</span>
-                                    ${isInternal ? `<span class="bg-primary/10 text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase">Tercepat • ${rate.distance ? rate.distance.toFixed(1) : '?'} KM</span>` : ''}
                                 </div>
                                 <span class="text-[10px] md:text-xs text-slate-500 font-medium">${rate.duration}</span>
                             </div>
@@ -698,6 +712,7 @@ $order_token = bin2hex(random_bytes(16));
                         </label>
                         `;
                     }).join('');
+
                     ratesList.innerHTML = html;
                 } else {
                     ratesList.innerHTML = `
@@ -778,11 +793,14 @@ $order_token = bin2hex(random_bytes(16));
                 return;
             }
 
-            btnGeo.innerHTML = '<span class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></span> Mencari lokasi...';
+            const originalContent = btnGeo.innerHTML;
+            btnGeo.innerHTML = '<span class="animate-spin rounded-full h-3 w-3 border-2 border-primary border-t-transparent"></span><span class="text-[9px]">Mencari...</span>';
             btnGeo.disabled = true;
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
+                    btnGeo.innerHTML = originalContent;
+                    btnGeo.disabled = false;
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
 
@@ -802,11 +820,11 @@ $order_token = bin2hex(random_bytes(16));
                     
                     checkRates('', lat, lng);
 
-                    btnGeo.innerHTML = '<span class="material-symbols-outlined text-lg">check</span> Lokasi ditemukan';
+                    btnGeo.innerHTML = '<span class="material-symbols-outlined text-lg animate-bounce">check</span><span>Lokasi ditemukan</span>';
                     btnGeo.classList.remove('text-primary');
                     btnGeo.classList.add('text-green-600');
                     setTimeout(() => {
-                        btnGeo.innerHTML = '<span class="material-symbols-outlined text-lg">my_location</span> Gunakan Lokasi Saya';
+                        btnGeo.innerHTML = originalContent;
                         btnGeo.classList.add('text-primary');
                         btnGeo.classList.remove('text-green-600');
                         btnGeo.disabled = false;
@@ -815,7 +833,7 @@ $order_token = bin2hex(random_bytes(16));
                 (error) => {
                     console.error(error);
                     alert('Gagal mengambil lokasi: ' + error.message);
-                    btnGeo.innerHTML = '<span class="material-symbols-outlined text-lg">my_location</span> Gunakan Lokasi Saya';
+                    btnGeo.innerHTML = originalContent;
                     btnGeo.disabled = false;
                 }
             );
