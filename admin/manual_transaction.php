@@ -178,10 +178,13 @@ while ($r = $rules_res->fetch_assoc()) {
     ];
 }
 
-// Generate Auto Walk-in Name
-$today = date('Y-m-d');
-$walkin_count_q = $conn->query("SELECT COUNT(*) as count FROM orders WHERE customer_id IS NULL AND DATE(created_at) = '$today'");
-$walkin_count = $walkin_count_q->fetch_assoc()['count'] + 1;
+// Generate Auto Walk-in Name (Global Sequential)
+// Get the highest number from 'PelangganXXX' historically to ensure continuous sequence
+$walkin_query = $conn->query("SELECT MAX(CAST(SUBSTR(customer_name, 10) AS UNSIGNED)) as max_val 
+                             FROM orders 
+                             WHERE customer_name LIKE 'Pelanggan%'");
+$max_val = $walkin_query->fetch_assoc()['max_val'] ?? 0;
+$walkin_count = $max_val + 1;
 $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
 ?>
 <script>

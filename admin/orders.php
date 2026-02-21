@@ -669,13 +669,13 @@ $orders_result = $conn->query($orders_query);
                                                 <td class="px-6 py-4">
                                                     <?php
                                                     $status_colors = [
-                                                        'pending' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-                                                        'ready_to_ship' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-                                                        'shipped' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-                                                        'confirmed' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-                                                        'completed' => 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-                                                        'delivered' => 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-                                                        'cancelled' => 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+                                                        'pending' => 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/10 dark:text-amber-400 dark:border-amber-800',
+                                                        'ready_to_ship' => 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/10 dark:text-yellow-400 dark:border-yellow-800',
+                                                        'shipped' => 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/10 dark:text-blue-400 dark:border-blue-800',
+                                                        'confirmed' => 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/10 dark:text-blue-400 dark:border-blue-800',
+                                                        'completed' => 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/10 dark:text-green-400 dark:border-green-800',
+                                                        'delivered' => 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/10 dark:text-green-400 dark:border-green-800',
+                                                        'cancelled' => 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/10 dark:text-red-400 dark:border-red-800',
                                                     ];
                                                     $curr_status = $order['status'];
                                                     // Map display names for list view
@@ -691,7 +691,7 @@ $orders_result = $conn->query($orders_query);
                                                     $color_class = $status_colors[$curr_status] ?? 'bg-slate-100 text-slate-600';
                                                     ?>
                                                     <span
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?php echo $color_class; ?> capitalize">
+                                                        class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border <?php echo $color_class; ?> uppercase tracking-wider">
                                                         <?php echo $status_display[$curr_status] ?? $curr_status; ?>
                                                     </span>
                                                 </td>

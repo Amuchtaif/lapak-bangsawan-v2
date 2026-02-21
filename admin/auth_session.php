@@ -16,8 +16,8 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Session Timeout (30 minutes)
-$timeout_duration = 1800; // 30 minutes in seconds
+// Session Timeout (8 hours)
+$timeout_duration = 28800; // 8 hours in seconds
 
 if (isset($_SESSION['last_activity'])) {
     if ((time() - $_SESSION['last_activity']) > $timeout_duration) {
