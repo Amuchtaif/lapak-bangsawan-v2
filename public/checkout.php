@@ -846,7 +846,83 @@ $order_token = bin2hex(random_bytes(16));
             }
         });
 
+        // --- Persistence Logic ---
+        const PERSISTENCE_KEY = 'customer_biodata';
+
+        function saveCustomerData() {
+            const formData = new FormData(document.getElementById('checkout-form'));
+            const dataToSave = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                address: formData.get('address'),
+                postal_code: formData.get('postal_code'),
+                area_id: document.getElementById('destination-area-id').value,
+                area_text: document.getElementById('destination-area-text').value,
+                area_search: document.getElementById('area-search-input').value,
+                lat: document.getElementById('dest-lat').value,
+                lng: document.getElementById('dest-lng').value
+            };
+            localStorage.setItem(PERSISTENCE_KEY, JSON.stringify(dataToSave));
+        }
+
+        function loadCustomerData() {
+            try {
+                const saved = localStorage.getItem(PERSISTENCE_KEY);
+                if (!saved) return;
+                const data = JSON.parse(saved);
+
+                // Fill standard inputs
+                const form = document.getElementById('checkout-form');
+                if (data.name) form.querySelector('[name="name"]').value = data.name;
+                if (data.email) form.querySelector('[name="email"]').value = data.email;
+                if (data.phone) form.querySelector('[name="phone"]').value = data.phone;
+                if (data.address) form.querySelector('[name="address"]').value = data.address;
+                if (data.postal_code) form.querySelector('[name="postal_code"]').value = data.postal_code;
+
+                // Fill hidden inputs
+                if (data.area_id) document.getElementById('destination-area-id').value = data.area_id;
+                if (data.area_text) document.getElementById('destination-area-text').value = data.area_text;
+                if (data.area_search) document.getElementById('area-search-input').value = data.area_search;
+                if (data.lat) document.getElementById('dest-lat').value = data.lat;
+                if (data.lng) document.getElementById('dest-lng').value = data.lng;
+
+                // Trigger rates if we have location info
+                if (data.area_id || (data.lat && data.lng)) {
+                    checkRates(data.area_id, data.lat, data.lng);
+                }
+            } catch (e) {
+                console.error('Failed to load saved biodata:', e);
+            }
+        }
+
+        // Attach listeners to all relevant inputs
+        const formFields = ['name', 'email', 'phone', 'address', 'postal_code'];
+        formFields.forEach(fieldName => {
+            const el = document.querySelector(`[name="${fieldName}"]`);
+            if (el) el.addEventListener('change', saveCustomerData);
+        });
+
+        // Search input also needs saving on manual clear or change
+        document.getElementById('area-search-input').addEventListener('change', saveCustomerData);
+
+        // Also save when an area is selected (add to window.selectArea)
+        const originalSelectArea = window.selectArea;
+        window.selectArea = async (id, name, lat, lng) => {
+            await originalSelectArea(id, name, lat, lng);
+            saveCustomerData();
+        };
+
+        // Also save when geolocation is used
+        const originalCheckRates = window.checkRates;
+        window.checkRates = async (areaId, lat, lng) => {
+            await originalCheckRates(areaId, lat, lng);
+            // Save after potentially getting new coordinates/area
+            saveCustomerData();
+        };
+
         // Initialize
+        loadCustomerData();
         togglePaymentInfo();
     </script>
 </body>

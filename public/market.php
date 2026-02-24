@@ -393,7 +393,7 @@ $best_sellers = $conn->query($best_seller_query);
                                     Terlaris
                                 </div>
 
-                                <div class="relative h-32 sm:h-48 overflow-hidden rounded-t-xl bg-slate-100">
+                                <a href="<?= BASE_URL ?>product-detail?id=<?= $bs_product['id'] ?>" class="relative h-32 sm:h-48 overflow-hidden rounded-t-xl bg-slate-100 block">
                                     <?php
                                     if ($bs_product['image']) {
                                         $img_src = $bs_product['image'];
@@ -409,13 +409,13 @@ $best_sellers = $conn->query($best_seller_query);
                                             <span class="material-symbols-outlined text-4xl">image_not_supported</span>
                                         </div>
                                     <?php } ?>
-                                </div>
+                                </a>
                                 <div class="p-3 sm:p-5 flex flex-col flex-1">
                                     <div class="flex justify-between items-start gap-2 mb-2">
-                                        <h3
-                                            class="font-bold text-sm sm:text-lg leading-tight text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+                                        <a href="<?= BASE_URL ?>product-detail?id=<?= $bs_product['id'] ?>"
+                                            class="font-bold text-sm sm:text-lg leading-tight text-slate-900 dark:text-white hover:text-primary transition-colors">
                                             <?php echo htmlspecialchars($bs_product['name']); ?>
-                                        </h3>
+                                        </a>
                                     </div>
                                     <p class="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-2 sm:mb-4 line-clamp-2" title="<?php echo htmlspecialchars($bs_product['description']); ?>">
                                         <?php echo htmlspecialchars($bs_product['description']); ?>
@@ -509,7 +509,7 @@ $best_sellers = $conn->query($best_seller_query);
                            echo htmlspecialchars($img_src);
                            ?>" data-category="<?php echo htmlspecialchars($product['category_name']); ?>"
                         data-unit="<?php echo htmlspecialchars($unit); ?>">
-                        <div class="relative h-32 sm:h-48 overflow-hidden rounded-t-xl bg-slate-100">
+                        <a href="<?= BASE_URL ?>product-detail?id=<?= $product['id'] ?>" class="relative h-32 sm:h-48 overflow-hidden rounded-t-xl bg-slate-100 block">
                             <?php
                             if ($product['image']) {
                                 $img_src = $product['image'];
@@ -536,13 +536,13 @@ $best_sellers = $conn->query($best_seller_query);
                                     Stok Menipis
                                 </div>
                             <?php endif; ?>
-                        </div>
+                        </a>
                         <div class="p-3 sm:p-5 flex flex-col flex-1">
                             <div class="flex justify-between items-start gap-2 mb-2">
-                                <h3
-                                    class="font-bold text-sm sm:text-lg leading-tight text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+                                <a href="<?= BASE_URL ?>product-detail?id=<?= $product['id'] ?>"
+                                    class="font-bold text-sm sm:text-lg leading-tight text-slate-900 dark:text-white hover:text-primary transition-colors">
                                     <?php echo htmlspecialchars($product['name']); ?>
-                                </h3>
+                                </a>
                             </div>
                             <p class="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-2 sm:mb-4 line-clamp-2">
                                 <?php echo htmlspecialchars($product['description']); ?>
