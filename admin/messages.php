@@ -78,7 +78,7 @@ $result = $conn->query("SELECT * FROM messages ORDER BY created_at DESC LIMIT $s
                 <!-- Notification Area -->
                 <?php if (isset($_SESSION['status_msg'])): ?>
                     <div
-                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-2 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
                         <span
                             class="material-icons-round <?php echo $_SESSION['status_type'] == 'success' ? 'text-green-500' : 'text-red-500'; ?>">
                             <?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?>
@@ -179,28 +179,69 @@ $result = $conn->query("SELECT * FROM messages ORDER BY created_at DESC LIMIT $s
                         </table>
                     </div>
 
-                    <div class="flex justify-end mt-4 gap-2">
-                        <?php if ($page > 1): ?>
-                            <a href="?page=<?php echo $page - 1; ?>&limit=<?php echo $limit; ?>"
-                                class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Sebelumnya</a>
-                        <?php else: ?>
-                            <button disabled
-                                class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-300 cursor-not-allowed">Sebelumnya</button>
-                        <?php endif; ?>
+                    <?php if ($total_pages > 0):
+                        $pages_to_show = [];
+                        if ($total_pages <= 7) {
+                            for ($i = 1; $i <= $total_pages; $i++) $pages_to_show[] = $i;
+                        } else {
+                            $pages_to_show[] = 1;
+                            $range_start = max(2, $page - 1);
+                            $range_end = min($total_pages - 1, $page + 1);
+                            if ($range_start > 2) $pages_to_show[] = '...';
+                            for ($i = $range_start; $i <= $range_end; $i++) $pages_to_show[] = $i;
+                            if ($range_end < $total_pages - 1) $pages_to_show[] = '...';
+                            $pages_to_show[] = $total_pages;
+                        }
+                        $base_url = "?limit=$limit";
+                    ?>
+                    <div class="border-t border-slate-200 dark:border-slate-800 pt-4 mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div class="flex items-center gap-2 text-xs text-slate-500">
+                            <span class="text-slate-500">
+                                <span class="font-semibold text-slate-700 dark:text-slate-300"><?= $total_rows > 0 ? $start + 1 : 0 ?>–<?= min($start + $limit, $total_rows) ?></span>
+                                dari
+                                <span class="font-semibold text-slate-700 dark:text-slate-300"><?= number_format($total_rows) ?></span>
+                                pesan
+                            </span>
+                        </div>
 
-                        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                            <a href="?page=<?php echo $i; ?>&limit=<?php echo $limit; ?>"
-                                class="px-3 py-1 text-xs border <?php echo $i == $page ? 'border-primary bg-primary text-white' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'; ?> rounded transition-colors"><?php echo $i; ?></a>
-                        <?php endfor; ?>
+                        <nav class="flex items-center gap-1" aria-label="Pagination">
+                            <?php if ($page > 1): ?>
+                                <a href="<?= $base_url ?>&page=<?= $page - 1 ?>"
+                                    class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary transition-all"
+                                    title="Halaman sebelumnya">
+                                    <span class="material-icons-round text-base">chevron_left</span>
+                                </a>
+                            <?php else: ?>
+                                <span class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                                    <span class="material-icons-round text-base">chevron_left</span>
+                                </span>
+                            <?php endif; ?>
 
-                        <?php if ($page < $total_pages): ?>
-                            <a href="?page=<?php echo $page + 1; ?>&limit=<?php echo $limit; ?>"
-                                class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Selanjutnya</a>
-                        <?php else: ?>
-                            <button disabled
-                                class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-300 cursor-not-allowed">Selanjutnya</button>
-                        <?php endif; ?>
+                            <?php foreach ($pages_to_show as $pg): ?>
+                                <?php if ($pg === '...'): ?>
+                                    <span class="inline-flex items-center justify-center w-8 h-8 text-xs text-slate-400 select-none">•••</span>
+                                <?php elseif ($pg == $page): ?>
+                                    <span class="inline-flex items-center justify-center size-8 rounded-lg text-xs font-bold bg-primary text-white shadow-sm shadow-primary/30"><?= $pg ?></span>
+                                <?php else: ?>
+                                    <a href="<?= $base_url ?>&page=<?= $pg ?>"
+                                        class="inline-flex items-center justify-center size-8 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all"><?= $pg ?></a>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+
+                            <?php if ($page < $total_pages): ?>
+                                <a href="<?= $base_url ?>&page=<?= $page + 1 ?>"
+                                    class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary transition-all"
+                                    title="Halaman selanjutnya">
+                                    <span class="material-icons-round text-base">chevron_right</span>
+                                </a>
+                            <?php else: ?>
+                                <span class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                                    <span class="material-icons-round text-base">chevron_right</span>
+                                </span>
+                            <?php endif; ?>
+                        </nav>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
             <?php include ROOT_PATH . "includes/admin/footer.php"; ?>

@@ -97,7 +97,7 @@ while ($p = $products_res->fetch_assoc())
 
                 <?php if (isset($_SESSION['status_msg'])): ?>
                     <div
-                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-2 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
                         <span class="material-icons-round text-green-500">check_circle</span>
                         <div>
                             <h3 class="font-medium text-slate-900 dark:text-white">Berhasil</h3>
@@ -112,7 +112,7 @@ while ($p = $products_res->fetch_assoc())
 
                 <?php if ($error): ?>
                     <div
-                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-2 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
                         <span class="material-icons-round text-red-500">error</span>
                         <div>
                             <h3 class="font-medium text-slate-900 dark:text-white">Gagal</h3>

@@ -437,31 +437,67 @@ $new_prod_percentage = ($total_products > 0) ? round(($new_prod_count / $total_p
                             </tbody>
                         </table>
                     </div>
+                    <?php if ($total_pages > 0):
+                        $dash_pages_to_show = [];
+                        if ($total_pages <= 7) {
+                            for ($i = 1; $i <= $total_pages; $i++) $dash_pages_to_show[] = $i;
+                        } else {
+                            $dash_pages_to_show[] = 1;
+                            $range_start = max(2, $recent_page - 1);
+                            $range_end = min($total_pages - 1, $recent_page + 1);
+                            if ($range_start > 2) $dash_pages_to_show[] = '...';
+                            for ($i = $range_start; $i <= $range_end; $i++) $dash_pages_to_show[] = $i;
+                            if ($range_end < $total_pages - 1) $dash_pages_to_show[] = '...';
+                            $dash_pages_to_show[] = $total_pages;
+                        }
+                        $dash_base_url = "?" . ($recent_status_filter ? "recent_status=" . urlencode($recent_status_filter) . "&" : "") . ($period ? "period=" . urlencode($period) . "&" : "");
+                    ?>
                     <div
-                        class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
-                        <span class="text-xs text-slate-500">Menampilkan <?php echo $recent_start + 1; ?> -
-                            <?php echo min($recent_start + $recent_limit, $total_orders_count); ?> dari
-                            <?php echo $total_orders_count; ?> entri</span>
-                        <div class="flex gap-2">
+                        class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <span class="text-xs text-slate-500">
+                            <span class="font-semibold text-slate-700 dark:text-slate-300"><?= $recent_start + 1 ?>–<?= min($recent_start + $recent_limit, $total_orders_count) ?></span>
+                            dari
+                            <span class="font-semibold text-slate-700 dark:text-slate-300"><?= number_format($total_orders_count) ?></span>
+                            pesanan
+                        </span>
+                        <nav class="flex items-center gap-1" aria-label="Pagination">
                             <?php if ($recent_page > 1): ?>
-                                <a href="?page=<?php echo $recent_page - 1; ?><?php echo $recent_status_filter ? '&recent_status=' . $recent_status_filter : ''; ?><?php echo $period ? '&period=' . $period : ''; ?>"
-                                    class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Sebelumnya</a>
+                                <a href="<?= $dash_base_url ?>page=<?= $recent_page - 1 ?>"
+                                    class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary transition-all"
+                                    title="Halaman sebelumnya">
+                                    <span class="material-icons-round text-base">chevron_left</span>
+                                </a>
                             <?php else: ?>
-                                <button
-                                    class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 disabled:opacity-50"
-                                    disabled>Sebelumnya</button>
+                                <span class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                                    <span class="material-icons-round text-base">chevron_left</span>
+                                </span>
                             <?php endif; ?>
 
+                            <?php foreach ($dash_pages_to_show as $pg): ?>
+                                <?php if ($pg === '...'): ?>
+                                    <span class="inline-flex items-center justify-center w-8 h-8 text-xs text-slate-400 select-none">•••</span>
+                                <?php elseif ($pg == $recent_page): ?>
+                                    <span class="inline-flex items-center justify-center size-8 rounded-lg text-xs font-bold bg-primary text-white shadow-sm shadow-primary/30"><?= $pg ?></span>
+                                <?php else: ?>
+                                    <a href="<?= $dash_base_url ?>page=<?= $pg ?>"
+                                        class="inline-flex items-center justify-center size-8 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all"><?= $pg ?></a>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+
                             <?php if ($recent_page < $total_pages): ?>
-                                <a href="?page=<?php echo $recent_page + 1; ?><?php echo $recent_status_filter ? '&recent_status=' . $recent_status_filter : ''; ?><?php echo $period ? '&period=' . $period : ''; ?>"
-                                    class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Selanjutnya</a>
+                                <a href="<?= $dash_base_url ?>page=<?= $recent_page + 1 ?>"
+                                    class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary transition-all"
+                                    title="Halaman selanjutnya">
+                                    <span class="material-icons-round text-base">chevron_right</span>
+                                </a>
                             <?php else: ?>
-                                <button
-                                    class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 disabled:opacity-50"
-                                    disabled>Selanjutnya</button>
+                                <span class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                                    <span class="material-icons-round text-base">chevron_right</span>
+                                </span>
                             <?php endif; ?>
-                        </div>
+                        </nav>
                     </div>
+                    <?php endif; ?>
                 </div>
                 <?php include ROOT_PATH . "includes/admin/footer.php"; ?>
             </div>

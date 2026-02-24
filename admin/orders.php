@@ -156,7 +156,7 @@ $orders_result = $conn->query($orders_query);
                         <!-- Notification Area -->
                         <?php if (isset($_SESSION['status_msg'])): ?>
                             <div
-                                class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-2 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                                class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
                                 <span
                                     class="material-icons-round <?php echo $_SESSION['status_type'] == 'success' ? 'text-green-500' : 'text-red-500'; ?>">
                                     <?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?>
@@ -800,45 +800,97 @@ $orders_result = $conn->query($orders_query);
                         </div>
 
                         <!-- Pagination Controls -->
-                        <?php if (!isset($_GET['action'])): ?>
+                        <?php if (!isset($_GET['action']) && $total_pages > 0): ?>
+                            <?php
+                            // Smart pagination: build array of pages to show
+                            $pages_to_show = [];
+                            $adjacents = 1; // pages on each side of current
+
+                            if ($total_pages <= 7) {
+                                // Show all pages if 7 or less
+                                for ($i = 1; $i <= $total_pages; $i++) $pages_to_show[] = $i;
+                            } else {
+                                // Always show first page
+                                $pages_to_show[] = 1;
+
+                                // Calculate range around current page
+                                $range_start = max(2, $page - $adjacents);
+                                $range_end = min($total_pages - 1, $page + $adjacents);
+
+                                // Add ellipsis before range if needed
+                                if ($range_start > 2) $pages_to_show[] = '...';
+
+                                // Add range pages
+                                for ($i = $range_start; $i <= $range_end; $i++) $pages_to_show[] = $i;
+
+                                // Add ellipsis after range if needed
+                                if ($range_end < $total_pages - 1) $pages_to_show[] = '...';
+
+                                // Always show last page
+                                $pages_to_show[] = $total_pages;
+                            }
+
+                            $base_url = "?status=" . urlencode($filter_status) . "&limit=$limit";
+                            ?>
                             <div
                                 class="border-t border-slate-200 dark:border-slate-800 pt-4 mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                                <div class="flex items-center gap-2 text-sm text-slate-500">
+                                <!-- Left: Per page & info -->
+                                <div class="flex items-center gap-2 text-xs text-slate-500">
                                     <span>Tampilkan</span>
-                                    <select onchange="window.location.href='?limit='+this.value+'&page=1'"
-                                        class="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded text-xs py-2 px-6 focus:ring-primary focus:border-primary">
-                                        <option value="5" <?php echo $limit == 5 ? 'selected' : ''; ?>>5</option>
-                                        <option value="10" <?php echo $limit == 10 ? 'selected' : ''; ?>>10</option>
-                                        <option value="20" <?php echo $limit == 20 ? 'selected' : ''; ?>>20</option>
+                                    <select onchange="window.location.href='<?= $base_url ?>&page=1'.replace('limit=<?= $limit ?>','limit='+this.value)"
+                                        class="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs py-1.5 px-3 pr-7 focus:ring-primary focus:border-primary cursor-pointer">
+                                        <option value="5" <?= $limit == 5 ? 'selected' : '' ?>>5</option>
+                                        <option value="10" <?= $limit == 10 ? 'selected' : '' ?>>10</option>
+                                        <option value="20" <?= $limit == 20 ? 'selected' : '' ?>>20</option>
                                     </select>
-                                    <span>entri</span>
-                                    <span class="ml-2 hidden sm:inline"> | Menampilkan <?php echo $start + 1; ?> sampai
-                                        <?php echo min($start + $limit, $total_orders); ?> dari <?php echo $total_orders; ?>
-                                        entri</span>
+                                    <span class="text-slate-400">|</span>
+                                    <span class="text-slate-500">
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300"><?= $start + 1 ?>–<?= min($start + $limit, $total_orders) ?></span>
+                                        dari
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300"><?= number_format($total_orders) ?></span>
+                                    </span>
                                 </div>
 
-                                <div class="flex gap-2">
+                                <!-- Right: Page buttons -->
+                                <nav class="flex items-center gap-1" aria-label="Pagination">
+                                    <!-- Prev button -->
                                     <?php if ($page > 1): ?>
-                                        <a href="?page=<?php echo $page - 1; ?>&limit=<?php echo $limit; ?>&status=<?php echo $filter_status; ?>"
-                                            class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Sebelumnya</a>
-                                     <?php else: ?>
-                                        <button disabled
-                                            class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-300 cursor-not-allowed">Sebelumnya</button>
-                                     <?php endif; ?>
+                                        <a href="<?= $base_url ?>&page=<?= $page - 1 ?>"
+                                            class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary transition-all"
+                                            title="Halaman sebelumnya">
+                                            <span class="material-icons-round text-base">chevron_left</span>
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                                            <span class="material-icons-round text-base">chevron_left</span>
+                                        </span>
+                                    <?php endif; ?>
 
-                                     <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                                        <a href="?page=<?php echo $i; ?>&limit=<?php echo $limit; ?>&status=<?php echo $filter_status; ?>"
-                                            class="px-3 py-1 text-xs border <?php echo $i == $page ? 'border-primary bg-primary text-white' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'; ?> rounded transition-colors"><?php echo $i; ?></a>
-                                     <?php endfor; ?>
+                                    <!-- Page numbers with ellipsis -->
+                                    <?php foreach ($pages_to_show as $pg): ?>
+                                        <?php if ($pg === '...'): ?>
+                                            <span class="inline-flex items-center justify-center w-8 h-8 text-xs text-slate-400 select-none">•••</span>
+                                        <?php elseif ($pg == $page): ?>
+                                            <span class="inline-flex items-center justify-center size-8 rounded-lg text-xs font-bold bg-primary text-white shadow-sm shadow-primary/30"><?= $pg ?></span>
+                                        <?php else: ?>
+                                            <a href="<?= $base_url ?>&page=<?= $pg ?>"
+                                                class="inline-flex items-center justify-center size-8 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all"><?= $pg ?></a>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
 
-                                     <?php if ($page < $total_pages): ?>
-                                        <a href="?page=<?php echo $page + 1; ?>&limit=<?php echo $limit; ?>&status=<?php echo $filter_status; ?>"
-                                            class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Selanjutnya</a>
-                                     <?php else: ?>
-                                        <button disabled
-                                            class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-300 cursor-not-allowed">Selanjutnya</button>
-                                     <?php endif; ?>
-                                </div>
+                                    <!-- Next button -->
+                                    <?php if ($page < $total_pages): ?>
+                                        <a href="<?= $base_url ?>&page=<?= $page + 1 ?>"
+                                            class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary transition-all"
+                                            title="Halaman selanjutnya">
+                                            <span class="material-icons-round text-base">chevron_right</span>
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                                            <span class="material-icons-round text-base">chevron_right</span>
+                                        </span>
+                                    <?php endif; ?>
+                                </nav>
                             </div>
                         <?php endif; ?>
                     </div>

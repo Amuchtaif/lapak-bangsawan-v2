@@ -256,7 +256,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                 <!-- Notification Area -->
                 <?php if (isset($_SESSION['status_msg'])): ?>
                     <div
-                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-2 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
                         <span
                             class="material-icons-round <?php echo $_SESSION['status_type'] == 'success' ? 'text-green-500' : 'text-red-500'; ?>">
                             <?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?>
@@ -274,7 +274,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
 
                 <?php if ($success): ?>
                     <div
-                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-2 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
                         <span class="material-icons-round text-green-500">check_circle</span>
                         <div>
                             <h3 class="font-medium text-slate-900 dark:text-white">Berhasil</h3>
@@ -285,7 +285,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
 
                 <?php if ($error): ?>
                     <div
-                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-2 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
                         <span class="material-icons-round text-red-500">error</span>
                         <div>
                             <h3 class="font-medium text-slate-900 dark:text-white">Gagal</h3>
@@ -813,47 +813,78 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                             </div>
 
                             <!-- Pagination Controls -->
+                            <?php if ($total_pages > 0):
+                                $pages_to_show = [];
+                                if ($total_pages <= 7) {
+                                    for ($i = 1; $i <= $total_pages; $i++) $pages_to_show[] = $i;
+                                } else {
+                                    $pages_to_show[] = 1;
+                                    $range_start = max(2, $page - 1);
+                                    $range_end = min($total_pages - 1, $page + 1);
+                                    if ($range_start > 2) $pages_to_show[] = '...';
+                                    for ($i = $range_start; $i <= $range_end; $i++) $pages_to_show[] = $i;
+                                    if ($range_end < $total_pages - 1) $pages_to_show[] = '...';
+                                    $pages_to_show[] = $total_pages;
+                                }
+                                $pag_base_url = "?limit=$limit" . ($base_query ? '&' . $base_query : '');
+                            ?>
                             <div
                                 class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex flex-col sm:flex-row justify-between items-center gap-4">
-                                <div class="flex items-center gap-2 text-sm text-slate-500">
+                                <div class="flex items-center gap-2 text-xs text-slate-500">
                                     <span>Tampilkan</span>
                                     <select
-                                        onchange="const url = '?limit='+this.value+'&page=1<?php echo $base_query ? '&' . $base_query : ''; ?>'; if(typeof loadProducts === 'function'){ loadProducts(url); } else { window.location.href=url; }"
-                                        class="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded text-xs py-2 px-6 focus:ring-primary focus:border-primary">
-                                        <option value="5" <?php echo $limit == 5 ? 'selected' : ''; ?>>5</option>
-                                        <option value="10" <?php echo $limit == 10 ? 'selected' : ''; ?>>10</option>
-                                        <option value="20" <?php echo $limit == 20 ? 'selected' : ''; ?>>20</option>
+                                        onchange="const url = '?limit='+this.value+'&page=1<?= $base_query ? '&' . $base_query : '' ?>'; if(typeof loadProducts === 'function'){ loadProducts(url); } else { window.location.href=url; }"
+                                        class="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs py-1.5 px-3 pr-7 focus:ring-primary focus:border-primary cursor-pointer">
+                                        <option value="5" <?= $limit == 5 ? 'selected' : '' ?>>5</option>
+                                        <option value="10" <?= $limit == 10 ? 'selected' : '' ?>>10</option>
+                                        <option value="20" <?= $limit == 20 ? 'selected' : '' ?>>20</option>
                                     </select>
-                                    <span>entri</span>
-                                    <span class="ml-2 hidden sm:inline"> | Menampilkan
-                                        <?php echo $total_rows > 0 ? $offset + 1 : 0; ?> sampai
-                                        <?php echo min($offset + $limit, $total_rows); ?> dari <?php echo $total_rows; ?>
-                                        entri</span>
+                                    <span class="text-slate-400">|</span>
+                                    <span class="text-slate-500">
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300"><?= $total_rows > 0 ? $offset + 1 : 0 ?>–<?= min($offset + $limit, $total_rows) ?></span>
+                                        dari
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300"><?= number_format($total_rows) ?></span>
+                                    </span>
                                 </div>
 
-                                <div class="flex gap-2">
+                                <nav class="flex items-center gap-1" aria-label="Pagination">
                                     <?php if ($page > 1): ?>
-                                        <a href="?page=<?php echo $page - 1; ?>&limit=<?php echo $limit; ?><?php echo $base_query ? '&' . $base_query : ''; ?>"
-                                            class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Sebelumnya</a>
+                                        <a href="<?= $pag_base_url ?>&page=<?= $page - 1 ?>"
+                                            class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary transition-all"
+                                            title="Halaman sebelumnya">
+                                            <span class="material-icons-round text-base">chevron_left</span>
+                                        </a>
                                     <?php else: ?>
-                                        <button disabled
-                                            class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-300 cursor-not-allowed">Sebelumnya</button>
+                                        <span class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                                            <span class="material-icons-round text-base">chevron_left</span>
+                                        </span>
                                     <?php endif; ?>
 
-                                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                                        <a href="?page=<?php echo $i; ?>&limit=<?php echo $limit; ?><?php echo $base_query ? '&' . $base_query : ''; ?>"
-                                            class="px-3 py-1 text-xs border <?php echo $i == $page ? 'border-primary bg-primary text-white' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'; ?> rounded transition-colors"><?php echo $i; ?></a>
-                                    <?php endfor; ?>
+                                    <?php foreach ($pages_to_show as $pg): ?>
+                                        <?php if ($pg === '...'): ?>
+                                            <span class="inline-flex items-center justify-center w-8 h-8 text-xs text-slate-400 select-none">•••</span>
+                                        <?php elseif ($pg == $page): ?>
+                                            <span class="inline-flex items-center justify-center size-8 rounded-lg text-xs font-bold bg-primary text-white shadow-sm shadow-primary/30"><?= $pg ?></span>
+                                        <?php else: ?>
+                                            <a href="<?= $pag_base_url ?>&page=<?= $pg ?>"
+                                                class="inline-flex items-center justify-center size-8 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all"><?= $pg ?></a>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
 
                                     <?php if ($page < $total_pages): ?>
-                                        <a href="?page=<?php echo $page + 1; ?>&limit=<?php echo $limit; ?><?php echo $base_query ? '&' . $base_query : ''; ?>"
-                                            class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Selanjutnya</a>
+                                        <a href="<?= $pag_base_url ?>&page=<?= $page + 1 ?>"
+                                            class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary transition-all"
+                                            title="Halaman selanjutnya">
+                                            <span class="material-icons-round text-base">chevron_right</span>
+                                        </a>
                                     <?php else: ?>
-                                        <button disabled
-                                            class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-300 cursor-not-allowed">Selanjutnya</button>
+                                        <span class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                                            <span class="material-icons-round text-base">chevron_right</span>
+                                        </span>
                                     <?php endif; ?>
-                                </div>
+                                </nav>
                             </div>
+                            <?php endif; ?>
                         </div>
                         <?php if (isset($_GET['ajax'])):
                             echo ob_get_clean();

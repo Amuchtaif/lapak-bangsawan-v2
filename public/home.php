@@ -381,6 +381,75 @@
                     </div>
                 </div>
 
+                <!-- Testimonials Section -->
+                <div class="py-16 mt-8 border-t border-slate-100 dark:border-slate-800">
+                    <div class="text-center max-w-[720px] mx-auto mb-12">
+                        <h2 class="text-[#111318] dark:text-white text-2xl md:text-3xl font-bold leading-tight mb-3">
+                            Kesan Pelanggan Kami
+                        </h2>
+                        <p class="text-[#606e8a] dark:text-[#a0aec0]">
+                            Kepercayaan Anda adalah prioritas utama kami dalam menjaga kesegaran dan kualitas protein terbaik.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <?php
+                        $testimonials = [
+                            [
+                                'name' => 'Ibu Yanti',
+                                'location' => 'Kesambi, Cirebon',
+                                'text' => 'Cekernya bagus, bersih dan gede gede. Mantap!',
+                                'color' => 'bg-pink-100 text-pink-600',
+                                'initial' => 'Y'
+                            ],
+                            [
+                                'name' => 'Pak Atar',
+                                'location' => 'Sumber, Kab. Cirebon',
+                                'text' => 'Komplit, ayam potong, ikan segar, seafood & frozen food 🥰🥰🥰Pastikan anda membeli di lapak bangsawan yang amanah',
+                                'color' => 'bg-blue-100 text-blue-600',
+                                'initial' => 'A'
+                            ],
+                            [
+                                'name' => 'Naufal',
+                                'location' => 'Kedawung, Cirebon',
+                                'text' => 'Ramah, amanah dan berkualitas',
+                                'color' => 'bg-emerald-100 text-emerald-600',
+                                'initial' => 'N'
+                            ]
+                        ];
+
+                        foreach ($testimonials as $t): ?>
+                            <div class="bg-white dark:bg-[#1a202c] p-8 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 relative group flex flex-col h-full">
+                                <!-- Quote Icon -->
+                                <div class="absolute -top-4 right-8 size-8 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/30 group-hover:scale-110 transition-transform">
+                                    <span class="material-symbols-outlined text-sm">format_quote</span>
+                                </div>
+
+                                <!-- Stars -->
+                                <div class="flex gap-1 mb-6 text-amber-400">
+                                    <?php for ($i = 0; $i < 5; $i++): ?>
+                                        <span class="material-symbols-outlined text-sm fill-current">star</span>
+                                    <?php endfor; ?>
+                                </div>
+
+                                <p class="text-slate-600 dark:text-slate-300 italic mb-8 leading-relaxed flex-1">
+                                    "<?php echo $t['text']; ?>"
+                                </p>
+
+                                <div class="flex items-center gap-4 mt-auto">
+                                    <div class="size-12 rounded-full <?php echo $t['color']; ?> flex items-center justify-center font-bold text-lg shrink-0">
+                                        <?php echo $t['initial']; ?>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 dark:text-white"><?php echo $t['name']; ?></h4>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo $t['location']; ?></p>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
                 <!-- Call To Action -->
                 <div
                     class="my-12 rounded-2xl bg-gradient-to-r from-primary to-blue-700 overflow-hidden relative shadow-xl">
@@ -413,26 +482,9 @@
                         </div>
                     </div>
                 </div>
-                <!-- Newsletter -->
-                <div class="mt-12 rounded-2xl bg-[#101622] p-8 md:p-12 relative overflow-hidden">
-                    <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                        <div class="flex flex-col gap-2 text-center md:text-left">
-                            <h2 class="text-white text-2xl md:text-3xl font-bold">Dapatkan Penawaran Segar
-                                Mingguan</h2>
-                            <p class="text-gray-400">Berlangganan buletin kami untuk penawaran dan resep
-                                eksklusif.</p>
-                        </div>
-                        <div class="w-full md:w-auto flex flex-col sm:flex-row gap-3">
-                            <input
-                                class="h-12 rounded-lg px-4 bg-white/10 border border-white/20 text-white placeholder:text-gray-400 focus:ring-primary focus:border-primary w-full sm:w-80"
-                                placeholder="Masukkan email Anda" type="email" />
-                            <button
-                                class="h-12 px-6 bg-primary hover:bg-blue-600 text-white font-bold rounded-lg transition-colors whitespace-nowrap">
-                                Berlangganan
-                            </button>
-                        </div>
-                    </div>
                 </div>
+            </div>
+        </main>
             </div>
         </main>
         <!-- Footer -->

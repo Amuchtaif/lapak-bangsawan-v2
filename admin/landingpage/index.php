@@ -62,7 +62,7 @@ while ($row = $res->fetch_assoc()) {
                 <!-- Notification -->
                 <?php if (isset($_SESSION['status_msg'])): ?>
                     <div
-                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-2 flex items-start gap-3 shadow-sm auto-close-alert">
+                        class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
                         <span
                             class="material-icons-round <?php echo $_SESSION['status_type'] == 'success' ? 'text-green-500' : 'text-red-500'; ?>"><?php echo $_SESSION['status_type'] == 'success' ? 'check_circle' : 'error'; ?></span>
                         <div>

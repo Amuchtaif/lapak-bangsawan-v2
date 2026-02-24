@@ -170,15 +170,21 @@ if (isset($_POST['username'])) {
 
                     <!-- Form -->
                     <?php if ($error): ?>
-                        <div class="mb-4 p-3 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-medium">
-                            <?php echo $error; ?>
+                        <div class="bg-white dark:bg-slate-800/80 border border-red-100 dark:border-red-900/30 rounded-xl p-4 mb-6 flex items-start gap-3 shadow-sm transition-opacity duration-500">
+                            <span class="material-symbols-outlined text-red-500">error</span>
+                            <div>
+                                <h3 class="font-medium text-slate-900 dark:text-white text-sm">Gagal Login</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo $error; ?></p>
+                            </div>
                         </div>
                     <?php endif; ?>
                     <?php if (isset($_GET['timeout'])): ?>
-                        <div
-                            class="mb-4 p-3 bg-amber-50 text-amber-700 border border-amber-100 rounded-xl text-sm flex items-center gap-2 font-medium">
-                            <span class="material-symbols-outlined text-lg">warning</span>
-                            Sesi anda sudah habis, login kembali.
+                        <div class="bg-white dark:bg-slate-800/80 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4 mb-6 flex items-start gap-3 shadow-sm transition-opacity duration-500">
+                            <span class="material-symbols-outlined text-amber-500">warning</span>
+                            <div>
+                                <h3 class="font-medium text-slate-900 dark:text-white text-sm">Sesi Berakhir</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Sesi anda sudah habis, silahkan login kembali.</p>
+                            </div>
                         </div>
                     <?php endif; ?>
 

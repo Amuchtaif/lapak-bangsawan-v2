@@ -165,8 +165,12 @@ if ($stmt) {
                 <!-- Report Table -->
                 <div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                     <?php if (isset($error_msg)): ?>
-                        <div class="p-8 text-center text-red-500">
-                            <?= $error_msg ?>
+                        <div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-lg p-4 m-6 flex items-start gap-3 shadow-sm auto-close-alert transition-opacity duration-500">
+                            <span class="material-icons-round text-red-500">error</span>
+                            <div>
+                                <h3 class="font-medium text-slate-900 dark:text-white">Gagal</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400"><?= $error_msg ?></p>
+                            </div>
                         </div>
                     <?php else: ?>
                         <div class="overflow-x-auto">

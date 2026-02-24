@@ -24,11 +24,24 @@ $product_revenue = $stmt->get_result()->fetch_assoc()['total'];
 
 // ============================================================
 // 2. Shipping Income (Pendapatan Ongkir)
+//    For old orders where shipping_cost was not saved, we calculate  
+//    it as: total_amount - SUM(oi.subtotal) + manual_discount
+//    For new orders, we use the stored shipping_cost value.
 // ============================================================
-$stmt = $conn->prepare("SELECT COALESCE(SUM(COALESCE(shipping_cost, 0)), 0) as total 
-                         FROM orders 
-                         WHERE status = 'completed' 
-                         AND DATE(created_at) BETWEEN ? AND ?");
+$stmt = $conn->prepare("SELECT COALESCE(SUM(
+                            CASE 
+                                WHEN COALESCE(o.shipping_cost, 0) > 0 THEN o.shipping_cost
+                                ELSE GREATEST(o.total_amount - COALESCE(item_totals.product_total, 0) + COALESCE(o.manual_discount, 0), 0)
+                            END
+                         ), 0) as total
+                         FROM orders o
+                         LEFT JOIN (
+                            SELECT order_id, SUM(subtotal) as product_total 
+                            FROM order_items 
+                            GROUP BY order_id
+                         ) item_totals ON o.id = item_totals.order_id
+                         WHERE o.status = 'completed' 
+                         AND DATE(o.created_at) BETWEEN ? AND ?");
 $stmt->bind_param("ss", $start_date, $end_date);
 $stmt->execute();
 $shipping_income = $stmt->get_result()->fetch_assoc()['total'];
@@ -508,7 +521,6 @@ $top_products_res = $stmt->get_result();
                                 $gross_margin = ($gross_profit / $product_revenue) * 100;
                                 echo "Margin laba bersih Anda adalah <b>" . number_format($margin, 1) . "%</b>";
                                 echo " dengan margin kotor <b>" . number_format($gross_margin, 1) . "%</b>.";
-                                echo " Pertahankan efisiensi biaya operasional untuk hasil lebih maksimal.";
                             } elseif ($net_profit < 0) {
                                 echo "Operasional Anda sedang mengalami <b class='text-red-600'>defisit (Rugi)</b>. Tinjau kembali kategori pengeluaran terbesar untuk melakukan penghematan.";
                             } else {

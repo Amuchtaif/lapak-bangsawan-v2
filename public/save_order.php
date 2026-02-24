@@ -165,10 +165,10 @@ try {
     // 8. Insert Order Header
     $status = 'pending';
 
-    $stmt = $conn->prepare("INSERT INTO orders (id, order_number, customer_id, customer_name, customer_phone, customer_address, destination_area_id, destination_latitude, destination_longitude, total_amount, status, payment_method, order_token, order_notes, courier_company, courier_type, weight_total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO orders (id, order_number, customer_id, customer_name, customer_phone, customer_address, destination_area_id, destination_latitude, destination_longitude, total_amount, shipping_cost, status, payment_method, order_token, order_notes, courier_company, courier_type, weight_total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
     $stmt->bind_param(
-        "issssssddsssssssi",
+        "issssssdddsssssssi",
         $next_id,
         $order_number,
         $cust_id,
@@ -179,6 +179,7 @@ try {
         $dest_lat,
         $dest_lng,
         $grand_total,
+        $shipping_cost,
         $status,
         $payment_method,
         $order_token,

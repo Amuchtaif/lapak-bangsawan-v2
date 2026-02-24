@@ -11,9 +11,40 @@ while ($row = mysqli_fetch_assoc($categories_result)) {
 
 // Fetch Products
 $where = "";
+$resolved_cat_slug = "";
 if (isset($_GET['category'])) {
-    $cat_slug = mysqli_real_escape_string($conn, $_GET['category']);
-    $where = "WHERE categories.slug = '$cat_slug'";
+    $cat_param = $_GET['category'];
+    
+    // Mapping category names/simplified slugs to actual DB slugs
+    $cat_mapping = [
+        // Ayam
+        'Ayam' => 'daging-ayam',
+        'ayam' => 'daging-ayam',
+        'Daging Ayam' => 'daging-ayam',
+        'daging-ayam' => 'daging-ayam',
+        
+        // Ikan
+        'Ikan' => 'ikan-segar',
+        'ikan' => 'ikan-segar',
+        'Ikan Segar' => 'ikan-segar',
+        'ikan-segar' => 'ikan-segar',
+        
+        // Seafood
+        'Seafood' => 'seafood',
+        'seafood' => 'seafood',
+        'Makanan Laut' => 'seafood',
+        'makanan-laut' => 'seafood',
+        
+        // Frozen food
+        'Frozen Food' => 'frozen-food',
+        'frozen-food' => 'frozen-food',
+        'Makanan Beku' => 'frozen-food',
+        'makanan-beku' => 'frozen-food'
+    ];
+    
+    $resolved_cat_slug = isset($cat_mapping[$cat_param]) ? $cat_mapping[$cat_param] : $cat_param;
+    $cat_slug_escaped = mysqli_real_escape_string($conn, $resolved_cat_slug);
+    $where = "WHERE categories.slug = '$cat_slug_escaped'";
 }
 
 // Search
@@ -151,10 +182,11 @@ $best_sellers = $conn->query($best_seller_query);
                     <?php
                     // Category Icon Mapping
                     $cat_icons = [
-                        'ayam' => 'restaurant',
-                        'ikan' => 'sailing',
-                        'makanan-laut' => 'waves',
-                        'makanan-beku' => 'ac_unit'
+                        'daging-ayam' => 'restaurant',
+                        'ikan-segar' => 'sailing',
+                        'seafood' => 'waves',
+                        'frozen-food' => 'ac_unit',
+                        'produk-jadi' => 'restaurant_menu'
                     ];
 
                     $is_all_active = !isset($_GET['category']);
@@ -176,7 +208,7 @@ $best_sellers = $conn->query($best_seller_query);
                     </a>
 
                     <?php foreach ($categories as $cat):
-                        $is_cat_active = (isset($_GET['category']) && $_GET['category'] == $cat['slug']);
+                        $is_cat_active = (isset($_GET['category']) && $resolved_cat_slug == $cat['slug']);
                         $icon = $cat_icons[$cat['slug']] ?? 'category';
                         ?>
                         <a href="?category=<?php echo $cat['slug']; ?>"
@@ -281,39 +313,39 @@ $best_sellers = $conn->query($best_seller_query);
                         <button type="button"
                             class="custom-select-trigger w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-white/5 px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 transition-all text-left">
                             <span class="selected-label">
-                                <?php
-                                $current_cat = 'Semua Kategori';
-                                if (isset($_GET['category'])) {
-                                    foreach ($categories as $cat) {
-                                        if ($cat['slug'] == $_GET['category']) {
-                                            $current_cat = $cat['name'];
-                                            break;
-                                        }
+                            <?php 
+                            $current_cat = 'Semua Kategori';
+                            if (isset($_GET['category'])): 
+                                foreach ($categories as $cat) {
+                                    if ($cat['slug'] == $resolved_cat_slug) {
+                                        $current_cat = $cat['name'];
+                                        break;
                                     }
-                                }
-                                echo htmlspecialchars($current_cat);
-                                ?>
-                            </span>
-                            <span
-                                class="material-symbols-outlined text-slate-400 selected-icon transition-transform">expand_more</span>
-                        </button>
-                        <div
-                            class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-[#1a202c] border border-slate-200 dark:border-white/5 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
-                            <div class="max-h-60 overflow-y-auto p-2">
-                                <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?= !isset($_GET['category']) ? 'bg-primary/10 text-primary font-bold' : '' ?>"
-                                    data-value="">Semua Kategori</div>
-                                <?php foreach ($categories as $cat): ?>
-                                    <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?= (isset($_GET['category']) && $_GET['category'] == $cat['slug']) ? 'bg-primary/10 text-primary font-bold' : '' ?>"
-                                        data-value="<?php echo $cat['slug']; ?>">
-                                        <?php echo htmlspecialchars($cat['name']); ?>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
+                                } 
+                            endif; 
+                            echo htmlspecialchars($current_cat); 
+                            ?>
+                        </span>
+                        <span
+                            class="material-symbols-outlined text-slate-400 selected-icon transition-transform">expand_more</span>
+                    </button>
+                    <div
+                        class="custom-select-options hidden absolute z-[110] w-full mt-2 bg-white dark:bg-[#1a202c] border border-slate-200 dark:border-white/5 rounded-xl shadow-xl opacity-0 translate-y-2 transition-all duration-200 overflow-hidden">
+                        <div class="max-h-60 overflow-y-auto p-2">
+                            <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?= !isset($_GET['category']) ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                data-value="">Semua Kategori</div>
+                            <?php foreach ($categories as $cat): ?>
+                                <div class="custom-option px-4 py-2 rounded-lg hover:bg-primary/5 hover:text-primary cursor-pointer transition-colors text-sm <?= (isset($_GET['category']) && $resolved_cat_slug == $cat['slug']) ? 'bg-primary/10 text-primary font-bold' : '' ?>"
+                                    data-value="<?php echo $cat['slug']; ?>">
+                                    <?php echo htmlspecialchars($cat['name']); ?>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3">
                     <label class="text-xs font-black uppercase tracking-widest text-slate-400"
                         for="sort-mobile">Urutkan</label>
                     <div class="custom-select-wrapper relative flex-1"
