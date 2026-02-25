@@ -57,7 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
 
         foreach ($items as $idx => $item_raw) {
             $p_id = intval($_POST["product_id"][$idx]);
-            $qty = floatval($_POST["qty"][$idx]);
+            $qty_ons = floatval($_POST["qty"][$idx]);
+            $qty = $qty_ons / 10; // Convert ons to kg
 
             if ($p_id == 0 || $qty <= 0)
                 continue;
@@ -430,7 +431,7 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
                                             <th class="text-left px-3 py-2 w-24">Kode</th>
                                             <th class="text-left px-3 py-2">Nama Produk</th>
                                             <th class="text-left px-3 py-2 w-32 text-right">Harga</th>
-                                            <th class="text-center px-3 py-2 w-20">Qty</th>
+                                            <th class="text-center px-3 py-2 w-24">Qty (ons)</th>
                                             <th class="text-right px-3 py-2 w-32">Subtotal</th>
                                             <th class="w-10"></th>
                                         </tr>
@@ -568,11 +569,14 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
                 <span class="font-medium price-display text-sm text-slate-500">Rp 0</span>
             </td>
 
-            <!-- Quantity Input -->
+            <!-- Quantity Input (ons) -->
             <td class="px-2 py-2 align-middle text-center">
-                <input type="number" name="qty[]" step="0.5" value="1" min="0.5"
-                    class="w-20 inline-block rounded-md border-slate-200 bg-white dark:bg-slate-900 text-sm py-2 text-center focus:ring-primary focus:border-primary"
-                    oninput="updateRow(this)">
+                <div class="inline-flex items-center gap-1">
+                    <input type="number" name="qty[]" step="any" value="1" min="0.1"
+                        class="w-16 rounded-md border-slate-200 bg-white dark:bg-slate-900 text-sm py-2 text-center focus:ring-primary focus:border-primary"
+                        oninput="updateRow(this)">
+                    <span class="text-xs font-bold text-slate-500">ons</span>
+                </div>
             </td>
 
             <!-- Subtotal -->
@@ -714,11 +718,12 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
             const selectedOpt = select.options[select.selectedIndex];
             if (!selectedOpt || !selectedOpt.value) return;
 
-            const price = parseFloat(selectedOpt.getAttribute('data-price')) || 0;
-            const qty = parseFloat(qtyInput.value) || 0;
+            const price = parseFloat(selectedOpt.getAttribute('data-price')) || 0; // price per kg
+            const qtyOns = parseFloat(qtyInput.value) || 0;
+            const qtyKg = qtyOns / 10; // Convert ons to kg for calculation
             const category = selectedOpt.getAttribute('data-category');
 
-            const subtotal = price * qty;
+            const subtotal = price * qtyKg;
 
             const formatter = new Intl.NumberFormat('id-ID', {
                 style: 'currency',
@@ -727,10 +732,10 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
                 maximumFractionDigits: 0
             });
 
-            row.querySelector('.price-display').innerText = formatter.format(price);
+            row.querySelector('.price-display').innerText = formatter.format(price) + '/kg';
             row.querySelector('.subtotal-display').innerText = formatter.format(subtotal);
             row.querySelector('.subtotal-display').setAttribute('data-val', subtotal);
-            row.querySelector('.subtotal-display').setAttribute('data-weight', qty);
+            row.querySelector('.subtotal-display').setAttribute('data-weight', qtyKg);
             row.querySelector('.subtotal-display').setAttribute('data-category', category);
 
             recalcTotal();
