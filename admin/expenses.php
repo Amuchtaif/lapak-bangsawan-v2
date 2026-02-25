@@ -453,10 +453,10 @@ $expenses_result = $conn->query($query);
                                                 </td>
                                                 <td class="px-6 py-4 text-center">
                                                     <?php if ($row['proof_image']): ?>
-                                                        <a href="<?= BASE_URL . $row['proof_image'] ?>" target="_blank"
-                                                            class="size-8 inline-flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-primary rounded-lg transition-colors shadow-sm">
+                                                        <button type="button" onclick="openProofModal('<?= BASE_URL . $row['proof_image'] ?>')"
+                                                            class="size-8 inline-flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-primary rounded-lg transition-colors shadow-sm focus:outline-none">
                                                             <span class="material-icons-round text-sm">visibility</span>
-                                                        </a>
+                                                        </button>
                                                     <?php else: ?>
                                                         <span class="text-slate-300 dark:text-slate-700">-</span>
                                                     <?php endif; ?>
@@ -631,7 +631,91 @@ $expenses_result = $conn->query($query);
                 }
             }, false);
         }
+
+        // Modal Functions
+        function openProofModal(url) {
+            const modal = document.getElementById('proofModal');
+            const img = document.getElementById('modalImage');
+            const pdf = document.getElementById('modalPDF');
+            const download = document.getElementById('modalDownload');
+            const ext = url.split('.').pop().toLowerCase();
+
+            img.classList.add('hidden');
+            pdf.classList.add('hidden');
+            download.href = url;
+
+            if (ext === 'pdf') {
+                pdf.src = url;
+                pdf.classList.remove('hidden');
+            } else {
+                img.src = url;
+                img.classList.remove('hidden');
+            }
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            // Animation
+            setTimeout(() => {
+                modal.querySelector('#modalOverlay').classList.remove('opacity-0');
+                modal.querySelector('.inline-block').classList.remove('opacity-0', 'translate-y-4', 'sm:scale-95');
+            }, 10);
+        }
+
+        function closeProofModal() {
+            const modal = document.getElementById('proofModal');
+            modal.querySelector('#modalOverlay').classList.add('opacity-0');
+            modal.querySelector('.inline-block').classList.add('opacity-0', 'translate-y-4', 'sm:scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+                document.getElementById('modalImage').src = '';
+                document.getElementById('modalPDF').src = '';
+            }, 300);
+        }
+
+        // Close on ESC
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeProofModal();
+        });
+
+        // Close on overlay click
+        document.getElementById('modalOverlay')?.addEventListener('click', closeProofModal);
     </script>
+
+    <!-- Modal Receipt Preview -->
+    <div id="proofModal" class="fixed inset-0 z-[100] hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div id="modalOverlay" class="fixed inset-0 transition-opacity bg-slate-900/60 backdrop-blur-sm opacity-0 duration-300" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block overflow-hidden text-left align-middle transition-all duration-300 transform bg-white dark:bg-surface-dark rounded-2xl shadow-xl sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full opacity-0 translate-y-4 sm:scale-95">
+                <div class="relative">
+                    <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="material-icons-round text-primary">receipt_long</span>
+                            Preview Bukti Pembayaran
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <a id="modalDownload" href="" download class="p-2 text-slate-400 hover:text-primary transition-colors flex items-center gap-1 text-sm font-semibold">
+                                <span class="material-icons-round text-sm">download</span>
+                                <span class="hidden sm:inline">Download</span>
+                            </a>
+                            <button type="button" onclick="closeProofModal()" class="text-slate-400 hover:text-slate-500 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-lg transition-all">
+                                <span class="material-icons-round">close</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-2 bg-slate-50 dark:bg-slate-900/50">
+                        <div class="max-h-[70vh] overflow-y-auto rounded-xl">
+                            <img id="modalImage" src="" alt="Bukti Pembayaran" class="w-full h-auto mx-auto shadow-sm hidden">
+                            <iframe id="modalPDF" src="" class="w-full h-[70vh] border-0 hidden"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
