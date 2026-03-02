@@ -178,7 +178,7 @@ $orders_result = $conn->query($orders_query);
                             </h2>
                             <div class="flex gap-2 flex-wrap">
                                 <!-- Cetak Nota -->
-                                <a href="print_nota?id=<?php echo $order_data['id']; ?>" target="_blank"
+                                <a href="print_nota?id=<?php echo $order_data['id']; ?>&size=58mm&auto_print=1" target="_blank"
                                     class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-2 shadow-sm shadow-emerald-500/30">
                                     <span class="material-icons-round text-sm">receipt_long</span> Cetak Nota
                                 </a>
@@ -771,6 +771,11 @@ $orders_result = $conn->query($orders_query);
                                                             class="inline-flex items-center justify-center rounded-lg size-8 text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm"
                                                             title="Detail Pesanan">
                                                             <span class="material-icons-round text-lg">visibility</span>
+                                                        </a>
+                                                        <a href="print_nota?id=<?php echo $order['id']; ?>&size=58mm&auto_print=1" target="_blank"
+                                                            class="inline-flex items-center justify-center rounded-lg size-8 text-xs font-medium bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors shadow-sm"
+                                                            title="Cetak Nota 58mm">
+                                                            <span class="material-icons-round text-lg">print</span>
                                                         </a>
                                                         <button
                                                             onclick="confirmDelete('orders?action=delete&id=<?php echo $order['id']; ?>')"

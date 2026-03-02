@@ -308,7 +308,11 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
                         <span class="material-icons-round text-green-500">check_circle</span>
                         <div>
                             <h3 class="font-medium text-slate-900 dark:text-white">Berhasil</h3>
-                            <p class="text-sm text-slate-500 dark:text-slate-400"><?php echo $success_msg; ?></p>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mb-3"><?php echo $success_msg; ?></p>
+                            <a href="print_nota?id=<?php echo $new_id; ?>&size=58mm&auto_print=1" target="_blank"
+                               class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm">
+                                <span class="material-icons-round text-sm">print</span> Cetak Nota Sekarang
+                            </a>
                         </div>
                     </div>
                 <?php endif; ?>

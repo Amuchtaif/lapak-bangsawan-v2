@@ -273,7 +273,7 @@ $size = $_GET['size'] ?? '58mm';
             <a href="?id=<?= $oid ?>&size=58mm" class="btn btn-size <?= $size === '58mm' ? 'active' : '' ?>">58mm</a>
             <a href="?id=<?= $oid ?>&size=80mm" class="btn btn-size <?= $size === '80mm' ? 'active' : '' ?>">80mm</a>
             <a href="?id=<?= $oid ?>&size=a4" class="btn btn-size <?= $size === 'a4' ? 'active' : '' ?>">A4</a>
-            <button onclick="window.print()" class="btn btn-print">
+            <button onclick="window.print(); window.onafterprint = () => window.close();" class="btn btn-print">
                 <span class="material-icons-round" style="font-size:18px">print</span>
                 Cetak
             </button>
@@ -400,7 +400,18 @@ $size = $_GET['size'] ?? '58mm';
     <script>
         <?php if (isset($_GET['auto_print'])): ?>
         window.addEventListener('load', () => {
-            setTimeout(() => window.print(), 500);
+            setTimeout(() => {
+                window.print();
+                // Attempt to close the window after printing
+                window.onafterprint = () => {
+                    window.close();
+                };
+                // Fallback for browsers that don't support onafterprint or if dialog is cancelled
+                setTimeout(() => {
+                    // We don't want to close too early if they are slow with the dialog
+                    // but usually 1-2 seconds after print command is enough for the dialog to take focus
+                }, 1000);
+            }, 500);
         });
         <?php endif; ?>
     </script>
