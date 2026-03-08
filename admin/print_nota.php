@@ -30,7 +30,12 @@ while ($item = $items_result->fetch_assoc()) {
     $items_arr[] = $item;
 }
 
-$shipping_cost = $order['total_amount'] - $product_subtotal;
+$shipping_cost = (float)($order['shipping_cost'] ?? 0);
+$manual_discount = (float)($order['manual_discount'] ?? 0);
+// system discount isn't explicitly stored, but total_amount = product_subtotal - system_discount - manual_discount + shipping_cost
+// so system_discount = product_subtotal - manual_discount + shipping_cost - total_amount
+$system_discount = $product_subtotal - $manual_discount + $shipping_cost - $order['total_amount'];
+
 $order_number = $order['order_number'] ?? str_pad($order['id'], 5, '0', STR_PAD_LEFT);
 $order_date = date('d/m/Y H:i', strtotime($order['created_at']));
 
@@ -358,10 +363,24 @@ $size = $_GET['size'] ?? '58mm';
                     <span class="total-label">Subtotal</span>
                     <span class="total-val">Rp<?= number_format($product_subtotal, 0, ',', '.') ?></span>
                 </div>
+                <?php if ($system_discount > 1): ?>
+                <div class="r-row-flex">
+                    <span class="total-label">Diskon Grosir</span>
+                    <span class="total-val">-Rp<?= number_format($system_discount, 0, ',', '.') ?></span>
+                </div>
+                <?php endif; ?>
+
+                <?php if ($manual_discount > 0): ?>
+                <div class="r-row-flex">
+                    <span class="total-label">Diskon Manual</span>
+                    <span class="total-val">-Rp<?= number_format($manual_discount, 0, ',', '.') ?></span>
+                </div>
+                <?php endif; ?>
+
                 <?php if ($shipping_cost > 0): ?>
                 <div class="r-row-flex">
                     <span class="total-label">Ongkir</span>
-                    <span class="total-val">Rp<?= number_format($shipping_cost, 0, ',', '.') ?></span>
+                    <span class="total-val">+Rp<?= number_format($shipping_cost, 0, ',', '.') ?></span>
                 </div>
                 <?php elseif ($shipping_cost == 0 && !empty($order['courier_company'])): ?>
                 <div class="r-row-flex">

@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_expense'])) {
             $new_filename = time() . '_' . rand(1000, 9999) . '.' . $file_ext;
             $target_file = $target_dir . $new_filename;
 
-            if (move_uploaded_file($_FILES["proof_image"]["tmp_name"], $target_file)) {
+            if (compress_image($_FILES["proof_image"]["tmp_name"], $target_file, 70)) {
                 $image_path = "assets/uploads/receipts/" . $new_filename;
             }
         }

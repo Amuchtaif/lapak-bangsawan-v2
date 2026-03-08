@@ -1,6 +1,6 @@
 <?php
-session_start();
 require_once dirname(__DIR__) . '/config/init.php';
+// session_start() occurs in init.php
 $error = '';
 if (isset($_POST['username'])) {
     $username = stripslashes($_REQUEST['username']);
@@ -14,10 +14,15 @@ if (isset($_POST['username'])) {
         if (password_verify($password, $user['password'])) {
             $_SESSION['username'] = $username;
             $_SESSION['user_id'] = $user['id'];
+            
+            // Log the activity
+            log_activity("LOGIN", "Admin berhasil masuk ke sistem.");
+            
             header("Location: dashboard");
             exit();
         } else {
             $error = "Incorrect Password.";
+            // Log the failed attempt if needed, but for now just success
         }
     } else {
         $error = "Username does not exist.";
@@ -25,7 +30,6 @@ if (isset($_POST['username'])) {
 }
 ?>
 <!DOCTYPE html>
-
 <html class="light" lang="en">
 
 <head>
@@ -35,14 +39,8 @@ if (isset($_POST['username'])) {
     <link rel="icon" href="<?= BASE_URL ?>assets/images/favicon-laba.png" type="image/x-icon">
     <link href="https://fonts.googleapis.com" rel="preconnect" />
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap"
-        rel="stylesheet" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-        rel="stylesheet" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script id="tailwind-config">
         tailwind.config = {
@@ -51,169 +49,156 @@ if (isset($_POST['username'])) {
                 extend: {
                     colors: {
                         "primary": "#0d59f2",
-                        "background-light": "#f5f6f8",
-                        "background-dark": "#101622",
+                        "primary-dark": "#0a47c2",
+                        "background-light": "#f1f3f7",
+                        "background-dark": "#0f172a",
                     },
                     fontFamily: {
                         "display": ["Inter", "sans-serif"]
                     },
-                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                    borderRadius: { "DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "2xl": "1.5rem", "3xl": "2.5rem", "full": "9999px" },
                 },
             },
         }
     </script>
-    </script>
     <style>
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .animate-fade-in-up {
-            animation: fadeInUp 0.6s ease-out forwards;
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dark .glass-card {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .bg-pattern {
+            background-color: #f1f3f7;
+            background-image: radial-gradient(#0d59f2 0.5px, #f1f3f7 0.5px);
+            background-size: 20px 20px;
+        }
+
+        .dark .bg-pattern {
+            background-color: #0f172a;
+            background-image: radial-gradient(#1e293b 0.5px, #0f172a 0.5px);
+            background-size: 20px 20px;
         }
     </style>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased">
-    <div class="flex min-h-screen w-full flex-row overflow-hidden">
-        <!-- Left Side: Visual Anchor (Desktop Only) -->
-        <div
-            class="hidden lg:flex w-1/2 relative bg-slate-900 text-white flex-col justify-between p-12 overflow-hidden">
-            <!-- Background Image -->
-            <div class="absolute inset-0 z-0 h-full w-full">
-                <div class="h-full w-full bg-cover bg-center opacity-60 mix-blend-overlay"
-                    data-alt="Premium raw beef steak on a dark stone background with herbs"
-                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuApiN778Hkr54yuB7RBFiA9NIZK_TDAzRmi-fq9gHZCuljj2zGgRFYMYMCTF2w45sGwYZzx5fNa7uQnE1okSIZwe30Q6z1nHvAZqJD8s9o-V6Nv-ndp04M_BHlw04D8bEwMR8EY39YKPWkSl3tUtcVGx54CDBotzL3P2qhMqyiwiPu25apr6rB33c4DD6-rJkSWoV4z02x5z_wk2eDDxujR-zmnhwPcdlBRr2CdZ_8bA-IMSAZ2Zj6p1IThXbwCJw33qv_T-aRq7Vc");'>
+<body class="bg-pattern dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased selection:bg-primary/20 selection:text-primary">
+    
+    <!-- Outer Container -->
+    <div class="min-h-screen w-full flex items-center justify-center p-4 md:p-8 lg:p-12 relative overflow-hidden">
+        
+        <!-- Desktop Layout: Contained Card -->
+        <div class="relative z-10 w-full max-w-6xl bg-white dark:bg-slate-900 rounded-3xl shadow-[0_32px_96px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_32px_96px_-12px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col lg:flex-row animate-fade-in-up">
+            
+            <!-- Left Panel (Visual Anchor) -->
+            <div class="hidden lg:flex w-full lg:w-[45%] relative bg-slate-950 text-white flex-col justify-between p-12 overflow-hidden border-r border-slate-200/10">
+                <!-- Background Image -->
+                <div class="absolute inset-0 z-0 h-full w-full">
+                    <div class="h-full w-full bg-cover bg-center opacity-60 mix-blend-overlay"
+                        style='background-image: url("https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=2000&auto=format&fit=crop");'>
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/20"></div>
                 </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-slate-900/30"></div>
-            </div>
-            <!-- Logo on Image Side -->
-            <div class="relative z-10 flex items-center gap-3">
-                <div
-                    class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/20 backdrop-blur-sm border border-white/10 text-white overflow-hidden">
-                    <img src="../assets/images/logo.jpeg" alt="Logo" class="w-full h-full object-cover">
-                </div>
-                <h2 class="text-xl font-bold tracking-tight text-white">Lapak Bangsawan</h2>
-            </div>
-            <!-- Testimonial/Quote -->
-            <div class="relative z-10 max-w-lg">
-                <blockquote class="text-2xl font-medium leading-snug text-white">
-                    "The quality of meat from Lapak Bangsawan has completely transformed our restaurant's menu. Simply
-                    the best protein sourcing available."
-                </blockquote>
-                <div class="mt-6 flex items-center gap-4">
-                    <div class="h-10 w-10 overflow-hidden rounded-full border border-white/20">
-                        <div class="h-full w-full bg-cover bg-center"
-                            data-alt="Portrait of a smiling chef in a white uniform"
-                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC46hBd3Py3bnIo3KFmy7Vi1-Ezx485_E3pod0EvZY2twRi1iIxEbdbD_XCeJ6LJ2910nJKBSJlVa3yQ18vDdvgIli3nkTJI0kjbJ7V9EqZd4CQcpHLfDTFkfYNGb1C6-bpF_VC3nibQfNR7lmCuzccFx6lBnsJWdnjmDKiVl97Kp88CL-En69x3QxhK7CXIFYwlMe3g8RY55XTs6L-0CS-Gmb73p13Na4NhxbxyGFw47NUtqQVCqAHoJeNoCUeBsAlvj4reNcR2wA");'>
-                        </div>
+
+                <!-- Branding -->
+                <div class="relative z-10 flex items-center gap-4">
+                    <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-1 shadow-xl">
+                        <img src="../assets/images/logo.jpeg" alt="Logo" class="w-full h-full object-cover rounded-xl">
                     </div>
                     <div>
-                        <p class="text-sm font-semibold text-white">Chef Hendra Gunawan</p>
-                        <p class="text-xs text-slate-300">Executive Chef, The Royal Grill</p>
+                        <h1 class="text-xl font-black tracking-tight text-white leading-tight uppercase">Lapak</h1>
+                        <p class="text-[10px] font-bold tracking-[0.3em] text-white uppercase">Bangsawan</p>
                     </div>
                 </div>
-            </div>
-        </div>
-        <!-- Right Side: Login Form -->
-        <div
-            class="flex w-full lg:w-1/2 flex-col justify-center bg-slate-50 dark:bg-background-dark px-4 py-8 relative lg:static">
 
-            <!-- Mobile Background Elements -->
-            <div class="lg:hidden absolute inset-0 overflow-hidden pointer-events-none z-0">
-                <div
-                    class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-100 via-white to-white dark:from-slate-800 dark:via-slate-900 dark:to-slate-900">
-                </div>
-                <div
-                    class="absolute -top-[100px] -left-[100px] w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl opacity-50 mix-blend-multiply dark:mix-blend-normal dark:bg-primary/10">
-                </div>
-                <div
-                    class="absolute top-[20%] -right-[100px] w-[400px] h-[400px] bg-cyan-400/20 rounded-full blur-3xl opacity-50 mix-blend-multiply dark:mix-blend-normal dark:bg-cyan-500/10">
-                </div>
-                <div class="absolute bottom-0 left-[10%] w-[600px] h-[400px] bg-indigo-500/10 rounded-full blur-3xl">
+                <!-- Footer info -->
+                <div class="relative z-10 text-slate-500 text-[10px] font-bold tracking-[0.1em] uppercase">
+                    © 2026 Lapak Bangsawan — Sistem Manajemen
                 </div>
             </div>
 
-            <!-- Mobile Logo (Visible only on small screens) -->
-            <div
-                class="mb-10 flex flex-col items-center justify-center gap-4 lg:hidden relative z-10 animate-fade-in-up">
-                <div class="flex items-center gap-3 px-6 py-3">
-                    <div
-                        class="flex h-20 w-20 items-center justify-center rounded-full bg-white p-1 shadow-lg shadow-primary/20 ring-4 ring-white/20">
-                        <img src="../assets/images/logo.jpeg" alt="Logo"
-                            class="w-full h-full object-cover rounded-full">
-                    </div>
+            <!-- Mobile Logo Content (Visible only on small screens) -->
+            <div class="lg:hidden w-full p-8 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                <div class="flex h-20 w-20 items-center justify-center rounded-3xl bg-white dark:bg-slate-700 p-1 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-600">
+                    <img src="../assets/images/logo.jpeg" alt="Logo" class="w-full h-full object-cover rounded-2xl">
                 </div>
+                <h1 class="mt-4 text-xl font-black tracking-tight text-slate-900 dark:text-white uppercase">Lapak Bangsawan</h1>
+                <p class="text-[10px] font-bold tracking-[0.2em] text-primary uppercase">Manajemen</p>
             </div>
 
-            <div class="w-full max-w-[420px] mx-auto relative z-10">
-                <!-- Login Card (Mobile) / Container (Desktop) -->
-                <div
-                    class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl lg:backdrop-blur-none lg:bg-transparent lg:dark:bg-transparent p-8 lg:p-0 rounded-3xl lg:rounded-none shadow-2xl shadow-slate-200/50 dark:shadow-black/20 lg:shadow-none border border-white/50 dark:border-slate-700/50 lg:border-none transition-all duration-500 animate-fade-in-up">
+            <!-- Right Panel (Form Side) -->
+            <div class="w-full lg:w-[55%] flex flex-col justify-center bg-white dark:bg-slate-900 p-8 md:p-12 lg:p-20 relative">
+                
+                <div class="w-full max-sm mx-auto">
                     <!-- Page Heading -->
-                    <div class="mb-8">
-                        <h3 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white mb-2">
-                            Login</h3>
-                        <p class="text-slate-500 dark:text-slate-400 text-sm lg:hidden italic">Silahkan masuk untuk
-                            mengakses dashboard.</p>
-                        <p class="hidden lg:block text-slate-500 dark:text-slate-400 text-base">Silahkan masuk untuk
-                            mengakses dashboard.</p>
+                    <div class="mb-10 text-center lg:text-left">
+                        <h3 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-3">Login</h3>
+                        <p class="text-slate-500 dark:text-slate-400 font-medium md:text-lg">Silahkan masuk untuk mengakses dashboard Anda.</p>
                     </div>
+
+                    <!-- Status Messages -->
+                    <?php if ($error): ?>
+                        <div class="bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/20 rounded-2xl p-4 mb-8 flex items-start gap-3">
+                            <span class="material-symbols-outlined text-red-500 text-[20px]">error</span>
+                            <div>
+                                <h4 class="font-bold text-red-900 dark:text-red-400 text-sm">Gagal Login</h4>
+                                <p class="text-xs text-red-600 dark:text-red-400/80 mt-1"><?php echo $error; ?></p>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if (isset($_GET['timeout'])): ?>
+                        <div class="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/20 rounded-2xl p-4 mb-8 flex items-start gap-3">
+                            <span class="material-symbols-outlined text-amber-500 text-[20px]">warning</span>
+                            <div>
+                                <h4 class="font-bold text-amber-900 dark:text-amber-400 text-sm">Sesi Berakhir</h4>
+                                <p class="text-xs text-amber-700 dark:text-amber-400/80 mt-1">Sesi anda sudah habis, silahkan login kembali.</p>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                     <!-- Form -->
-                    <?php if ($error): ?>
-                        <div class="bg-white dark:bg-slate-800/80 border border-red-100 dark:border-red-900/30 rounded-xl p-4 mb-6 flex items-start gap-3 shadow-sm transition-opacity duration-500">
-                            <span class="material-symbols-outlined text-red-500">error</span>
-                            <div>
-                                <h3 class="font-medium text-slate-900 dark:text-white text-sm">Gagal Login</h3>
-                                <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo $error; ?></p>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                    <?php if (isset($_GET['timeout'])): ?>
-                        <div class="bg-white dark:bg-slate-800/80 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4 mb-6 flex items-start gap-3 shadow-sm transition-opacity duration-500">
-                            <span class="material-symbols-outlined text-amber-500">warning</span>
-                            <div>
-                                <h3 class="font-medium text-slate-900 dark:text-white text-sm">Sesi Berakhir</h3>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">Sesi anda sudah habis, silahkan login kembali.</p>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <form action="" class="flex flex-col gap-6" method="POST">
+                    <form action="" method="POST" class="flex flex-col gap-6">
                         <!-- username Field -->
                         <div class="flex flex-col gap-2">
-                            <label class="text-sm font-medium text-slate-900 dark:text-white"
-                                for="username">Username</label>
+                            <label class="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 ml-1" for="username">Username</label>
                             <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[20px]">person</span>
                                 <input
-                                    class="form-input flex w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 px-4 h-14 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800"
-                                    id="username" name="username" placeholder="Enter your username" type="text" />
+                                    class="form-input flex w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 pl-11 pr-4 h-14 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none transition-all duration-300 font-medium"
+                                    id="username" name="username" placeholder="Masukkan username" type="text" required />
                             </div>
                         </div>
 
                         <!-- Password Field -->
                         <div class="flex flex-col gap-2">
-                            <div class="flex items-center justify-between">
-                                <label class="text-sm font-medium text-slate-900 dark:text-white"
-                                    for="password">Password</label>
+                            <div class="flex items-center justify-between ml-1">
+                                <label class="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400" for="password">Password</label>
                             </div>
-                            <div class="relative flex items-center">
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[20px]">lock</span>
                                 <input
-                                    class="form-input flex w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 px-4 h-14 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 pr-12"
-                                    id="password" name="password" placeholder="••••••••" type="password" />
+                                    class="form-input flex w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 pl-11 pr-12 h-14 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none transition-all duration-300 font-medium"
+                                    id="password" name="password" placeholder="••••••••" type="password" required />
                                 <button
-                                    class="absolute right-4 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center text-slate-400 hover:text-primary transition-colors"
                                     type="button"
-                                    onclick="const p = document.getElementById('password'); p.type = p.type === 'password' ? 'text' : 'password';">
+                                    onclick="const p = document.getElementById('password'); p.type = p.type === 'password' ? 'text' : 'password'; this.children[0].textContent = p.type === 'password' ? 'visibility' : 'visibility_off';">
                                     <span class="material-symbols-outlined text-[20px]">visibility</span>
                                 </button>
                             </div>
@@ -221,11 +206,10 @@ if (isset($_POST['username'])) {
 
                         <!-- Submit Button -->
                         <button
-                            class="mt-4 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-primary to-blue-600 h-14 text-base font-bold text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200"
+                            class="mt-4 flex w-full items-center justify-center rounded-2xl bg-primary hover:bg-primary-dark h-15 py-4 text-base font-black text-white shadow-[0_20px_40px_-10px_rgba(13,89,242,0.3)] hover:shadow-[0_25px_50px_-10px_rgba(13,89,242,0.5)] hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all duration-300"
                             type="submit">
-                            Log In
+                            Login
                         </button>
-
                     </form>
                 </div>
             </div>

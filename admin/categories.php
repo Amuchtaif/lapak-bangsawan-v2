@@ -7,6 +7,7 @@ require(ROOT_PATH . "includes/admin/notification_logic.php");
 if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id'])) {
     $id = intval($_GET['id']);
     if ($conn->query("DELETE FROM categories WHERE id=$id")) {
+        log_activity("DELETE_CATEGORY", "Menghapus kategori ID #$id");
         $_SESSION['status_msg'] = "Category deleted successfully.";
         $_SESSION['status_type'] = "success";
     } else {
@@ -28,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (isset($_POST['add_category'])) {
             $sql = "INSERT INTO categories (name, slug) VALUES ('$name', '$slug')";
             if ($conn->query($sql)) {
+                log_activity("ADD_CATEGORY", "Menambahkan kategori baru: $name");
                 $_SESSION['status_msg'] = "Category added successfully.";
                 $_SESSION['status_type'] = "success";
                 header("Location: categories");
@@ -40,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $sql = "UPDATE categories SET name='$name', slug='$slug'";
             $sql .= " WHERE id=$id";
             if ($conn->query($sql)) {
+                log_activity("UPDATE_CATEGORY", "Memperbarui kategori: $name (ID: $id)");
                 $_SESSION['status_msg'] = "Category updated successfully.";
                 $_SESSION['status_type'] = "success";
                 header("Location: categories");

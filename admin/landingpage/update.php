@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $new_name = $key . '-' . time() . '.' . $ext;
                         $target_file = $target_dir . $new_name;
 
-                        if (move_uploaded_file($file['tmp_name'], $target_file)) {
+                        if (compress_image($file['tmp_name'], $target_file, 85)) {
                             $db_path = "assets/uploads/" . $new_name;
                             $conn->query("INSERT INTO site_settings (setting_key, setting_value) VALUES ('$key', '$db_path') ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
                         }

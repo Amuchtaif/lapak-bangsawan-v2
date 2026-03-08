@@ -6,6 +6,7 @@ require_once dirname(__DIR__) . "/config/init.php";
 if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id'])) {
     $id = intval($_GET['id']);
     if ($conn->query("DELETE FROM customers WHERE id=$id")) {
+        log_activity("DELETE_CUSTOMER", "Menghapus data pelanggan ID #$id");
         $_SESSION['status_msg'] = "Pelanggan berhasil dihapus.";
         $_SESSION['status_type'] = "success";
     } else {

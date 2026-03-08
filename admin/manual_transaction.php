@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
             $customer_address = $cust_data['address'];
         } elseif ($customer_type === 'new') {
             $customer_name = mysqli_real_escape_string($conn, $_POST['new_customer_name']);
-            $customer_phone = mysqli_real_escape_string($conn, $_POST['new_customer_phone']);
+            $customer_phone = format_phone($_POST['new_customer_phone']);
             $customer_address = mysqli_real_escape_string($conn, $_POST['new_customer_address']);
 
             if (empty($customer_name) || empty($customer_phone))
@@ -115,7 +115,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
         }
 
         $manual_discount = floatval(preg_replace('/[^0-9]/', '', $_POST['manual_discount'] ?? '0'));
-        $total_amount = $subtotal_gross - $system_discount - $manual_discount;
+        $shipping_cost = floatval(preg_replace('/[^0-9]/', '', $_POST['shipping_cost'] ?? '0'));
+        $total_amount = $subtotal_gross - $system_discount - $manual_discount + $shipping_cost;
 
         // 4. Create Order
         $max_id = $conn->query("SELECT MAX(id) as m FROM orders")->fetch_assoc()['m'];
@@ -131,8 +132,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
         $notes = isset($_POST['order_notes']) ? mysqli_real_escape_string($conn, $_POST['order_notes']) : "Transaksi Manual (Admin)";
         $transaction_time = !empty($_POST['transaction_time']) ? $_POST['transaction_time'] : date('Y-m-d H:i:s');
 
-        $stmt_order = $conn->prepare("INSERT INTO orders (id, order_number, customer_id, customer_name, customer_phone, customer_address, total_amount, manual_discount, status, payment_method, order_notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt_order->bind_param("isssisddssss", $new_id, $order_number, $customer_id, $customer_name, $customer_phone, $customer_address, $total_amount, $manual_discount, $status, $payment_method, $notes, $transaction_time);
+        $stmt_order = $conn->prepare("INSERT INTO orders (id, order_number, customer_id, customer_name, customer_phone, customer_address, total_amount, manual_discount, shipping_cost, status, payment_method, order_notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt_order->bind_param("isssisdddssss", $new_id, $order_number, $customer_id, $customer_name, $customer_phone, $customer_address, $total_amount, $manual_discount, $shipping_cost, $status, $payment_method, $notes, $transaction_time);
 
         if (!$stmt_order->execute())
             throw new Exception("Gagal membuat pesanan: " . $conn->error);
@@ -150,6 +151,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
 
         $conn->commit();
         $success_msg = "Transaksi berhasil! ID Order: #$new_id";
+        
+        // Log activity
+        log_activity("CREATE_ORDER", "Menambahkan pesanan manual baru #$order_number senilai Rp " . number_format($total_amount, 0, ',', '.'));
 
     } catch (Exception $e) {
         $conn->rollback();
@@ -500,6 +504,25 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
                             </div>
                         </div>
 
+                        <!-- Shipping Cost (Ongkir) Card -->
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                            <h2
+                                class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 uppercase tracking-wider">
+                                <span class="material-icons-round text-primary text-sm">local_shipping</span>
+                                Ongkos Kirim (Ongkir)
+                            </h2>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase">Biaya Pengiriman (Rp)</label>
+                                <div class="relative flex items-center group">
+                                    <span
+                                        class="absolute left-3 text-sm font-bold text-slate-400 group-focus-within:text-primary transition-colors">Rp</span>
+                                    <input type="text" name="shipping_cost" id="shipping_cost_input" placeholder="0"
+                                        class="currency-input w-full pl-10 pr-4 py-2 rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-sm font-bold focus:ring-primary focus:border-primary transition-all">
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Summary Card -->
                         <div
                             class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 sticky top-6">
@@ -518,6 +541,11 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
                             <div id="row_manual_discount" class="flex justify-between items-center mb-2 text-sm text-amber-600 hidden">
                                 <span>Diskon Manual</span>
                                 <span id="summary_manual_discount" class="font-medium">- Rp 0</span>
+                            </div>
+
+                            <div id="row_shipping_cost" class="flex justify-between items-center mb-2 text-sm text-slate-600 hidden">
+                                <span>Ongkos Kirim</span>
+                                <span id="summary_shipping_cost" class="font-medium">+ Rp 0</span>
                             </div>
 
                             <div class="border-t border-slate-100 dark:border-slate-800 my-4"></div>
@@ -811,8 +839,12 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
             const manualDiscountInput = document.getElementById('manual_discount_input');
             const manualDiscountVal = manualDiscountInput.value.replace(/[^0-9]/g, '');
             const manualDiscount = parseFloat(manualDiscountVal) || 0;
+
+            const shippingCostInput = document.getElementById('shipping_cost_input');
+            const shippingCostVal = shippingCostInput.value.replace(/[^0-9]/g, '');
+            const shippingCost = parseFloat(shippingCostVal) || 0;
             
-            const finalTotal = subtotal - systemDiscount - manualDiscount;
+            const finalTotal = subtotal - systemDiscount - manualDiscount + shippingCost;
 
             const formatter = new Intl.NumberFormat('id-ID', {
                 style: 'currency',
@@ -840,6 +872,15 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
                 document.getElementById('summary_manual_discount').innerText = "- " + formatter.format(manualDiscount);
             } else {
                 rowManual.classList.add('hidden');
+            }
+
+            // Shipping Cost Row
+            const rowShipping = document.getElementById('row_shipping_cost');
+            if (shippingCost > 0) {
+                rowShipping.classList.remove('hidden');
+                document.getElementById('summary_shipping_cost').innerText = "+ " + formatter.format(shippingCost);
+            } else {
+                rowShipping.classList.add('hidden');
             }
 
             document.getElementById('summary_total').innerText = formatter.format(finalTotal < 0 ? 0 : finalTotal);
@@ -875,6 +916,7 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
         
         // Manual Discount Listener
         document.getElementById('manual_discount_input').addEventListener('input', recalcTotal); 
+        document.getElementById('shipping_cost_input').addEventListener('input', recalcTotal); 
     </script>
 </body>
 

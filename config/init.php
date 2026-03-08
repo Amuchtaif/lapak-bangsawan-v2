@@ -22,8 +22,17 @@ if (!defined('BASE_URL')) {
     define('BASE_URL', preg_replace('/([^:])(\/{2,})/', '$1/', $final_base));
 }
 
-// 3. Start Session
+// 3. Start Session (Global Settings)
 if (session_status() === PHP_SESSION_NONE) {
+    // Increase session lifetime to 8 hours (28800 seconds)
+    // This solves the issue of being logged out after 24-30 minutes
+    $session_lifetime = 28800;
+    ini_set('session.gc_maxlifetime', $session_lifetime);
+    ini_set('session.cookie_lifetime', $session_lifetime);
+    
+    // Ensure the session cookie exists for the whole domain
+    session_set_cookie_params($session_lifetime, '/');
+    
     session_start();
 }
 

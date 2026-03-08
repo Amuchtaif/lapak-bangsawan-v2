@@ -29,6 +29,7 @@ $base_query = !empty($base_filter_params) ? http_build_query($base_filter_params
 if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id'])) {
     $id = intval($_GET['id']);
     if ($conn->query("DELETE FROM products WHERE id=$id")) {
+        log_activity("DELETE_PRODUCT", "Menghapus produk ID #$id");
         $_SESSION['status_msg'] = "Product deleted successfully.";
         $_SESSION['status_type'] = "success";
     } else {
@@ -65,8 +66,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 @mkdir($target_dir, 0777, true);
             $new_name = time() . '_' . basename($_FILES["image"]["name"]);
             $target_file = $target_dir . $new_name;
-            move_uploaded_file($_FILES["image"]["tmp_name"], $target_file);
-            $image_path = "assets/uploads/products/" . $new_name;
+            if (compress_image($_FILES["image"]["tmp_name"], $target_file, 80)) {
+                $image_path = "assets/uploads/products/" . $new_name;
+            }
         }
 
         if (isset($_POST['add_product'])) {
@@ -79,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             $sql = "INSERT INTO products (category_id, partner_id, product_type, short_code, name, slug, description, price, buy_price, stock, unit, image, weight) VALUES ($category_id, $partner_id, '$product_type', '$short_code', '$name', '$slug', '$description', $price, $buy_price, $stock, '$unit', '$image_path', $weight)";
             if ($conn->query($sql)) {
+                log_activity("ADD_PRODUCT", "Menambahkan produk baru: $name");
                 $_SESSION['status_msg'] = "Product added successfully.";
                 $_SESSION['status_type'] = "success";
                 header("Location: $filtered_redirect");
@@ -100,6 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $sql .= ", image='$image_path'";
             $sql .= " WHERE id=$id";
             if ($conn->query($sql)) {
+                log_activity("UPDATE_PRODUCT", "Memperbarui produk: $name (ID: $id)");
                 $_SESSION['status_msg'] = "Product updated successfully.";
                 $_SESSION['status_type'] = "success";
                 header("Location: $filtered_redirect");

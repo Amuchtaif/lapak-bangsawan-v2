@@ -12,7 +12,7 @@ if (!$input) {
 
 // 1. Basic Input Sanitization (Clean Strings)
 $name = isset($input['name']) ? trim($input['name']) : '';
-$phone = isset($input['phone']) ? trim($input['phone']) : '';
+$phone = isset($input['phone']) ? format_phone($input['phone']) : '';
 $address = isset($input['address']) ? trim($input['address']) : '';
 $order_notes = isset($input['order_notes']) ? trim($input['order_notes']) : '';
 $payment_method = isset($input['payment_method']) ? $input['payment_method'] : 'transfer';

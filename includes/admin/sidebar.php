@@ -93,6 +93,11 @@ $username = $_SESSION['username'] ?? 'Admin User';
             <span class="material-icons-round">assignment_ind</span>
             Laporan Mitra Laba
         </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'daily_report.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
+            href="<?= BASE_URL ?>admin/daily_report">
+            <span class="material-icons-round">today</span>
+            Laporan Harian
+        </a>
         <div class="pt-4 pb-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Manajemen</div>
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'wholesale_rules.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
             href="<?= BASE_URL ?>admin/wholesale_rules">
@@ -118,6 +123,11 @@ $username = $_SESSION['username'] ?? 'Admin User';
             href="<?= BASE_URL ?>admin/landingpage">
             <span class="material-icons-round">web</span>
             Kelola Landing Page
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'activity_logs.php' ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
+            href="<?= BASE_URL ?>admin/activity_logs">
+            <span class="material-icons-round">history</span>
+            Log Aktivitas
         </a>
     </nav>
     <div class="p-4 border-t border-slate-200 dark:border-slate-800">

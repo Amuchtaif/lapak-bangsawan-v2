@@ -7,6 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
     $order_id = intval($_POST['order_id']);
     $status = mysqli_real_escape_string($conn, $_POST['status']);
     if ($conn->query("UPDATE orders SET status='$status' WHERE id=$order_id")) {
+        log_activity("UPDATE_ORDER_STATUS", "Memperbarui status pesanan #$order_id menjadi " . ucfirst($status));
         $_SESSION['status_msg'] = "Order status updated successfully to " . ucfirst($status) . ".";
         $_SESSION['status_type'] = "success";
     } else {
@@ -25,6 +26,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
     $conn->query("DELETE FROM order_items WHERE order_id=$order_id");
     // Then delete order
     if ($conn->query("DELETE FROM orders WHERE id=$order_id")) {
+        log_activity("DELETE_ORDER", "Menghapus pesanan #$order_id");
         $_SESSION['status_msg'] = "Order #$order_id has been deleted.";
         $_SESSION['status_type'] = "success";
     } else {
