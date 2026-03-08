@@ -159,9 +159,12 @@ if (!$dest_lat || !$dest_lng) {
 $payment_method_normalized = strtolower(trim($order['payment_method'] ?? ''));
 
 if ($payment_method_normalized === 'cod') {
-    // Format Updated based on specific User JSON Example (Flat Payload Style)
-    $payload['destination_cash_on_delivery'] = (int) $order['total_amount'];
-    $payload['destination_cash_on_delivery_type'] = '3_days'; // Default is 7_days if not specified
+    // Correct structure based on Biteship API for COD
+    $payload['cash_on_delivery'] = [
+        'amount' => (int) $order['total_amount'],
+        'type' => 'cash',
+        'note' => 'Tagihan COD Order #' . ($order['order_number'] ?: $order['id'])
+    ];
 }
 
 // DEBUG: Log the payload request

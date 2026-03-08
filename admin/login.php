@@ -105,52 +105,17 @@ if (isset($_POST['username'])) {
         <!-- Desktop Layout: Contained Card -->
         <div class="relative z-10 w-full max-w-6xl bg-white dark:bg-slate-900 rounded-3xl shadow-[0_32px_96px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_32px_96px_-12px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col lg:flex-row animate-fade-in-up">
             
-            <!-- Left Panel (Visual Anchor) -->
-            <div class="hidden lg:flex w-full lg:w-[45%] relative bg-slate-950 text-white flex-col justify-between p-12 overflow-hidden border-r border-slate-200/10">
-                <!-- Background Image -->
-                <div class="absolute inset-0 z-0 h-full w-full">
-                    <div class="h-full w-full bg-cover bg-center opacity-60 mix-blend-overlay"
-                        style='background-image: url("https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=2000&auto=format&fit=crop");'>
-                    </div>
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/20"></div>
-                </div>
-
-                <!-- Branding -->
-                <div class="relative z-10 flex items-center gap-4">
-                    <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-1 shadow-xl">
-                        <img src="../assets/images/logo.jpeg" alt="Logo" class="w-full h-full object-cover rounded-xl">
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-black tracking-tight text-white leading-tight uppercase">Lapak</h1>
-                        <p class="text-[10px] font-bold tracking-[0.3em] text-white uppercase">Bangsawan</p>
-                    </div>
-                </div>
-
-                <!-- Footer info -->
-                <div class="relative z-10 text-slate-500 text-[10px] font-bold tracking-[0.1em] uppercase">
-                    © 2026 Lapak Bangsawan — Sistem Manajemen
-                </div>
-            </div>
-
-            <!-- Mobile Logo Content (Visible only on small screens) -->
+            <!-- 1. Mobile Logo Content (Visible only on small screens) -->
             <div class="lg:hidden w-full p-8 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                 <div class="flex h-20 w-20 items-center justify-center rounded-3xl bg-white dark:bg-slate-700 p-1 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-600">
                     <img src="../assets/images/logo.jpeg" alt="Logo" class="w-full h-full object-cover rounded-2xl">
                 </div>
                 <h1 class="mt-4 text-xl font-black tracking-tight text-slate-900 dark:text-white uppercase">Lapak Bangsawan</h1>
-                <p class="text-[10px] font-bold tracking-[0.2em] text-primary uppercase">Manajemen</p>
             </div>
 
-            <!-- Right Panel (Form Side) -->
+            <!-- 2. Form Side (Left on Desktop, Below Logo on Mobile) -->
             <div class="w-full lg:w-[55%] flex flex-col justify-center bg-white dark:bg-slate-900 p-8 md:p-12 lg:p-20 relative">
-                
                 <div class="w-full max-sm mx-auto">
-                    <!-- Page Heading -->
-                    <div class="mb-10 text-center lg:text-left">
-                        <h3 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-3">Login</h3>
-                        <p class="text-slate-500 dark:text-slate-400 font-medium md:text-lg">Silahkan masuk untuk mengakses dashboard Anda.</p>
-                    </div>
-
                     <!-- Status Messages -->
                     <?php if ($error): ?>
                         <div class="bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/20 rounded-2xl p-4 mb-8 flex items-start gap-3">
@@ -208,9 +173,38 @@ if (isset($_POST['username'])) {
                         <button
                             class="mt-4 flex w-full items-center justify-center rounded-2xl bg-primary hover:bg-primary-dark h-15 py-4 text-base font-black text-white shadow-[0_20px_40px_-10px_rgba(13,89,242,0.3)] hover:shadow-[0_25px_50px_-10px_rgba(13,89,242,0.5)] hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all duration-300"
                             type="submit">
-                            Login
+                            <span class="material-symbols-outlined mr-2 text-[20px]">login</span>
+                            Login Ke Sistem
                         </button>
                     </form>
+                </div>
+            </div>
+
+            <!-- 3. Visual Panel (Right Side on Desktop, Hidden on Mobile) -->
+            <div class="hidden lg:flex w-full lg:w-[45%] relative bg-slate-950 text-white flex-col justify-between p-12 overflow-hidden">
+                <!-- Background Image -->
+                <div class="absolute inset-0 z-0 h-full w-full">
+                    <div class="h-full w-full bg-cover bg-center opacity-80"
+                        style='background-image: url("../assets/images/login-bg.jpg");'>
+                    </div>
+                    <!-- Gradient Overlay to make text and branding readable -->
+                    <div class="absolute inset-0 bg-gradient-to-l from-slate-950/20 via-slate-950/40 to-slate-950/80"></div>
+                </div>
+
+                <!-- Branding -->
+                <div class="relative z-10 flex items-center gap-4">
+                    <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-1 shadow-xl">
+                        <img src="../assets/images/logo.jpeg" alt="Logo" class="w-full h-full object-cover rounded-xl">
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-black tracking-tight text-white leading-tight uppercase">Lapak</h1>
+                        <p class="text-[10px] font-bold tracking-[0.3em] text-white uppercase">Bangsawan</p>
+                    </div>
+                </div>
+
+                <!-- Footer info -->
+                <div class="relative z-10 text-slate-400 text-[10px] font-bold tracking-[0.1em] uppercase">
+                    © 2026 Lapak Bangsawan — Sistem Manajemen
                 </div>
             </div>
         </div>
