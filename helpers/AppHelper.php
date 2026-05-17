@@ -108,11 +108,14 @@ class AppHelper {
         $result = imagejpeg($image, $destination, $quality);
         
         // Free memory
-        imagedestroy($image);
+        if (PHP_VERSION_ID < 80000) {
+            $destroyFunc = 'imagedestroy';
+            $destroyFunc($image);
+        }
 
         // 4. If JPEG save failed for some reason, fallback to basic move
         if (!$result || !file_exists($destination)) {
-            return move_uploaded_file($source_tmp, $destination);
+            return is_uploaded_file($source) ? move_uploaded_file($source, $destination) : copy($source, $destination);
         }
 
         return true;

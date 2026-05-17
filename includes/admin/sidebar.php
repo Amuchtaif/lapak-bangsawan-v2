@@ -134,10 +134,13 @@ $username = $_SESSION['username'] ?? 'Admin User';
         <div
             class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
             <div class="relative">
-                <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 flex items-center justify-center text-primary shadow-sm overflow-hidden">
+                <div
+                    class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 flex items-center justify-center text-primary shadow-sm overflow-hidden">
                     <span class="material-icons-round text-2xl">account_circle</span>
                 </div>
-                <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-surface-dark rounded-full shadow-sm"></div>
+                <div
+                    class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-surface-dark rounded-full shadow-sm">
+                </div>
             </div>
             <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-slate-900 dark:text-white truncate">

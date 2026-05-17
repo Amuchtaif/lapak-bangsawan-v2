@@ -109,7 +109,7 @@ if ($stmt) {
         <?php include ROOT_PATH . "includes/admin/header.php"; ?>
         
         <div class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
-            <div class="max-w-7xl mx-auto flex flex-col gap-6">
+            <div class="max-w-full mx-auto flex flex-col gap-6">
 
                 <!-- Header & Filter -->
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">

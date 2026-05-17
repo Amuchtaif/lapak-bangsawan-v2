@@ -51,10 +51,10 @@ $is_manual = (stripos($order['order_notes'] ?? '', 'Transaksi Manual') !== false
 
 // Payment method label
 $pm = strtolower($order['payment_method'] ?? 'transfer');
-if ($is_manual) {
+if (in_array($pm, ['cod', 'cash', 'tunai'])) {
     $pm_label = 'Tunai';
 } else {
-    $pm_label = ($pm === 'cod') ? 'COD' : 'Transfer Bank';
+    $pm_label = 'Transfer Bank';
 }
 
 // Courier

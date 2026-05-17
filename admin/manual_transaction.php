@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
         $order_number = "LB-$date_prefix-$random_suffix";
 
         $status = 'completed';
-        $payment_method = 'cod';
+        $payment_method = isset($_POST['payment_method']) && $_POST['payment_method'] === 'transfer' ? 'transfer' : 'cash';
         $notes = isset($_POST['order_notes']) ? mysqli_real_escape_string($conn, $_POST['order_notes']) : "Transaksi Manual (Admin)";
         $transaction_time = !empty($_POST['transaction_time']) ? $_POST['transaction_time'] : date('Y-m-d H:i:s');
 
@@ -470,6 +470,28 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
                             <input type="datetime-local" id="transaction_time_input" name="transaction_time"
                                 class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary text-sm transition-all text-slate-500">
                             <p class="text-[10px] text-slate-400 mt-2">Biarkan kosong untuk menggunakan waktu saat ini (Otomatis).</p>
+                        </div>
+
+                        <!-- Payment Method Card -->
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                            <h2
+                                class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 uppercase tracking-wider">
+                                <span class="material-icons-round text-primary text-sm">payments</span>
+                                Metode Pembayaran
+                            </h2>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-primary bg-primary/5 text-primary cursor-pointer hover:bg-primary/10 transition-all font-semibold" id="pm_label_cash">
+                                    <input type="radio" name="payment_method" value="cash" checked class="sr-only" onchange="selectPaymentMethod('cash')">
+                                    <span class="material-icons-round text-2xl mb-1">payments</span>
+                                    <span class="text-xs">Cash / Tunai</span>
+                                </label>
+                                <label class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-transparent text-slate-500 dark:text-slate-400 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all font-semibold" id="pm_label_transfer">
+                                    <input type="radio" name="payment_method" value="transfer" class="sr-only" onchange="selectPaymentMethod('transfer')">
+                                    <span class="material-icons-round text-2xl mb-1">account_balance</span>
+                                    <span class="text-xs">Transfer Bank</span>
+                                </label>
+                            </div>
                         </div>
 
                         <!-- Order Notes Card -->
@@ -902,6 +924,19 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
                 const minutes = String(now.getMinutes()).padStart(2, '0');
                 input.value = `${year}-${month}-${day}T${hours}:${minutes}`;
              }
+        }
+        
+        function selectPaymentMethod(method) {
+            const cashLabel = document.getElementById('pm_label_cash');
+            const transferLabel = document.getElementById('pm_label_transfer');
+            
+            if (method === 'cash') {
+                cashLabel.className = "flex flex-col items-center justify-center p-4 rounded-xl border-2 border-primary bg-primary/5 text-primary cursor-pointer hover:bg-primary/10 transition-all font-semibold";
+                transferLabel.className = "flex flex-col items-center justify-center p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-transparent text-slate-500 dark:text-slate-400 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all font-semibold";
+            } else {
+                transferLabel.className = "flex flex-col items-center justify-center p-4 rounded-xl border-2 border-primary bg-primary/5 text-primary cursor-pointer hover:bg-primary/10 transition-all font-semibold";
+                cashLabel.className = "flex flex-col items-center justify-center p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-transparent text-slate-500 dark:text-slate-400 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all font-semibold";
+            }
         }
         
         // Run once on load

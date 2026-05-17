@@ -6,7 +6,13 @@ require_once dirname(__DIR__) . "/config/init.php";
 $date_param = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
 $selected_date = mysqli_real_escape_string($conn, $date_param);
 
-// Fetch Daily Sales Report
+// Derive Month and Year for the chart
+$selected_month_param = isset($_GET['month']) ? $_GET['month'] : date('Y-m', strtotime($selected_date));
+$month_parts = explode('-', $selected_month_param);
+$chart_year = $month_parts[0];
+$chart_month = $month_parts[1];
+
+// Fetch Daily Sales Report for the selected date
 $sql = "
 SELECT 
     oi.product_name,
@@ -37,6 +43,38 @@ if ($result) {
 // Fetch Total Orders for the day
 $sql_orders = "SELECT COUNT(*) as total_orders FROM orders WHERE DATE(created_at) = '$selected_date' AND status = 'completed'";
 $total_orders = $conn->query($sql_orders)->fetch_assoc()['total_orders'] ?? 0;
+
+// Fetch Monthly Daily Sales (Entire Selected Month)
+$monthly_sales_sql = "
+    SELECT 
+        DATE(created_at) as sale_date,
+        SUM(total_amount) as daily_total
+    FROM orders 
+    WHERE status = 'completed' 
+      AND MONTH(created_at) = '$chart_month'
+      AND YEAR(created_at) = '$chart_year'
+    GROUP BY DATE(created_at)
+    ORDER BY sale_date ASC
+";
+$monthly_result = $conn->query($monthly_sales_sql);
+$chart_labels = [];
+$chart_values = [];
+
+// Initialize all days of the month with 0
+$days_in_month = date('t', strtotime("$chart_year-$chart_month-01"));
+for ($i = 1; $i <= $days_in_month; $i++) {
+    $date_str = sprintf('%s-%s-%02d', $chart_year, $chart_month, $i);
+    $chart_labels[$date_str] = $i; // Just day number for cleaner look
+    $chart_values[$date_str] = 0;
+}
+
+if ($monthly_result) {
+    while ($row = $monthly_result->fetch_assoc()) {
+        if (isset($chart_values[$row['sale_date']])) {
+            $chart_values[$row['sale_date']] = (float)$row['daily_total'];
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html class="light" lang="id">
@@ -50,6 +88,7 @@ $total_orders = $conn->query($sql_orders)->fetch_assoc()['total_orders'] ?? 0;
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -92,9 +131,18 @@ $total_orders = $conn->query($sql_orders)->fetch_assoc()['total_orders'] ?? 0;
                             <?php echo format_date_id($selected_date); ?>
                         </p>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <form action="" method="GET" class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <form action="" method="GET" class="flex flex-wrap items-center gap-3" id="filterForm">
                             <div class="relative">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest absolute -top-5 left-0">Pilih Bulan (Grafik)</label>
+                                <span
+                                    class="absolute left-3 top-1/2 -translate-y-1/2 material-icons-round text-slate-400 text-sm">calendar_month</span>
+                                <input type="month" name="month" value="<?php echo $selected_month_param; ?>"
+                                    class="pl-9 pr-4 py-2 text-sm bg-white dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary shadow-sm text-slate-700 dark:text-white"
+                                    onchange="this.form.submit()">
+                            </div>
+                            <div class="relative">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest absolute -top-5 left-0">Pilih Hari (Laporan)</label>
                                 <span
                                     class="absolute left-3 top-1/2 -translate-y-1/2 material-icons-round text-slate-400 text-sm">calendar_today</span>
                                 <input type="date" name="date" value="<?php echo $date_param; ?>"
@@ -135,6 +183,22 @@ $total_orders = $conn->query($sql_orders)->fetch_assoc()['total_orders'] ?? 0;
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Pesanan</p>
                         <h3 class="text-3xl font-black text-slate-900 dark:text-white mt-2 tracking-tight"><?php echo number_format($total_orders); ?></h3>
                         <span class="material-icons-round absolute -right-4 -bottom-4 text-8xl text-slate-100 dark:text-slate-800/40 group-hover:scale-110 transition-transform duration-500">shopping_bag</span>
+                    </div>
+                </div>
+
+                <!-- Daily Sales Chart -->
+                <div class="bg-surface-light dark:bg-surface-dark p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900 dark:text-white text-base">Tren Penjualan Bulan <?php echo date('F Y', strtotime($selected_month_param . '-01')); ?></h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Akumulasi penjualan harian sepanjang bulan</p>
+                        </div>
+                        <div class="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold">
+                            Monthly View
+                        </div>
+                    </div>
+                    <div class="h-[300px] w-full">
+                        <canvas id="salesChart"></canvas>
                     </div>
                 </div>
 
@@ -199,6 +263,102 @@ $total_orders = $conn->query($sql_orders)->fetch_assoc()['total_orders'] ?? 0;
             </div>
         </div>
     </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            
+            // Create Gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(13, 89, 242, 0.2)');
+            gradient.addColorStop(1, 'rgba(13, 89, 242, 0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: <?php echo json_encode(array_values($chart_labels)); ?>,
+                    datasets: [{
+                        label: 'Total Penjualan (Rp)',
+                        data: <?php echo json_encode(array_values($chart_values)); ?>,
+                        borderColor: '#0d59f2',
+                        borderWidth: 3,
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#0d59f2',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: { size: 10 },
+                                color: '#94a3b8',
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 15
+                            },
+                            title: {
+                                display: true,
+                                text: 'Tanggal',
+                                font: { size: 10, weight: 'bold' },
+                                color: '#94a3b8'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                borderDash: [5, 5],
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            },
+                            ticks: {
+                                font: { size: 11 },
+                                color: '#94a3b8',
+                                callback: function(value) {
+                                    if (value >= 1000000) return 'Rp ' + (value / 1000000) + 'jt';
+                                    if (value >= 1000) return 'Rp ' + (value / 1000) + 'rb';
+                                    return 'Rp ' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

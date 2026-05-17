@@ -174,10 +174,25 @@ $orders_result = $conn->query($orders_query);
                             <?php unset($_SESSION['status_msg']);
                             unset($_SESSION['status_type']); ?>
                         <?php endif; ?>
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Pesanan
-                                #<?php echo htmlspecialchars($order_data['order_number'] ?? str_pad($order_data['id'], 5, '0', STR_PAD_LEFT)); ?>
-                            </h2>
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                                <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Pesanan
+                                    #<?php echo htmlspecialchars($order_data['order_number'] ?? str_pad($order_data['id'], 5, '0', STR_PAD_LEFT)); ?>
+                                </h2>
+                                <div class="flex">
+                                    <?php if (in_array(strtolower($order_data['payment_method'] ?? ''), ['cod', 'cash', 'tunai'])): ?>
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                            <span class="material-icons-round text-sm">payments</span>
+                                            Cash / Tunai
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                            <span class="material-icons-round text-sm">account_balance</span>
+                                            Transfer Bank
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
                             <div class="flex gap-2 flex-wrap">
                                 <!-- Cetak Nota -->
                                 <a href="print_nota?id=<?php echo $order_data['id']; ?>&size=58mm&auto_print=1" target="_blank"
@@ -318,17 +333,17 @@ $orders_result = $conn->query($orders_query);
                                     $pm = isset($order_data['payment_method']) ? $order_data['payment_method'] : 'transfer';
                                     ?>
 
-                                    <?php if (strtolower($pm) == 'cod'): ?>
+                                    <?php if (in_array(strtolower($pm), ['cod', 'cash', 'tunai'])): ?>
                                         <!-- COD View -->
                                         <div class="flex flex-col items-center justify-center py-6 text-center h-full">
                                             <div
                                                 class="size-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3">
                                                 <span class="material-icons-round text-green-600 text-3xl">payments</span>
                                             </div>
-                                            <h4 class="font-bold text-lg text-green-700 dark:text-green-400 mb-1">Cash On
-                                                Delivery
+                                            <h4 class="font-bold text-lg text-green-700 dark:text-green-400 mb-1"><?php echo (strtolower($pm) === 'cod') ? 'Cash On Delivery' : 'Cash / Tunai'; ?><!--
+                                                -->
                                             </h4>
-                                            <p class="text-xs text-slate-500">Bayar ditempat saat barang diterima</p>
+                                            <p class="text-xs text-slate-500"><?php echo (strtolower($pm) === 'cod') ? 'Bayar ditempat saat barang diterima' : 'Pembayaran secara langsung (tunai)'; ?></p>
                                         </div>
 
                                     <?php else: ?>
@@ -606,6 +621,37 @@ $orders_result = $conn->query($orders_query);
                         </div>
                     </div>
                 <?php else: ?>
+                    <?php
+                    // Fetch payment method statistics (excluding cancelled orders)
+                    $stats_query = "
+                        SELECT 
+                            payment_method,
+                            COUNT(*) as order_count,
+                            SUM(total_amount) as total_rupiah
+                        FROM orders 
+                        WHERE status != 'cancelled'
+                        GROUP BY payment_method
+                    ";
+                    $stats_result = $conn->query($stats_query);
+
+                    $cash_count = 0;
+                    $cash_total = 0;
+                    $transfer_count = 0;
+                    $transfer_total = 0;
+
+                    if ($stats_result) {
+                        while ($row = $stats_result->fetch_assoc()) {
+                            $pm_lower = strtolower(trim($row['payment_method'] ?? ''));
+                            if (in_array($pm_lower, ['cod', 'cash', 'tunai'])) {
+                                $cash_count += $row['order_count'];
+                                $cash_total += $row['total_rupiah'];
+                            } else {
+                                $transfer_count += $row['order_count'];
+                                $transfer_total += $row['total_rupiah'];
+                            }
+                        }
+                    }
+                    ?>
                     <!-- List View -->
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
@@ -641,6 +687,55 @@ $orders_result = $conn->query($orders_query);
                         <?php unset($_SESSION['status_msg']);
                         unset($_SESSION['status_type']); ?>
                     <?php endif; ?>
+
+                    <!-- Payment Method Statistics Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <!-- Cash Statistics Card -->
+                        <div class="relative overflow-hidden bg-surface-light dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex items-center gap-5 group hover:border-emerald-500/30 transition-all duration-300">
+                            <!-- Background glow -->
+                            <div class="absolute -right-10 -bottom-10 w-40 h-40 rounded-full bg-emerald-500/5 blur-2xl group-hover:bg-emerald-500/10 transition-all duration-500"></div>
+                            
+                            <!-- Icon -->
+                            <div class="size-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/30 flex items-center justify-center shrink-0 shadow-sm text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform duration-300">
+                                <span class="material-icons-round text-3xl">payments</span>
+                            </div>
+                            
+                            <!-- Stats Content -->
+                            <div class="flex-1">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Total Cash / Tunai</span>
+                                <h3 class="text-2xl font-black text-slate-800 dark:text-white tracking-tight">
+                                    Rp <?php echo number_format($cash_total, 0, ',', '.'); ?>
+                                </h3>
+                                <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5 font-medium">
+                                    <span class="inline-flex size-1.5 rounded-full bg-emerald-500"></span>
+                                    Total <span class="font-bold text-slate-800 dark:text-slate-300"><?php echo $cash_count; ?></span> Pesanan
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Transfer Statistics Card -->
+                        <div class="relative overflow-hidden bg-surface-light dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex items-center gap-5 group hover:border-blue-500/30 transition-all duration-300">
+                            <!-- Background glow -->
+                            <div class="absolute -right-10 -bottom-10 w-40 h-40 rounded-full bg-blue-500/5 blur-2xl group-hover:bg-blue-500/10 transition-all duration-500"></div>
+                            
+                            <!-- Icon -->
+                            <div class="size-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/30 flex items-center justify-center shrink-0 shadow-sm text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform duration-300">
+                                <span class="material-icons-round text-3xl">account_balance</span>
+                            </div>
+                            
+                            <!-- Stats Content -->
+                            <div class="flex-1">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Total Transfer Bank</span>
+                                <h3 class="text-2xl font-black text-slate-800 dark:text-white tracking-tight">
+                                    Rp <?php echo number_format($transfer_total, 0, ',', '.'); ?>
+                                </h3>
+                                <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5 font-medium">
+                                    <span class="inline-flex size-1.5 rounded-full bg-blue-500"></span>
+                                    Total <span class="font-bold text-slate-800 dark:text-slate-300"><?php echo $transfer_count; ?></span> Pesanan
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Compact Filter Card -->
                     <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 mb-2">
@@ -716,8 +811,21 @@ $orders_result = $conn->query($orders_query);
                                         <?php while ($order = mysqli_fetch_assoc($orders_result)): ?>
                                             <tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                                 <td class="px-6 py-4">
-                                                    <span
-                                                        class="font-medium text-slate-900 dark:text-white">#<?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?></span>
+                                                    <div class="flex flex-col">
+                                                        <span
+                                                            class="font-medium text-slate-900 dark:text-white">#<?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?></span>
+                                                        <div class="mt-1 flex">
+                                                            <?php if (in_array(strtolower($order['payment_method'] ?? ''), ['cod', 'cash', 'tunai'])): ?>
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/10 uppercase tracking-wider">
+                                                                    Cash
+                                                                </span>
+                                                            <?php else: ?>
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/10 uppercase tracking-wider">
+                                                                    Transfer
+                                                                </span>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
                                                     <?php echo date('d M, Y', strtotime($order['created_at'])); ?>
