@@ -37,6 +37,12 @@ if (!$name || !$phone || !$address || empty($items_input)) {
     exit;
 }
 
+// Validation: WhatsApp Phone Number Format Check
+if (!preg_match('/^(08|628|8)\d{7,12}$/', $phone)) {
+    echo json_encode(['success' => false, 'message' => 'Format Nomor WhatsApp tidak valid! Harus berupa nomor Indonesia yang benar (contoh: 08123456789) dengan panjang 9 hingga 14 angka.']);
+    exit;
+}
+
 // Validation: Shipping Cost
 if ($shipping_cost < 0)
     $shipping_cost = 0;

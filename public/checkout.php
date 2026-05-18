@@ -57,20 +57,35 @@ $order_token = bin2hex(random_bytes(16));
         }
     </script>
     <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
-        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+
         @media (max-width: 768px) {
             .mobile-bottom-bar {
-                box-shadow: 0 -10px 20px -5px rgba(0,0,0,0.1);
+                box-shadow: 0 -10px 20px -5px rgba(0, 0, 0, 0.1);
             }
         }
-        
-        .step-active { @apply ring-4 ring-primary/20 scale-110; }
-        
-        input:focus, textarea:focus {
+
+        .step-active {
+            @apply ring-4 ring-primary/20 scale-110;
+        }
+
+        input:focus,
+        textarea:focus {
             @apply ring-2 ring-primary/20 border-primary !important;
         }
 
@@ -124,10 +139,11 @@ $order_token = bin2hex(random_bytes(16));
                             <div>
                                 <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                                     Nomor WhatsApp</label>
-                                <input type="tel" name="phone" required placeholder="e.g. 08123456789"
-                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                <input type="tel" name="phone" required placeholder="e.g. 08123456789" minlength="11"
+                                    maxlength="15" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                     class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">
-                                <p class="text-xs text-slate-500 mt-1.5">Kami akan mengirimkan update pesanan ke sini.
+                                <p class="text-xs text-slate-500 mt-1.5">Masukkan nomor WhatsApp aktif (contoh:
+                                    08123456789).
                                 </p>
                             </div>
                         </div>
@@ -145,10 +161,11 @@ $order_token = bin2hex(random_bytes(16));
                                 <input type="text" id="area-search-input" required autocomplete="off"
                                     placeholder="Ketik minimal 3 karakter untuk mencari..."
                                     class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">
-                                
+
                                 <button type="button" id="btn-geolocation"
                                     class="mt-2.5 text-xs md:text-sm text-primary font-bold flex items-center gap-2 px-3 py-2 -ml-3 rounded-xl hover:bg-primary/5 transition-all active:scale-95 group/geo w-fit">
-                                    <span class="material-symbols-outlined text-[20px] group-hover/geo:rotate-90 transition-transform duration-500">my_location</span>
+                                    <span
+                                        class="material-symbols-outlined text-[20px] group-hover/geo:rotate-90 transition-transform duration-500">my_location</span>
                                     <span>Gunakan Lokasi Saya</span>
                                 </button>
 
@@ -162,13 +179,12 @@ $order_token = bin2hex(random_bytes(16));
                                     class="hidden absolute z-50 w-full mt-1 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-800 rounded-lg shadow-xl max-h-60 overflow-y-auto">
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                                     Kode Pos</label>
                                 <input type="text" name="postal_code" id="postal-code" maxlength="5" pattern="\d{5}"
-                                    placeholder="Ex: 45132"
-                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                    placeholder="Ex: 45132" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                     class="w-full md:w-1/3 rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary transition-all py-2.5">
                             </div>
                         </div>
@@ -258,7 +274,8 @@ $order_token = bin2hex(random_bytes(16));
                         <button form="checkout-form" type="submit" id="submit-btn"
                             class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-6 rounded-xl shadow-xl shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0 transition-all flex justify-center items-center gap-2 group">
                             <span id="btn-text">Bayar Sekarang</span>
-                            <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                            <span
+                                class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                             <span id="btn-spinner"
                                 class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
                         </button>
@@ -270,7 +287,8 @@ $order_token = bin2hex(random_bytes(16));
 
     <!-- Mobile Sticky Bottom Bar -->
     <div class="md:hidden fixed bottom-0 left-0 right-0 z-[60] animate-slide-up">
-        <div class="bg-white dark:bg-card-dark border-t border-slate-200 dark:border-slate-800 p-4 pb-safe-area flex items-center justify-between gap-4 mobile-bottom-bar rounded-t-3xl">
+        <div
+            class="bg-white dark:bg-card-dark border-t border-slate-200 dark:border-slate-800 p-4 pb-safe-area flex items-center justify-between gap-4 mobile-bottom-bar rounded-t-3xl">
             <div class="flex flex-col">
                 <span class="text-xs text-slate-500 font-medium">Total Tagihan</span>
                 <span id="mobile-total" class="text-xl font-black text-primary">Rp 0</span>
@@ -369,7 +387,7 @@ $order_token = bin2hex(random_bytes(16));
             const method = document.querySelector('input[name="payment_method"]:checked').value;
             const submitBtnText = document.getElementById('btn-text');
             const mobileBtnText = document.getElementById('mobile-btn-text');
-            
+
             if (method === 'transfer') {
                 if (submitBtnText) submitBtnText.innerText = 'Bayar Sekarang';
                 if (mobileBtnText) mobileBtnText.innerText = 'Bayar';
@@ -386,6 +404,22 @@ $order_token = bin2hex(random_bytes(16));
         // Handle Submit
         document.getElementById('checkout-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Validate WhatsApp Number Format
+            const phoneInput = document.querySelector('input[name="phone"]');
+            const rawPhone = phoneInput.value.replace(/[^0-9]/g, '');
+            const isIndonesianWA = /^(08|628|8)\d{7,12}$/.test(rawPhone);
+            if (!isIndonesianWA) {
+                Swal.fire({
+                    title: 'Nomor WhatsApp Tidak Valid!',
+                    text: 'Harap masukkan nomor WhatsApp Indonesia yang valid (contoh: 08123456789) dengan panjang antara 9 hingga 14 angka.',
+                    icon: 'warning',
+                    confirmButtonColor: '#0d59f2',
+                    confirmButtonText: 'OK'
+                });
+                phoneInput.focus();
+                return;
+            }
 
             // Validate Area and Courier
             const areaId = document.getElementById('destination-area-id').value;
@@ -409,22 +443,22 @@ $order_token = bin2hex(random_bytes(16));
             const submitBtn = document.getElementById('submit-btn');
             const btnText = document.getElementById('btn-text');
             const btnSpinner = document.getElementById('btn-spinner');
-            
+
             const mobileSubmitBtn = document.getElementById('mobile-submit-btn');
             const mobileBtnText = document.getElementById('mobile-btn-text');
             const mobileBtnSpinner = document.getElementById('mobile-btn-spinner');
 
             [submitBtn, mobileSubmitBtn].forEach(btn => {
-                if(btn) {
+                if (btn) {
                     btn.disabled = true;
                     btn.classList.add('opacity-75', 'cursor-not-allowed');
                 }
             });
-            
-            if(btnText) btnText.innerText = 'Memproses...';
-            if(btnSpinner) btnSpinner.classList.remove('hidden');
-            if(mobileBtnText) mobileBtnText.innerText = '...';
-            if(mobileBtnSpinner) mobileBtnSpinner.classList.remove('hidden');
+
+            if (btnText) btnText.innerText = 'Memproses...';
+            if (btnSpinner) btnSpinner.classList.remove('hidden');
+            if (mobileBtnText) mobileBtnText.innerText = '...';
+            if (mobileBtnSpinner) mobileBtnSpinner.classList.remove('hidden');
 
             const formData = new FormData(e.target);
             const data = {
@@ -544,13 +578,13 @@ $order_token = bin2hex(random_bytes(16));
         });
 
         const postalInput = document.getElementById('postal-code');
-        
+
         // Listener for Postal Code
         postalInput.addEventListener('input', () => {
             const areaId = document.getElementById('destination-area-id').value;
             const lat = document.getElementById('dest-lat').value;
             const lng = document.getElementById('dest-lng').value;
-            
+
             // Only re-check rates if postal code is valid (5 digits) AND we have location data
             if (postalInput.value.length === 5 && (areaId || (lat && lng))) {
                 checkRates(areaId, lat, lng);
@@ -585,7 +619,7 @@ $order_token = bin2hex(random_bytes(16));
 
             document.getElementById('dest-lat').value = finalLat;
             document.getElementById('dest-lng').value = finalLng;
-            
+
             // Trigger checkRates immediately!
             checkRates(id, finalLat, finalLng);
         };
@@ -644,9 +678,9 @@ $order_token = bin2hex(random_bytes(16));
                         </div>
                     `;
                 }
-                
-                if(!data.success) {
-                     html += `
+
+                if (!data.success) {
+                    html += `
                         <div class="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-3">
                             ${data.message || 'Gagal memuat ongkir.'}
                         </div>
@@ -666,7 +700,7 @@ $order_token = bin2hex(random_bytes(16));
 
                 if (data.pricing && data.pricing.length > 0) {
                     const hasLocal = data.pricing.some(r => r.company === 'local');
-                    
+
                     if (hasLocal) {
                         html += `
                         <div class="mb-3 p-4 bg-primary/5 border border-primary/10 rounded-xl flex items-start gap-3 shadow-sm border-l-4">
@@ -684,7 +718,7 @@ $order_token = bin2hex(random_bytes(16));
                         const isInternal = rate.company === 'local';
                         const icon = isInternal ? 'local_shipping' : 'package_2';
                         const iconBg = isInternal ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-500';
-                        
+
                         return `
                         <label class="cursor-pointer relative rounded-2xl border border-slate-200 dark:border-slate-800 p-4 grid grid-cols-[auto_1fr_auto] items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all group has-[:checked]:border-primary has-[:checked]:bg-primary/[0.03] has-[:checked]:ring-1 has-[:checked]:ring-primary/50">
                             <div class="flex items-center justify-center size-10 rounded-xl ${iconBg} transition-colors group-hover:scale-110">
@@ -737,7 +771,7 @@ $order_token = bin2hex(random_bytes(16));
             document.querySelectorAll('input[name="courier_company"]').forEach(i => i.checked = false);
             document.querySelectorAll('input[name="courier_type"]').forEach(i => i.checked = false);
             document.querySelectorAll('input[name="courier_price"]').forEach(i => i.checked = false);
-            
+
             // Try to match safely by escaping or finding partial
             // In API response construction above, IDs are sanitized? Ideally yes.
             // Simplified here: Just rely on name attributes if IDs fail, but let's try IDs:
@@ -745,18 +779,18 @@ $order_token = bin2hex(random_bytes(16));
             const safeCompany = company.replace(/[^a-zA-Z0-9-_]/g, '');
             // Actually the ID construction in map loop was: id="c-${rate.company}-${rate.courier_service_name}"
             // Service name might have spaces.
-            
+
             // Better approach: Find inputs by value matching
-             const cInput = document.querySelector(`input[name="courier_company"][value="${company}"]`);
-             // Type/Service matching is harder as value might be code or name.
-             // But we set them specific to this loop instance.
-             
-             // Re-finding based on the clicked radio's parent label context is safest?
-             // No, let's just use the hidden inputs next to the radio.
-             const parentLabel = document.querySelector(`input[name="courier_option"][value="${courierOption}"]`).closest('label');
-             parentLabel.querySelector('input[name="courier_company"]').checked = true;
-             parentLabel.querySelector('input[name="courier_type"]').checked = true;
-             parentLabel.querySelector('input[name="courier_price"]').checked = true;
+            const cInput = document.querySelector(`input[name="courier_company"][value="${company}"]`);
+            // Type/Service matching is harder as value might be code or name.
+            // But we set them specific to this loop instance.
+
+            // Re-finding based on the clicked radio's parent label context is safest?
+            // No, let's just use the hidden inputs next to the radio.
+            const parentLabel = document.querySelector(`input[name="courier_option"][value="${courierOption}"]`).closest('label');
+            parentLabel.querySelector('input[name="courier_company"]').checked = true;
+            parentLabel.querySelector('input[name="courier_type"]').checked = true;
+            parentLabel.querySelector('input[name="courier_price"]').checked = true;
 
             updateTotalDisplay();
         };
@@ -776,9 +810,9 @@ $order_token = bin2hex(random_bytes(16));
 
             const finalTotal = baseTotal + shippingCost;
             const formattedTotal = 'Rp ' + formatter.format(finalTotal);
-            
-            if(totalDisplay) totalDisplay.innerText = formattedTotal;
-            if(mobileTotalDisplay) mobileTotalDisplay.innerText = formattedTotal;
+
+            if (totalDisplay) totalDisplay.innerText = formattedTotal;
+            if (mobileTotalDisplay) mobileTotalDisplay.innerText = formattedTotal;
         }
 
         // Initialize total display
@@ -806,7 +840,7 @@ $order_token = bin2hex(random_bytes(16));
 
                     document.getElementById('dest-lat').value = lat;
                     document.getElementById('dest-lng').value = lng;
-                    
+
                     // Optional: Reverse Geocoding could go here if needed to fill the text input
                     areaSearchInput.value = "Lokasi Saya (" + lat.toFixed(4) + ", " + lng.toFixed(4) + ")";
                     document.getElementById('destination-area-text').value = "Pinned Location";
@@ -817,7 +851,7 @@ $order_token = bin2hex(random_bytes(16));
                     // For now, let's assume we proceed with empty area_id if we have coords, 
                     // OR we force user to still select area for Biteship accuracy if needed.
                     // But let's try to just trigger checkRates with what we have.
-                    
+
                     checkRates('', lat, lng);
 
                     btnGeo.innerHTML = '<span class="material-symbols-outlined text-lg animate-bounce">check</span><span>Lokasi ditemukan</span>';

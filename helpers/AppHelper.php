@@ -64,6 +64,52 @@ class AppHelper {
         return $phone;
     }
 
+    public static function format_phone_display($phone) {
+        if (empty($phone)) return '-';
+        // Remove non-numeric characters
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        
+        if (strpos($phone, '62') === 0) {
+            $phone = '0' . substr($phone, 2);
+        } elseif (strpos($phone, '8') === 0) {
+            $phone = '0' . $phone;
+        }
+        
+        // Format as 08XX-XXXX-XXXX
+        if (strlen($phone) >= 9 && strlen($phone) <= 13) {
+            $parts = [];
+            $parts[] = substr($phone, 0, 4);
+            $parts[] = substr($phone, 4, 4);
+            $parts[] = substr($phone, 8);
+            return implode('-', array_filter($parts));
+        }
+        
+        return $phone;
+    }
+
+    public static function get_whatsapp_url($phone, $text = '') {
+        if (empty($phone)) return '';
+        // Remove non-numeric characters
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        
+        if (strpos($phone, '0') === 0) {
+            $phone = '62' . substr($phone, 1);
+        } elseif (strpos($phone, '8') === 0) {
+            $phone = '62' . $phone;
+        }
+        
+        // WhatsApp API works only with valid country code prefix (e.g. 628...)
+        if (strpos($phone, '628') === 0 && strlen($phone) >= 10 && strlen($phone) <= 15) {
+            $url = "https://wa.me/" . $phone;
+            if (!empty($text)) {
+                $url .= "?text=" . urlencode($text);
+            }
+            return $url;
+        }
+        
+        return '';
+    }
+
     public static function compress_image($source, $destination, $quality) {
         // 1. If GD is not loaded, we can only copy the file if it's not the same location
         if (!extension_loaded('gd')) {
@@ -157,6 +203,14 @@ function log_activity($action, $details = '') {
 
 function format_phone($phone) {
     return AppHelper::format_phone($phone);
+}
+
+function format_phone_display($phone) {
+    return AppHelper::format_phone_display($phone);
+}
+
+function get_whatsapp_url($phone, $text = '') {
+    return AppHelper::get_whatsapp_url($phone, $text);
 }
 
 function compress_image($source, $destination, $quality = 60) {

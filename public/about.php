@@ -143,10 +143,10 @@ require_once dirname(__DIR__) . "/config/init.php";
             <div class="text-center mb-12">
                 <span class="text-primary font-bold tracking-wider uppercase text-sm">Tim Kami</span>
                 <h2 class="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mt-2">
-                    Team Lapak Bangsawan
+                    Tim Lapak Bangsawan
                 </h2>
                 <p class="text-slate-500 dark:text-slate-400 mt-4 max-w-2xl mx-auto">
-                    Para profesional berdedikasi yang bekerja keras untuk menghadirkan kualitas terbaik ke meja Anda.
+                    Tim kami berdedikasi untuk memberikan kualitas terbaik ke meja Anda.
                 </p>
             </div>
 
@@ -173,7 +173,7 @@ require_once dirname(__DIR__) . "/config/init.php";
                         class="size-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
                         <span class="material-symbols-outlined text-3xl">terminal</span>
                     </div>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Amuchtaif</h3>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Andi M.</h3>
                     <p class="text-sm font-medium text-primary mt-1">Web Developer</p>
                     <div
                         class="w-12 h-1 bg-slate-100 dark:bg-slate-700 rounded-full mt-4 group-hover:bg-primary transition-colors">
@@ -187,7 +187,7 @@ require_once dirname(__DIR__) . "/config/init.php";
                         class="size-16 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 text-white flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
                         <span class="material-symbols-outlined text-3xl">campaign</span>
                     </div>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Dzuki</h3>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Gunawan</h3>
                     <p class="text-sm font-medium text-primary mt-1">Marketing</p>
                     <div
                         class="w-12 h-1 bg-slate-100 dark:bg-slate-700 rounded-full mt-4 group-hover:bg-primary transition-colors">
@@ -201,7 +201,7 @@ require_once dirname(__DIR__) . "/config/init.php";
                         class="size-16 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
                         <span class="material-symbols-outlined text-3xl">precision_manufacturing</span>
                     </div>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Ipan</h3>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Yogan</h3>
                     <p class="text-sm font-medium text-primary mt-1">Produksi</p>
                     <div
                         class="w-12 h-1 bg-slate-100 dark:bg-slate-700 rounded-full mt-4 group-hover:bg-primary transition-colors">

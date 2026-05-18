@@ -34,6 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
             if (empty($customer_name) || empty($customer_phone))
                 throw new Exception("Nama dan Telepon pelanggan wajib diisi.");
 
+            // Validation: WhatsApp Phone Number Format Check
+            if (!preg_match('/^(08|628|8)\d{7,12}$/', $customer_phone)) {
+                throw new Exception("Format Nomor WhatsApp pelanggan tidak valid! Harus berupa nomor Indonesia yang benar (contoh: 08123456789) dengan panjang 9 hingga 14 angka.");
+            }
+
             $check_phone = $conn->query("SELECT id FROM customers WHERE phone='$customer_phone'");
             if ($check_phone->num_rows > 0) {
                 $customer_id = $check_phone->fetch_assoc()['id'];
@@ -403,7 +408,8 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
                                     <label
                                         class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Nomor
                                         Telepon</label>
-                                    <input type="text" name="new_customer_phone"
+                                    <input type="tel" name="new_customer_phone" placeholder="e.g. 08123456789"
+                                        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                         class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 focus:ring-primary focus:border-primary">
                                 </div>
                                 <div class="col-span-2">
@@ -952,6 +958,21 @@ $auto_walkin_name = "Pelanggan" . str_pad($walkin_count, 3, '0', STR_PAD_LEFT);
         // Manual Discount Listener
         document.getElementById('manual_discount_input').addEventListener('input', recalcTotal); 
         document.getElementById('shipping_cost_input').addEventListener('input', recalcTotal); 
+
+        // Validate before submit
+        document.querySelector('form').addEventListener('submit', (e) => {
+            const customerType = document.querySelector('input[name="customer_type"]:checked').value;
+            if (customerType === 'new') {
+                const phoneInput = document.querySelector('input[name="new_customer_phone"]');
+                const rawPhone = phoneInput.value.replace(/[^0-9]/g, '');
+                const isIndonesianWA = /^(08|628|8)\d{7,12}$/.test(rawPhone);
+                if (!isIndonesianWA) {
+                    e.preventDefault();
+                    alert('Format Nomor WhatsApp pelanggan baru tidak valid! Harap masukkan nomor WhatsApp Indonesia yang benar (contoh: 08123456789) dengan panjang antara 9 hingga 14 angka.');
+                    phoneInput.focus();
+                }
+            }
+        });
     </script>
 </body>
 

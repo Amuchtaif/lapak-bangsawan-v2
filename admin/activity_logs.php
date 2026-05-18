@@ -3,8 +3,12 @@ require("auth_session.php");
 require_once dirname(__DIR__) . "/config/init.php";
 
 // Pagination
-$limit = 25;
+$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 25;
+if (!in_array($limit, [10, 25, 50, 100])) {
+    $limit = 25;
+}
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
 $start = ($page - 1) * $limit;
 
 // Filter Search
@@ -145,21 +149,99 @@ $total_pages = ceil($total_rows / $limit);
                         </table>
                     </div>
 
-                    <!-- Pagination -->
-                    <?php if ($total_pages > 1): ?>
-                    <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/20">
-                        <div class="text-xs text-slate-500">
-                            Menampilkan <?= $start + 1 ?> ke <?= min($start + $limit, $total_rows) ?> dari <?= $total_rows ?> entri
+                    <!-- Pagination Controls -->
+                    <?php if ($total_pages > 0): ?>
+                        <?php
+                        // Smart pagination: build array of pages to show
+                        $pages_to_show = [];
+                        $adjacents = 1; // pages on each side of current
+
+                        if ($total_pages <= 7) {
+                            // Show all pages if 7 or less
+                            for ($i = 1; $i <= $total_pages; $i++) $pages_to_show[] = $i;
+                        } else {
+                            // Always show first page
+                            $pages_to_show[] = 1;
+
+                            // Calculate range around current page
+                            $range_start = max(2, $page - $adjacents);
+                            $range_end = min($total_pages - 1, $page + $adjacents);
+
+                            // Add ellipsis before range if needed
+                            if ($range_start > 2) $pages_to_show[] = '...';
+
+                            // Add range pages
+                            for ($i = $range_start; $i <= $range_end; $i++) $pages_to_show[] = $i;
+
+                            // Add ellipsis after range if needed
+                            if ($range_end < $total_pages - 1) $pages_to_show[] = '...';
+
+                            // Always show last page
+                            $pages_to_show[] = $total_pages;
+                        }
+
+                        $base_url = "?search=" . urlencode($search) . "&limit=$limit";
+                        ?>
+                        <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/30 dark:bg-slate-800/20">
+                            <!-- Left: Per page & info -->
+                            <div class="flex items-center gap-2 text-xs text-slate-500">
+                                <span>Tampilkan</span>
+                                <select onchange="window.location.href='<?= $base_url ?>&page=1'.replace('limit=<?= $limit ?>','limit='+this.value)"
+                                    class="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs py-1.5 px-3 pr-7 focus:ring-primary focus:border-primary cursor-pointer text-slate-700 dark:text-slate-300">
+                                    <option value="10" <?= $limit == 10 ? 'selected' : '' ?>>10</option>
+                                    <option value="25" <?= $limit == 25 ? 'selected' : '' ?>>25</option>
+                                    <option value="50" <?= $limit == 50 ? 'selected' : '' ?>>50</option>
+                                    <option value="100" <?= $limit == 100 ? 'selected' : '' ?>>100</option>
+                                </select>
+                                <span class="text-slate-400">|</span>
+                                <span class="text-slate-500">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300"><?= $total_rows > 0 ? $start + 1 : 0 ?>–<?= min($start + $limit, $total_rows) ?></span>
+                                    dari
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300"><?= number_format($total_rows) ?></span>
+                                </span>
+                            </div>
+
+                            <!-- Right: Page buttons -->
+                            <nav class="flex items-center gap-1" aria-label="Pagination">
+                                <!-- Prev button -->
+                                <?php if ($page > 1): ?>
+                                    <a href="<?= $base_url ?>&page=<?= $page - 1 ?>"
+                                        class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary transition-all"
+                                        title="Halaman sebelumnya">
+                                        <span class="material-icons-round text-base">chevron_left</span>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                                        <span class="material-icons-round text-base">chevron_left</span>
+                                    </span>
+                                <?php endif; ?>
+
+                                <!-- Page numbers with ellipsis -->
+                                <?php foreach ($pages_to_show as $pg): ?>
+                                    <?php if ($pg === '...'): ?>
+                                        <span class="inline-flex items-center justify-center w-8 h-8 text-xs text-slate-400 select-none">•••</span>
+                                    <?php elseif ($pg == $page): ?>
+                                        <span class="inline-flex items-center justify-center size-8 rounded-lg text-xs font-bold bg-primary text-white shadow-sm shadow-primary/30"><?= $pg ?></span>
+                                    <?php else: ?>
+                                        <a href="<?= $base_url ?>&page=<?= $pg ?>"
+                                            class="inline-flex items-center justify-center size-8 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all"><?= $pg ?></a>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+
+                                <!-- Next button -->
+                                <?php if ($page < $total_pages): ?>
+                                    <a href="<?= $base_url ?>&page=<?= $page + 1 ?>"
+                                        class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary transition-all"
+                                        title="Halaman selanjutnya">
+                                        <span class="material-icons-round text-base">chevron_right</span>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="inline-flex items-center justify-center size-8 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                                        <span class="material-icons-round text-base">chevron_right</span>
+                                    </span>
+                                <?php endif; ?>
+                            </nav>
                         </div>
-                        <div class="flex items-center gap-1">
-                            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                                <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>" 
-                                   class="size-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all <?= $i == $page ? 'bg-primary text-white shadow-lg shadow-blue-500/30' : 'bg-white dark:bg-surface-dark text-slate-500 hover:text-primary' ?>">
-                                    <?= $i ?>
-                                </a>
-                            <?php endfor; ?>
-                        </div>
-                    </div>
                     <?php endif; ?>
                 </div>
 

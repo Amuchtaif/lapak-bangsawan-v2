@@ -388,61 +388,76 @@
                             Kesan Pelanggan Kami
                         </h2>
                         <p class="text-[#606e8a] dark:text-[#a0aec0]">
-                            Kepercayaan Anda adalah prioritas utama kami dalam menjaga kesegaran dan kualitas protein terbaik.
+                            Kepercayaan Anda adalah prioritas utama kami dalam menjaga kesegaran dan kualitas protein
+                            terbaik.
                         </p>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <?php
                         $testimonials = [
+                            [
+                                'name' => 'Ibu Uun',
+                                'location' => 'Cirebon',
+                                'text' => 'Eggrollnya enak banget.. Isi 10, Ibrahim makan 7 sekaligus 🤣',
+                                'color' => 'bg-amber-100 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400',
+                                'initial' => 'U'
+                            ],
                             [
                                 'name' => 'Ibu Yanti',
                                 'location' => 'Kesambi, Cirebon',
                                 'text' => 'Cekernya bagus, bersih dan gede gede. Mantap!',
-                                'color' => 'bg-pink-100 text-pink-600',
+                                'color' => 'bg-pink-100 text-pink-600 dark:bg-pink-900/20 dark:text-pink-400',
                                 'initial' => 'Y'
                             ],
                             [
-                                'name' => 'Pak Atar',
-                                'location' => 'Sumber, Kab. Cirebon',
-                                'text' => 'Komplit, ayam potong, ikan segar, seafood & frozen food 🥰🥰🥰Pastikan anda membeli di lapak bangsawan yang amanah',
-                                'color' => 'bg-blue-100 text-blue-600',
+                                'name' => 'Bpk Atar',
+                                'location' => 'Ciperna, Cirebon',
+                                'text' => 'Komplit, ayam potong, ikan segar, seafood & frozen food 🥰🥰🥰 Pastikan anda membeli di lapak bangsawan yang amanah',
+                                'color' => 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',
                                 'initial' => 'A'
                             ],
                             [
                                 'name' => 'Naufal',
                                 'location' => 'Kedawung, Cirebon',
                                 'text' => 'Ramah, amanah dan berkualitas',
-                                'color' => 'bg-emerald-100 text-emerald-600',
+                                'color' => 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400',
                                 'initial' => 'N'
                             ]
                         ];
 
                         foreach ($testimonials as $t): ?>
-                            <div class="bg-white dark:bg-[#1a202c] p-8 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 relative group flex flex-col h-full">
+                            <div
+                                class="bg-white dark:bg-[#1a202c] p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 relative group flex flex-col h-full">
                                 <!-- Quote Icon -->
-                                <div class="absolute -top-4 right-8 size-8 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/30 group-hover:scale-110 transition-transform">
+                                <div
+                                    class="absolute -top-4 right-6 size-8 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/30 group-hover:scale-110 transition-transform">
                                     <span class="material-symbols-outlined text-sm">format_quote</span>
                                 </div>
 
                                 <!-- Stars -->
-                                <div class="flex gap-1 mb-6 text-amber-400">
+                                <div class="flex gap-1 mb-4 text-amber-400">
                                     <?php for ($i = 0; $i < 5; $i++): ?>
                                         <span class="material-symbols-outlined text-sm fill-current">star</span>
                                     <?php endfor; ?>
                                 </div>
 
-                                <p class="text-slate-600 dark:text-slate-300 italic mb-8 leading-relaxed flex-1">
+                                <p class="text-slate-600 dark:text-slate-300 italic mb-6 text-sm leading-relaxed flex-1">
                                     "<?php echo $t['text']; ?>"
                                 </p>
 
-                                <div class="flex items-center gap-4 mt-auto">
-                                    <div class="size-12 rounded-full <?php echo $t['color']; ?> flex items-center justify-center font-bold text-lg shrink-0">
+                                <div class="flex items-center gap-3 mt-auto">
+                                    <div
+                                        class="size-10 rounded-full <?php echo $t['color']; ?> flex items-center justify-center font-bold text-base shrink-0">
                                         <?php echo $t['initial']; ?>
                                     </div>
                                     <div>
-                                        <h4 class="font-bold text-slate-900 dark:text-white"><?php echo $t['name']; ?></h4>
-                                        <p class="text-xs text-slate-500 dark:text-slate-400"><?php echo $t['location']; ?></p>
+                                        <h4 class="font-bold text-sm text-slate-900 dark:text-white">
+                                            <?php echo $t['name']; ?>
+                                        </h4>
+                                        <p class="text-[10px] text-slate-500 dark:text-slate-400">
+                                            <?php echo $t['location']; ?>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -482,13 +497,13 @@
                         </div>
                     </div>
                 </div>
-                </div>
             </div>
-        </main>
-            </div>
-        </main>
-        <!-- Footer -->
-        <?php include ROOT_PATH . "includes/public_footer.php"; ?>
+    </div>
+    </main>
+    </div>
+    </main>
+    <!-- Footer -->
+    <?php include ROOT_PATH . "includes/public_footer.php"; ?>
     </div>
 </body>
 

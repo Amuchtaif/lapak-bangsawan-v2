@@ -245,8 +245,17 @@ $orders_result = $conn->query($orders_query);
                                         <p class="text-sm text-slate-600 dark:text-slate-400">
                                             <span
                                                 class="text-xs uppercase font-bold text-slate-500 block mb-1">Telepon</span>
-                                            <span
-                                                class="font-medium text-slate-900 dark:text-white block"><?php echo htmlspecialchars($order_data['customer_phone']); ?></span>
+                                            <span class="flex items-center gap-2 flex-wrap">
+                                                <span class="font-medium text-slate-900 dark:text-white block"><?php echo htmlspecialchars(format_phone_display($order_data['customer_phone'])); ?></span>
+                                                <?php 
+                                                $wa_url = get_whatsapp_url($order_data['customer_phone'], "Halo " . $order_data['customer_name'] . ", kami dari Lapak Bangsawan ingin mengonfirmasi pesanan Anda #" . ($order_data['order_number'] ?? str_pad($order_data['id'], 5, '0', STR_PAD_LEFT)) . ".");
+                                                if (!empty($wa_url)): 
+                                                ?>
+                                                    <a href="<?php echo $wa_url; ?>" target="_blank" class="inline-flex items-center gap-1 text-[10px] bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-2 py-0.5 rounded transition-colors shadow-sm shadow-emerald-500/20">
+                                                        <span class="material-icons-round text-[10px]">chat</span> WhatsApp
+                                                    </a>
+                                                <?php endif; ?>
+                                            </span>
                                         </p>
                                         <p class="text-sm text-slate-600 dark:text-slate-400">
                                             <span class="text-xs uppercase font-bold text-slate-500 block mb-1">Tanggal
@@ -595,13 +604,49 @@ $orders_result = $conn->query($orders_query);
                                                 </td>
                                             </tr>
                                         <?php endwhile; ?>
+                                        <?php
+                                        $shipping_cost = (float)($order_data['shipping_cost'] ?? 0);
+                                        $manual_discount = (float)($order_data['manual_discount'] ?? 0);
+                                        $system_discount = $product_subtotal - $manual_discount + $shipping_cost - $order_data['total_amount'];
+                                        ?>
+                                        <!-- Subtotal Row -->
+                                        <tr class="bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800">
+                                            <td colspan="3" class="px-6 py-3 text-right font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                                Subtotal Produk
+                                            </td>
+                                            <td class="px-6 py-3 text-right font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                                                Rp <?php echo number_format($product_subtotal, 0, ',', '.'); ?>
+                                            </td>
+                                        </tr>
+                                        <!-- Grosir Discount Row -->
+                                        <?php if ($system_discount > 1): ?>
+                                        <tr class="bg-white dark:bg-surface-dark border-b border-slate-200 dark:border-slate-800">
+                                            <td colspan="3" class="px-6 py-3 text-right font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                                Diskon Grosir
+                                            </td>
+                                            <td class="px-6 py-3 text-right font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                                -Rp <?php echo number_format($system_discount, 0, ',', '.'); ?>
+                                            </td>
+                                        </tr>
+                                        <?php endif; ?>
+                                        <!-- Manual Discount Row -->
+                                        <?php if ($manual_discount > 0): ?>
+                                        <tr class="bg-white dark:bg-surface-dark border-b border-slate-200 dark:border-slate-800">
+                                            <td colspan="3" class="px-6 py-3 text-right font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                                Diskon Manual
+                                            </td>
+                                            <td class="px-6 py-3 text-right font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                                -Rp <?php echo number_format($manual_discount, 0, ',', '.'); ?>
+                                            </td>
+                                        </tr>
+                                        <?php endif; ?>
                                         <!-- Ongkos Kirim Row -->
                                         <tr class="bg-white dark:bg-surface-dark border-t border-b border-slate-200 dark:border-slate-800">
                                             <td colspan="3" class="px-6 py-4 text-right font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap">
                                                 Ongkos Kirim
                                             </td>
                                             <td class="px-6 py-4 text-right font-bold text-slate-900 dark:text-white whitespace-nowrap">
-                                                Rp <?php echo number_format($order_data['total_amount'] - $product_subtotal, 0, ',', '.'); ?>
+                                                Rp <?php echo number_format($shipping_cost, 0, ',', '.'); ?>
                                             </td>
                                         </tr>
                                         <tr class="bg-slate-50 dark:bg-slate-800/20">
@@ -838,8 +883,17 @@ $orders_result = $conn->query($orders_query);
                                                         <span
                                                             class="text-sm font-medium text-slate-900 dark:text-white"><?php echo htmlspecialchars($order['customer_name']); ?></span>
                                                         <?php if (!empty($order['customer_phone']) && $order['customer_phone'] !== '0' && $order['customer_phone'] !== '-'): ?>
-                                                            <span
-                                                                class="text-xs text-slate-500"><?php echo htmlspecialchars($order['customer_phone']); ?></span>
+                                                            <div class="flex items-center gap-1.5 mt-0.5">
+                                                                <span class="text-xs text-slate-500 font-medium"><?php echo htmlspecialchars(format_phone_display($order['customer_phone'])); ?></span>
+                                                                <?php 
+                                                                $list_wa_url = get_whatsapp_url($order['customer_phone']);
+                                                                if (!empty($list_wa_url)): 
+                                                                ?>
+                                                                    <a href="<?php echo $list_wa_url; ?>" target="_blank" class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 inline-flex items-center transition-colors" title="Chat via WhatsApp">
+                                                                        <span class="material-icons-round text-xs font-bold">chat</span>
+                                                                    </a>
+                                                                <?php endif; ?>
+                                                            </div>
                                                         <?php endif; ?>
                                                     </div>
                                                 </td>

@@ -325,7 +325,7 @@ $size = $_GET['size'] ?? '58mm';
             <div class="r-section">
                 <div class="r-row r-bold"><?= htmlspecialchars($order['customer_name']) ?></div>
                 <?php if (!empty($order['customer_phone'])): ?>
-                <div class="r-row" style="font-size:10px;"><?= htmlspecialchars($order['customer_phone']) ?></div>
+                <div class="r-row" style="font-size:10px;"><?= htmlspecialchars(function_exists('format_phone_display') ? format_phone_display($order['customer_phone']) : $order['customer_phone']) ?></div>
                 <?php endif; ?>
                 <?php if (!empty($order['customer_address'])): ?>
                 <div class="r-row" style="font-size:9px;"><?= htmlspecialchars($order['customer_address']) ?></div>
