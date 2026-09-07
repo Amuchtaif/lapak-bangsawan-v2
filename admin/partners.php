@@ -84,14 +84,14 @@ $sql_partners = "
         SELECT COALESCE(SUM(oi.subtotal), 0) -- This is gross sales, not profit/debt directly without cost
         FROM order_items oi
         JOIN orders o ON oi.order_id = o.id
-        JOIN products prod ON oi.product_name = prod.name -- Join by name as per schema
+        JOIN products prod ON oi.product_id = prod.id
         WHERE prod.partner_id = p.id AND o.status = 'completed'
     ) as total_sales_revenue,
     (
         SELECT COALESCE(SUM(oi.weight * prod.buy_price), 0) -- Approx Debt (weight * modal)
         FROM order_items oi
         JOIN orders o ON oi.order_id = o.id
-        JOIN products prod ON oi.product_name = prod.name
+        JOIN products prod ON oi.product_id = prod.id
         WHERE prod.partner_id = p.id AND o.status = 'completed'
     ) as total_debt_calculated
     FROM partners p

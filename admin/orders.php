@@ -149,7 +149,7 @@ $orders_result = $conn->query($orders_query);
                     $order_data = mysqli_fetch_assoc($conn->query($order_q));
 
                     // Try to join with products to get image if possible, but purely optional
-                    $items_q = "SELECT order_items.*, products.image FROM order_items LEFT JOIN products ON order_items.product_name = products.name WHERE order_id=$oid";
+                    $items_q = "SELECT order_items.*, products.image FROM order_items LEFT JOIN products ON order_items.product_id = products.id WHERE order_id=$oid";
                     $items_res = $conn->query($items_q);
                     ?>
                     <!-- Order Detail View -->

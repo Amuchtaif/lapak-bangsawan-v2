@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
             if ($p_id == 0 || $qty <= 0)
                 continue;
 
-            $prod_q = $conn->query("SELECT p.name, p.price, p.buy_price, p.stock, c.name as category_name 
+            $prod_q = $conn->query("SELECT p.name, p.price, p.buy_price, p.stock, p.is_package, c.name as category_name 
                                     FROM products p 
                                     LEFT JOIN categories c ON p.category_id = c.id 
                                     WHERE p.id=$p_id FOR UPDATE");
@@ -76,8 +76,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
                 throw new Exception("Produk ID $p_id tidak ditemukan.");
             $prod_data = $prod_q->fetch_assoc();
 
-            if ($prod_data['stock'] < $qty) {
-                throw new Exception("Stok untuk {$prod_data['name']} tidak mencukupi (Sisa: {$prod_data['stock']}).");
+            $is_pkg = (bool)$prod_data['is_package'];
+
+            if ($is_pkg) {
+                $pkg_stock = AppHelper::getPackageStock($conn, $p_id);
+                if ($pkg_stock < $qty) {
+                    throw new Exception("Stok tidak mencukupi untuk paket {$prod_data['name']} (Sisa: $pkg_stock).");
+                }
+            } else {
+                if ($prod_data['stock'] < $qty) {
+                    throw new Exception("Stok untuk {$prod_data['name']} tidak mencukupi (Sisa: {$prod_data['stock']}).");
+                }
             }
 
             $line_subtotal = $prod_data['price'] * $qty;
@@ -94,7 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
                 'price' => $prod_data['price'],
                 'buy_price' => $prod_data['buy_price'],
                 'weight' => $qty,
-                'subtotal' => $line_subtotal
+                'subtotal' => $line_subtotal,
+                'is_package' => $is_pkg
             ];
         }
 
@@ -143,15 +153,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
         if (!$stmt_order->execute())
             throw new Exception("Gagal membuat pesanan: " . $conn->error);
 
-        // 5. Insert Items & Updates Stock
-        $stmt_item = $conn->prepare("INSERT INTO order_items (order_id, product_name, weight, price_per_kg, buy_price, subtotal) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt_item = $conn->prepare("INSERT INTO order_items (order_id, product_id, product_name, weight, price_per_kg, buy_price, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?)");
 
         foreach ($order_items_data as $item) {
-            $stmt_item->bind_param("isdddd", $new_id, $item['name'], $item['weight'], $item['price'], $item['buy_price'], $item['subtotal']);
+            $stmt_item->bind_param("iisdddd", $new_id, $item['product_id'], $item['name'], $item['weight'], $item['price'], $item['buy_price'], $item['subtotal']);
             if (!$stmt_item->execute())
                 throw new Exception("Gagal menyimpan item.");
 
-            $conn->query("UPDATE products SET stock = stock - {$item['weight']} WHERE id={$item['product_id']}");
+            if (!empty($item['is_package'])) {
+                // Deduct from component standard products
+                $comp_res = $conn->query("SELECT product_id, quantity FROM package_items WHERE package_id = {$item['product_id']}");
+                while ($comp = $comp_res->fetch_assoc()) {
+                    $deduction = $comp['quantity'] * $item['weight'];
+                    $conn->query("UPDATE products SET stock = stock - {$deduction} WHERE id = {$comp['product_id']}");
+                }
+            } else {
+                $conn->query("UPDATE products SET stock = stock - {$item['weight']} WHERE id={$item['product_id']}");
+            }
         }
 
         $conn->commit();
@@ -169,13 +187,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_transaction']))
 // Fetch Customers
 $customers = $conn->query("SELECT id, name, phone FROM customers ORDER BY name ASC");
 // Fetch Products
-$products = $conn->query("SELECT p.id, p.name, p.stock, p.price, p.short_code, c.name as category_name 
+$products = $conn->query("SELECT p.id, p.name, p.stock, p.price, p.short_code, p.is_package, c.name as category_name 
                           FROM products p 
                           LEFT JOIN categories c ON p.category_id = c.id 
-                          WHERE p.stock > 0 ORDER BY p.name ASC");
+                          WHERE p.status = 'active' ORDER BY p.name ASC");
 $prod_arr = [];
 while ($p = $products->fetch_assoc()) {
-    $prod_arr[] = $p;
+    if ($p['is_package']) {
+        $p['stock'] = AppHelper::getPackageStock($conn, $p['id']);
+    }
+    if ($p['stock'] > 0) {
+        $prod_arr[] = $p;
+    }
 }
 
 // Fetch Active Wholesale Rules for frontend calc

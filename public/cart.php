@@ -156,7 +156,7 @@
 
                 // Determine units from item data
                 let unit = item.unit || 'kg';
-                let weightLabel = (['pcs', 'box', 'porsi'].includes(unit)) ? 'Qty' : 'Berat';
+                let weightLabel = (['pcs', 'box', 'porsi', 'paket'].includes(unit)) ? 'Qty' : 'Berat';
                 let priceUnit = '/ ' + unit;
 
                 const itemImg = getImageUrl(item.image);

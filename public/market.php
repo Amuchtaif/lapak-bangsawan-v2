@@ -54,24 +54,25 @@ if (isset($_GET['search'])) {
 }
 
 // Sort
-$order = "ORDER BY (products.stock > 0) DESC, products.id DESC"; // Default
+$order = "ORDER BY products.is_package DESC, (products.stock > 0) DESC, products.id DESC"; // Default
 if (isset($_GET['sort'])) {
     switch ($_GET['sort']) {
         case 'price_asc':
-            $order = "ORDER BY products.price ASC";
+            $order = "ORDER BY products.is_package DESC, products.price ASC";
             break;
         case 'price_desc':
-            $order = "ORDER BY products.price DESC";
+            $order = "ORDER BY products.is_package DESC, products.price DESC";
             break;
         case 'name_asc':
-            $order = "ORDER BY products.name ASC";
+            $order = "ORDER BY products.is_package DESC, products.name ASC";
             break;
         case '':
-            $order = "ORDER BY (products.stock > 0) DESC, products.id DESC";
+            $order = "ORDER BY products.is_package DESC, (products.stock > 0) DESC, products.id DESC";
             break;
     }
 }
 
+$where = $where ? "$where AND products.status = 'active'" : "WHERE products.status = 'active'";
 $query = "SELECT products.*, categories.slug as category_slug, categories.name as category_name FROM products LEFT JOIN categories ON products.category_id = categories.id $where $order";
 $products = $conn->query($query);
 
@@ -82,7 +83,7 @@ $best_seller_query = "
     JOIN orders o ON oi.order_id = o.id
     JOIN products p ON oi.product_name = p.name 
     LEFT JOIN categories c ON p.category_id = c.id
-    WHERE o.status IN ('completed', 'delivered')
+    WHERE o.status IN ('completed', 'delivered') AND p.status = 'active'
     GROUP BY p.id 
     ORDER BY total_sold DESC 
     LIMIT 6";
@@ -400,11 +401,15 @@ $best_sellers = $conn->query($best_seller_query);
                     </h2>
                     <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-6">
                         <?php while ($bs_product = mysqli_fetch_assoc($best_sellers)):
+                            if ($bs_product['is_package']) {
+                                $bs_product['stock'] = AppHelper::getPackageStock($conn, $bs_product['id']);
+                            }
                             $category = $bs_product['category_name'];
                             $isPcsCategory = in_array($category, ['Frozen Food', 'Produk Jadi']);
-                            $unit = $isPcsCategory ? 'pcs' : 'kg';
-                            $step = $isPcsCategory ? 1 : 0.5;
-                            $initialQtyDisplay = $isPcsCategory ? '1' : '1.0';
+                            $unit = $bs_product['unit'] ?: ($isPcsCategory ? 'pcs' : 'kg');
+                            $isIntegerUnit = in_array($unit, ['pcs', 'box', 'porsi', 'paket']);
+                            $step = $isIntegerUnit ? 1 : 0.5;
+                            $initialQtyDisplay = $isIntegerUnit ? '1' : '1.0';
                             $initialQty = 1;
                             ?>
                             <article
@@ -416,7 +421,9 @@ $best_sellers = $conn->query($best_seller_query);
                                        $img_src = BASE_URL . $img_src;
                                    }
                                    echo htmlspecialchars($img_src);
-                                   ?>" data-category="<?php echo htmlspecialchars($bs_product['category_name']); ?>">
+                                   ?>" data-category="<?php echo htmlspecialchars($bs_product['category_name']); ?>"
+                                data-unit="<?php echo htmlspecialchars($unit); ?>"
+                                data-stock="<?php echo $bs_product['stock']; ?>">
 
                                 <!-- Badge Best Seller -->
                                 <div
@@ -515,6 +522,9 @@ $best_sellers = $conn->query($best_seller_query);
 
             <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-6 min-h-[50vh]">
                 <?php while ($product = mysqli_fetch_assoc($products)):
+                    if ($product['is_package']) {
+                        $product['stock'] = AppHelper::getPackageStock($conn, $product['id']);
+                    }
 
                     $category = $product['category_name'];
 
@@ -522,11 +532,12 @@ $best_sellers = $conn->query($best_seller_query);
                     $isPcsCategory = in_array($category, ['Frozen Food', 'Produk Jadi']);
 
                     $unit = $product['unit'] ?: ($isPcsCategory ? 'pcs' : 'kg');
-                    $step = ($unit == 'pcs' || $unit == 'box' || $unit == 'porsi') ? 1 : 0.5;
-                    $min = ($unit == 'pcs' || $unit == 'box' || $unit == 'porsi') ? 1 : 0.5;
+                    $isIntegerUnit = in_array($unit, ['pcs', 'box', 'porsi', 'paket']);
+                    $step = $isIntegerUnit ? 1 : 0.5;
+                    $min = $isIntegerUnit ? 1 : 0.5;
 
-                    $initialQty = $isPcsCategory ? 1 : 1.0;
-                    $initialQtyDisplay = $isPcsCategory ? '1' : '1.0';
+                    $initialQty = $isIntegerUnit ? 1 : 1.0;
+                    $initialQtyDisplay = $isIntegerUnit ? '1' : '1.0';
 
                     ?>
 
@@ -540,7 +551,8 @@ $best_sellers = $conn->query($best_seller_query);
                            }
                            echo htmlspecialchars($img_src);
                            ?>" data-category="<?php echo htmlspecialchars($product['category_name']); ?>"
-                        data-unit="<?php echo htmlspecialchars($unit); ?>">
+                        data-unit="<?php echo htmlspecialchars($unit); ?>"
+                        data-stock="<?php echo $product['stock']; ?>">
                         <a href="<?= BASE_URL ?>product-detail?id=<?= $product['id'] ?>" class="relative h-32 sm:h-48 overflow-hidden rounded-t-xl bg-slate-100 block">
                             <?php
                             if ($product['image']) {
@@ -672,15 +684,17 @@ $best_sellers = $conn->query($best_seller_query);
             const totalPriceDisplay = article.querySelector('.total-price-display');
             const unitPrice = parseFloat(article.dataset.price);
             const unit = article.dataset.unit;
-            const isPcsCategory = (unit == 'pcs' || unit == 'box' || unit == 'porsi');
+            const isIntegerUnit = (unit == 'pcs' || unit == 'box' || unit == 'porsi' || unit == 'paket');
+            const maxStock = parseFloat(article.dataset.stock) || 0;
 
             let currentWeight = parseFloat(weightDisplay.innerText);
             let newWeight = currentWeight + change;
 
-            const min = isPcsCategory ? 1 : 0.5;
+            if (newWeight > maxStock) newWeight = maxStock;
+            const min = isIntegerUnit ? 1 : 0.5;
             if (newWeight < min) newWeight = min;
 
-            weightDisplay.innerText = isPcsCategory
+            weightDisplay.innerText = isIntegerUnit
                 ? newWeight
                 : newWeight.toFixed(1);
 

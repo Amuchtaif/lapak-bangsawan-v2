@@ -55,6 +55,11 @@ $username = $_SESSION['username'] ?? 'Admin User';
             <span class="material-icons-round">inventory_2</span>
             Produk
         </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'packages.php' ? 'sidebar-active-item' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
+            href="<?= BASE_URL ?>admin/packages">
+            <span class="material-icons-round">redeem</span>
+            Produk Paket
+        </a>
         <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg <?php echo $current_page == 'categories.php' ? 'sidebar-active-item' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors'; ?>"
             href="<?= BASE_URL ?>admin/categories">
             <span class="material-icons-round">category</span>

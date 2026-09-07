@@ -128,7 +128,7 @@ $offset = ($page - 1) * $limit;
 
 // Filter Logic
 $where = "";
-$conditions = [];
+$conditions = ["products.is_package = 0"];
 
 if (isset($_GET['category_id']) && !empty($_GET['category_id'])) {
     $cat_id = intval($_GET['category_id']);
@@ -188,9 +188,9 @@ if($partner_res) {
 }
 
 // Statistics for Overview Cards
-$stat_total = $conn->query("SELECT COUNT(*) as c FROM products")->fetch_assoc()['c'];
-$stat_low = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock > 0 AND stock <= 5")->fetch_assoc()['c'];
-$stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->fetch_assoc()['c'];
+$stat_total = $conn->query("SELECT COUNT(*) as c FROM products WHERE is_package = 0")->fetch_assoc()['c'];
+$stat_low = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock > 0 AND stock <= 5 AND is_package = 0")->fetch_assoc()['c'];
+$stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0 AND is_package = 0")->fetch_assoc()['c'];
 ?>
 <!DOCTYPE html>
 <html class="light" lang="en">
@@ -567,12 +567,15 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                     <div
                         class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                         <form action="" method="GET" class="flex flex-col md:flex-row gap-4">
-                            <!-- Preserve Search if any -->
-                            <?php if (isset($_GET['search'])): ?>
-                                <input type="hidden" name="search" value="<?php echo htmlspecialchars($_GET['search']); ?>">
-                            <?php endif; ?>
+                            <div class="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-4">
+                                <!-- Search Product -->
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Cari Produk</label>
+                                    <input type="text" name="search" placeholder="Nama atau deskripsi..."
+                                        value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>"
+                                        class="w-full rounded-lg border-slate-200 bg-slate-50 dark:bg-slate-800/50 dark:border-slate-700 px-4 py-2 text-sm focus:ring-primary focus:border-primary text-slate-900 dark:text-white">
+                                </div>
 
-                            <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <!-- Category Filter -->
                                 <div>
                                     <label
@@ -583,7 +586,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                             <option value="">Semua Kategori</option>
                                             <?php foreach ($categories as $cat): ?>
                                                 <option value="<?php echo $cat['id']; ?>" <?php echo (isset($_GET['category_id']) && $_GET['category_id'] == $cat['id']) ? 'selected' : ''; ?>>
-                                                    <?php echo htmlspecialchars($cat['name']); ?>
+                                                     <?php echo htmlspecialchars($cat['name']); ?>
                                                 </option>
                                             <?php endforeach; ?>
                                         </select>
@@ -625,7 +628,7 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                 <!-- Stock Status Filter -->
                                 <div>
                                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Status
-                                        Stok</label>
+                                         Stok</label>
                                     <div class="custom-select-wrapper relative"
                                         data-onchange="this.closest('form').submit()">
                                         <select name="stock_status" class="hidden">
@@ -702,11 +705,16 @@ $stat_out = $conn->query("SELECT COUNT(*) as c FROM products WHERE stock = 0")->
                                 </div>
                             </div>
 
-                            <div class="flex items-end">
+                            <div class="flex items-end gap-2 shrink-0">
+                                <button type="submit"
+                                    class="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-blue-600 rounded-lg transition-all shadow-sm">
+                                    <span class="material-icons-round text-sm">search</span>
+                                    <span>Cari</span>
+                                </button>
                                 <a href="products"
                                     class="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-all shadow-sm">
                                     <span class="material-icons-round text-sm">restart_alt</span>
-                                    <span>Reset Filter</span>
+                                    <span>Reset</span>
                                 </a>
                             </div>
                         </form>

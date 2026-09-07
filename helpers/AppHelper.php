@@ -187,6 +187,61 @@ class AppHelper {
 
         return $formatted;
     }
+
+    public static function isPackage($conn, $product_id) {
+        $stmt = $conn->prepare("SELECT is_package FROM products WHERE id = ? LIMIT 1");
+        $stmt->bind_param("i", $product_id);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($row = $res->fetch_assoc()) {
+            return (bool)$row['is_package'];
+        }
+        return false;
+    }
+
+    public static function getPackageStock($conn, $package_id) {
+        $stmt = $conn->prepare("
+            SELECT pi.quantity, p.stock 
+            FROM package_items pi
+            JOIN products p ON pi.product_id = p.id
+            WHERE pi.package_id = ?
+        ");
+        $stmt->bind_param("i", $package_id);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($res->num_rows === 0) {
+            return 0;
+        }
+        $min_stock = null;
+        while ($row = $res->fetch_assoc()) {
+            $qty = floatval($row['quantity']);
+            $stock = floatval($row['stock']);
+            if ($qty <= 0) continue;
+            $available = floor($stock / $qty);
+            if ($min_stock === null || $available < $min_stock) {
+                $min_stock = $available;
+            }
+        }
+        return $min_stock === null ? 0 : $min_stock;
+    }
+
+    public static function getPackageItems($conn, $package_id) {
+        $stmt = $conn->prepare("
+            SELECT pi.product_id, pi.quantity, p.name, p.price, p.stock, p.unit, p.image 
+            FROM package_items pi
+            JOIN products p ON pi.product_id = p.id
+            WHERE pi.package_id = ?
+            ORDER BY p.name ASC
+        ");
+        $stmt->bind_param("i", $package_id);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $items = [];
+        while ($row = $res->fetch_assoc()) {
+            $items[] = $row;
+        }
+        return $items;
+    }
 }
 
 // Global convenience functions

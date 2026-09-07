@@ -38,14 +38,14 @@ LEFT JOIN categories c ON p.category_id = c.id
 LEFT JOIN weekly_sales_targets wst ON p.id = wst.product_id AND wst.start_date = '$selected_date'
 LEFT JOIN (
     SELECT 
-        product_name, 
+        product_id, 
         SUM(weight) as sold_qty 
     FROM order_items oi
     JOIN orders o ON oi.order_id = o.id
     WHERE DATE(o.created_at) BETWEEN '$monday_date' AND '$sunday_date' 
       AND o.status = 'completed'
-    GROUP BY product_name
-) sales ON p.name = sales.product_name
+    GROUP BY product_id
+) sales ON p.id = sales.product_id
 ORDER BY wst.target_qty_kg DESC, p.name ASC
 ";
 

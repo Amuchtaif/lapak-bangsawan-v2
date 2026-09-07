@@ -100,7 +100,7 @@ try {
             continue; // Skip invalid weights
 
         // Lock Product Row !
-        $stmt = $conn->prepare("SELECT id, name, price, buy_price, stock, category_id, unit FROM products WHERE id = ? FOR UPDATE");
+        $stmt = $conn->prepare("SELECT id, name, price, buy_price, stock, category_id, unit, is_package FROM products WHERE id = ? FOR UPDATE");
         $stmt->bind_param("i", $pid);
         $stmt->execute();
         $res = $stmt->get_result();
@@ -110,33 +110,81 @@ try {
         }
 
         $product = $res->fetch_assoc();
-        $current_stock = floatval($product['stock']);
+        $is_pkg = (bool)$product['is_package'];
         $real_price = floatval($product['price']);
         $real_buy_price = floatval($product['buy_price']);
 
-        // Check Stock
-        if ($current_stock < $reqWeight) {
-            throw new Exception("Stok tidak mencukupi untuk item: " . $product['name'] . ". Sisa stok: " . $current_stock);
-        }
+        if ($is_pkg) {
+            // Get package components and lock them
+            $comp_stmt = $conn->prepare("
+                SELECT pi.product_id, pi.quantity, p.name, p.stock 
+                FROM package_items pi
+                JOIN products p ON pi.product_id = p.id
+                WHERE pi.package_id = ?
+                FOR UPDATE
+            ");
+            $comp_stmt->bind_param("i", $pid);
+            $comp_stmt->execute();
+            $comp_res = $comp_stmt->get_result();
+            if ($comp_res->num_rows === 0) {
+                throw new Exception("Paket [" . $product['name'] . "] tidak memiliki komponen produk.");
+            }
 
-        // Fetch Category Name for Cart Calculation Helper
-        $cat_name = 'Uncategorized';
-        if ($product['category_id']) {
-            $cRes = $conn->query("SELECT name FROM categories WHERE id = " . $product['category_id']);
-            if ($cRes->num_rows > 0)
-                $cat_name = $cRes->fetch_assoc()['name'];
-        }
+            $components_list = [];
+            while ($comp = $comp_res->fetch_assoc()) {
+                $req_comp_qty = floatval($comp['quantity']) * $reqWeight;
+                $current_comp_stock = floatval($comp['stock']);
+                if ($current_comp_stock < $req_comp_qty) {
+                    throw new Exception("Stok tidak mencukupi untuk komponen [" . $comp['name'] . "] dari paket [" . $product['name'] . "]. Sisa stok: " . $current_comp_stock);
+                }
+                $components_list[] = [
+                    'product_id' => $comp['product_id'],
+                    'name' => $comp['name'],
+                    'required_qty' => $req_comp_qty,
+                    'current_stock' => $current_comp_stock
+                ];
+            }
 
-        $verified_items[] = [
-            'product_id' => $pid,
-            'name' => $product['name'], // Trust DB name
-            'price' => $real_price,     // Trust DB price
-            'buy_price' => $real_buy_price,
-            'weight' => $reqWeight,
-            'stock' => $current_stock,
-            'category' => $cat_name,
-            'unit' => $reqUnit
-        ];
+            $verified_items[] = [
+                'product_id' => $pid,
+                'name' => $product['name'],
+                'price' => $real_price,
+                'buy_price' => $real_buy_price,
+                'weight' => $reqWeight,
+                'stock' => 999999, // dummy high stock
+                'category' => 'Paket',
+                'unit' => $reqUnit,
+                'is_package' => true,
+                'components' => $components_list
+            ];
+        } else {
+            $current_stock = floatval($product['stock']);
+
+            // Check Stock
+            if ($current_stock < $reqWeight) {
+                throw new Exception("Stok tidak mencukupi untuk item: " . $product['name'] . ". Sisa stok: " . $current_stock);
+            }
+
+            // Fetch Category Name for Cart Calculation Helper
+            $cat_name = 'Uncategorized';
+            if ($product['category_id']) {
+                $cRes = $conn->query("SELECT name FROM categories WHERE id = " . $product['category_id']);
+                if ($cRes->num_rows > 0)
+                    $cat_name = $cRes->fetch_assoc()['name'];
+            }
+
+            $verified_items[] = [
+                'product_id' => $pid,
+                'name' => $product['name'], // Trust DB name
+                'price' => $real_price,     // Trust DB price
+                'buy_price' => $real_buy_price,
+                'weight' => $reqWeight,
+                'stock' => $current_stock,
+                'category' => $cat_name,
+                'unit' => $reqUnit,
+                'is_package' => false
+            ];
+        }
     }
 
     if (empty($verified_items)) {
@@ -210,14 +258,23 @@ try {
         $subtotal_item = $price * $qty;
 
         // Deduct Stock
-        $new_stock = $item['stock'] - $qty;
-        $upd = $conn->prepare("UPDATE products SET stock = ? WHERE id = ?");
-        $upd->bind_param("di", $new_stock, $p_id);
-        $upd->execute();
+        if (!empty($item['is_package'])) {
+            foreach ($item['components'] as $comp) {
+                $new_comp_stock = $comp['current_stock'] - $comp['required_qty'];
+                $upd = $conn->prepare("UPDATE products SET stock = ? WHERE id = ?");
+                $upd->bind_param("di", $new_comp_stock, $comp['product_id']);
+                $upd->execute();
+            }
+        } else {
+            $new_stock = $item['stock'] - $qty;
+            $upd = $conn->prepare("UPDATE products SET stock = ? WHERE id = ?");
+            $upd->bind_param("di", $new_stock, $p_id);
+            $upd->execute();
+        }
 
         // Insert Item
-        $ins = $conn->prepare("INSERT INTO order_items (order_id, product_name, weight, price_per_kg, buy_price, subtotal) VALUES (?, ?, ?, ?, ?, ?)");
-        $ins->bind_param("isdddd", $order_id, $item['name'], $qty, $price, $buy_price, $subtotal_item);
+        $ins = $conn->prepare("INSERT INTO order_items (order_id, product_id, product_name, weight, price_per_kg, buy_price, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $ins->bind_param("iisdddd", $order_id, $p_id, $item['name'], $qty, $price, $buy_price, $subtotal_item);
         $ins->execute();
     }
 

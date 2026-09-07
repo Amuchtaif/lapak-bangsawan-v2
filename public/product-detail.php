@@ -11,7 +11,7 @@ $product_id = mysqli_real_escape_string($conn, $_GET['id']);
 $query = "SELECT products.*, categories.name as category_name, categories.slug as category_slug 
           FROM products 
           LEFT JOIN categories ON products.category_id = categories.id 
-          WHERE products.id = '$product_id' LIMIT 1";
+          WHERE products.id = '$product_id' AND products.status = 'active' LIMIT 1";
 $result = $conn->query($query);
 
 if (mysqli_num_rows($result) === 0) {
@@ -20,6 +20,9 @@ if (mysqli_num_rows($result) === 0) {
 }
 
 $product = mysqli_fetch_assoc($result);
+if ($product['is_package']) {
+    $product['stock'] = AppHelper::getPackageStock($conn, $product['id']);
+}
 
 // Fetch Similar Products
 $cat_id = $product['category_id'];
@@ -34,9 +37,10 @@ $similar_products = $conn->query($similar_query);
 $category_name = $product['category_name'];
 $isPcsCategory = in_array($category_name, ['Frozen Food', 'Produk Jadi']);
 $unit = $product['unit'] ?: ($isPcsCategory ? 'pcs' : 'kg');
-$step = ($unit == 'pcs' || $unit == 'box' || $unit == 'porsi') ? 1 : 0.5;
-$initialQty = $isPcsCategory ? 1 : 1.0;
-$initialQtyDisplay = $isPcsCategory ? '1' : '1.0';
+$isIntegerUnit = in_array($unit, ['pcs', 'box', 'porsi', 'paket']);
+$step = $isIntegerUnit ? 1 : 0.5;
+$initialQty = $isIntegerUnit ? 1 : 1.0;
+$initialQtyDisplay = $isIntegerUnit ? '1' : '1.0';
 
 ?>
 <!DOCTYPE html>
@@ -144,14 +148,14 @@ $initialQtyDisplay = $isPcsCategory ? '1' : '1.0';
                 </div>
             </div>
 
-            <!-- Product info -->
             <div class="flex flex-col h-full" 
                  data-id="<?= $product['id'] ?>" 
                  data-price="<?= $product['price'] ?>"
                  data-name="<?= htmlspecialchars($product['name']) ?>" 
                  data-image="<?= htmlspecialchars($img_src) ?>" 
                  data-category="<?= htmlspecialchars($product['category_name']) ?>"
-                 data-unit="<?= htmlspecialchars($unit) ?>">
+                 data-unit="<?= htmlspecialchars($unit) ?>"
+                 data-stock="<?= $product['stock'] ?>">
                 
                 <div class="mb-6">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary mb-2 md:mb-3">
@@ -226,6 +230,40 @@ $initialQtyDisplay = $isPcsCategory ? '1' : '1.0';
                     </div>
                 </div>
 
+                <?php if ($product['is_package']): 
+                    $package_items = AppHelper::getPackageItems($conn, $product['id']);
+                ?>
+                    <!-- Package Items Breakdown -->
+                    <div class="mt-6 p-5 rounded-2xl bg-primary/5 border border-primary/10">
+                        <h4 class="text-xs font-black uppercase text-primary tracking-widest mb-3 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm">redeem</span>
+                            Isi Paket Promo
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <?php foreach ($package_items as $item): ?>
+                                <div class="flex items-center gap-3 bg-white dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-850">
+                                    <div class="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 border border-slate-100 dark:border-slate-800">
+                                        <?php 
+                                        $item_img = $item['image'];
+                                        if ($item_img && !filter_var($item_img, FILTER_VALIDATE_URL)) {
+                                            $item_img = BASE_URL . $item_img;
+                                        }
+                                        if ($item_img): ?>
+                                            <img src="<?= htmlspecialchars($item_img) ?>" class="w-full h-full object-cover">
+                                        <?php else: ?>
+                                            <span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center text-sm">image</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-xs text-slate-900 dark:text-white"><?= htmlspecialchars($item['name']) ?></div>
+                                        <div class="text-[10px] text-slate-500 font-semibold"><?= floatval($item['quantity']) ?> <?= htmlspecialchars($item['unit']) ?></div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Description -->
                 <div class="mt-8">
                     <h3 class="text-xs font-black uppercase text-slate-400 tracking-[0.2em] mb-4">Deskripsi Produk</h3>
@@ -294,16 +332,18 @@ $initialQtyDisplay = $isPcsCategory ? '1' : '1.0';
             const unitPrice = parseFloat(container.dataset.price);
             const unit = container.dataset.unit;
             
-            const isPcs = (unit == 'pcs' || unit == 'box' || unit == 'porsi');
-            const step = isPcs ? 1 : 0.5;
-            const min = isPcs ? 1 : 0.5;
+            const isIntegerUnit = (unit == 'pcs' || unit == 'box' || unit == 'porsi' || unit == 'paket');
+            const step = isIntegerUnit ? 1 : 0.5;
+            const min = isIntegerUnit ? 1 : 0.5;
+            const maxStock = parseFloat(container.dataset.stock) || 0;
 
             let currentWeight = parseFloat(weightDisplay.innerText);
             let newWeight = currentWeight + change;
 
+            if (newWeight > maxStock) newWeight = maxStock;
             if (newWeight < min) newWeight = min;
 
-            weightDisplay.innerText = isPcs
+            weightDisplay.innerText = isIntegerUnit
                 ? newWeight
                 : newWeight.toFixed(1);
 

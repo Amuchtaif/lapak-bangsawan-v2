@@ -48,15 +48,27 @@ $shipping_income = $stmt->get_result()->fetch_assoc()['total'];
 
 // ============================================================
 // 3. Total Discounts (Diskon yang diberikan)
-//    manual_discount from manual transactions
+//    We fetch both manual_discount and deduced system/wholesale discount
 // ============================================================
-$stmt = $conn->prepare("SELECT COALESCE(SUM(COALESCE(manual_discount, 0)), 0) as total 
-                         FROM orders 
-                         WHERE status = 'completed' 
-                         AND DATE(created_at) BETWEEN ? AND ?");
+$stmt = $conn->prepare("
+    SELECT 
+        COALESCE(SUM(COALESCE(o.manual_discount, 0)), 0) as manual_discount,
+        COALESCE(SUM(GREATEST(COALESCE(item_totals.product_total, 0) + COALESCE(o.shipping_cost, 0) - o.total_amount - COALESCE(o.manual_discount, 0), 0)), 0) as system_discount
+    FROM orders o
+    LEFT JOIN (
+        SELECT order_id, SUM(subtotal) as product_total 
+        FROM order_items 
+        GROUP BY order_id
+    ) item_totals ON o.id = item_totals.order_id
+    WHERE o.status = 'completed'
+    AND DATE(o.created_at) BETWEEN ? AND ?
+");
 $stmt->bind_param("ss", $start_date, $end_date);
 $stmt->execute();
-$total_discount = $stmt->get_result()->fetch_assoc()['total'];
+$discount_data = $stmt->get_result()->fetch_assoc();
+$manual_discount = $discount_data['manual_discount'];
+$system_discount = $discount_data['system_discount'];
+$total_discount = $manual_discount + $system_discount;
 
 // ============================================================
 // 4. Gross Revenue = total_amount (what customer actually paid)
@@ -75,7 +87,7 @@ $gross_revenue = $stmt->get_result()->fetch_assoc()['total'];
 // ============================================================
 $stmt = $conn->prepare("SELECT COALESCE(SUM(oi.weight * COALESCE(NULLIF(oi.buy_price, 0), p.buy_price, 0)), 0) as total 
                          FROM order_items oi 
-                         LEFT JOIN products p ON oi.product_name = p.name 
+                         LEFT JOIN products p ON oi.product_id = p.id 
                          JOIN orders o ON oi.order_id = o.id 
                          WHERE o.status = 'completed' 
                          AND DATE(o.created_at) BETWEEN ? AND ?");
@@ -86,8 +98,8 @@ $hpp = $stmt->get_result()->fetch_assoc()['total'];
 // ============================================================
 // 6. Calculations
 // ============================================================
-// Laba Kotor = Omset Produk - HPP (excluding shipping as it's not product margin)
-$gross_profit = $product_revenue - $hpp;
+// Laba Kotor = Omset Produk Bersih - HPP (excluding shipping as it's not product margin)
+$gross_profit = $product_revenue - $total_discount - $hpp;
 
 // 7. Operational Expenses
 $stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as total 
@@ -123,7 +135,7 @@ $order_count = $stmt->get_result()->fetch_assoc()['total'];
 $stmt = $conn->prepare("SELECT oi.product_name, SUM(oi.weight) as total_weight, SUM(oi.subtotal) as total_revenue,
                          SUM(oi.weight * COALESCE(NULLIF(oi.buy_price, 0), p.buy_price, 0)) as total_hpp
                          FROM order_items oi
-                         LEFT JOIN products p ON oi.product_name = p.name
+                         LEFT JOIN products p ON oi.product_id = p.id
                          JOIN orders o ON oi.order_id = o.id
                          WHERE o.status = 'completed'
                          AND DATE(o.created_at) BETWEEN ? AND ?
@@ -220,7 +232,7 @@ $top_products_res = $stmt->get_result();
                                     <td class="py-3 text-slate-600 dark:text-slate-400">
                                         <span class="flex items-center gap-2">
                                             <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                                            Omset Produk (Penjualan Bersih)
+                                            Omset Produk (Penjualan Kotor)
                                         </span>
                                     </td>
                                     <td class="py-3 text-right font-bold text-slate-900 dark:text-white">
@@ -238,16 +250,29 @@ $top_products_res = $stmt->get_result();
                                         + Rp <?= number_format($shipping_income, 0, ',', '.') ?>
                                     </td>
                                 </tr>
-                                <?php if ($total_discount > 0): ?>
+                                <?php if ($manual_discount > 0): ?>
                                     <tr>
                                         <td class="py-3 text-slate-600 dark:text-slate-400">
                                             <span class="flex items-center gap-2">
                                                 <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                                                Total Diskon Diberikan
+                                                Total Diskon Manual
                                             </span>
                                         </td>
                                         <td class="py-3 text-right font-medium text-amber-600">
-                                            - Rp <?= number_format($total_discount, 0, ',', '.') ?>
+                                            - Rp <?= number_format($manual_discount, 0, ',', '.') ?>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                                <?php if ($system_discount > 0): ?>
+                                    <tr>
+                                        <td class="py-3 text-slate-600 dark:text-slate-400">
+                                            <span class="flex items-center gap-2">
+                                                <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                                Total Diskon Grosir (Sistem)
+                                            </span>
+                                        </td>
+                                        <td class="py-3 text-right font-medium text-amber-600">
+                                            - Rp <?= number_format($system_discount, 0, ',', '.') ?>
                                         </td>
                                     </tr>
                                 <?php endif; ?>
@@ -340,15 +365,22 @@ $top_products_res = $stmt->get_result();
                                     <td class="py-2 text-right font-medium text-slate-900 dark:text-white">Rp
                                         <?= number_format($shipping_income, 0, ',', '.') ?></td>
                                 </tr>
-                                <?php if ($total_discount > 0): ?>
+                                <?php if ($manual_discount > 0): ?>
                                     <tr>
-                                        <td class="py-2 pl-4 text-amber-600">Diskon Penjualan</td>
+                                        <td class="py-2 pl-4 text-amber-600">Diskon Manual</td>
                                         <td class="py-2 text-right font-medium text-amber-600">(Rp
-                                            <?= number_format($total_discount, 0, ',', '.') ?>)</td>
+                                            <?= number_format($manual_discount, 0, ',', '.') ?>)</td>
+                                    </tr>
+                                <?php endif; ?>
+                                <?php if ($system_discount > 0): ?>
+                                    <tr>
+                                        <td class="py-2 pl-4 text-amber-600">Diskon Grosir (Sistem)</td>
+                                        <td class="py-2 text-right font-medium text-amber-600">(Rp
+                                            <?= number_format($system_discount, 0, ',', '.') ?>)</td>
                                     </tr>
                                 <?php endif; ?>
                                 <tr class="border-t border-slate-200 dark:border-slate-700">
-                                    <td class="py-2 pl-4 font-semibold text-slate-900 dark:text-white">Total Pendapatan
+                                    <td class="py-2 pl-4 font-semibold text-slate-900 dark:text-white">Total Pendapatan Bersih
                                     </td>
                                     <td class="py-2 text-right font-bold text-slate-900 dark:text-white">Rp
                                         <?= number_format($product_revenue + $shipping_income - $total_discount, 0, ',', '.') ?>
@@ -515,10 +547,11 @@ $top_products_res = $stmt->get_result();
                         <span class="material-icons-round text-5xl text-primary mb-4">insights</span>
                         <h4 class="font-bold text-slate-900 dark:text-white mb-2 text-lg">Analisa Performa</h4>
                         <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                            <?php
-                            if ($net_profit > 0 && $product_revenue > 0) {
-                                $margin = ($net_profit / $product_revenue) * 100;
-                                $gross_margin = ($gross_profit / $product_revenue) * 100;
+                            <?php 
+                            $net_sales = $product_revenue - $total_discount;
+                            if ($net_profit > 0 && $net_sales > 0) {
+                                $margin = ($net_profit / $net_sales) * 100;
+                                $gross_margin = ($gross_profit / $net_sales) * 100;
                                 echo "Margin laba bersih Anda adalah <b>" . number_format($margin, 1) . "%</b>";
                                 echo " dengan margin kotor <b>" . number_format($gross_margin, 1) . "%</b>.";
                             } elseif ($net_profit < 0) {
@@ -528,26 +561,26 @@ $top_products_res = $stmt->get_result();
                             }
                             ?>
                         </p>
-                        <?php if ($product_revenue > 0): ?>
+                        <?php if ($net_sales > 0): ?>
                             <div class="mt-4 space-y-3 text-left">
                                 <div>
                                     <div class="flex justify-between text-xs text-slate-500 mb-1">
                                         <span>Rasio HPP</span>
-                                        <span><?= $product_revenue > 0 ? number_format(($hpp / $product_revenue) * 100, 1) : 0 ?>%</span>
+                                        <span><?= number_format(($hpp / $net_sales) * 100, 1) ?>%</span>
                                     </div>
                                     <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                                         <div class="bg-orange-500 h-2 rounded-full"
-                                            style="width: <?= min(($hpp / $product_revenue) * 100, 100) ?>%"></div>
+                                            style="width: <?= min(($hpp / $net_sales) * 100, 100) ?>%"></div>
                                     </div>
                                 </div>
                                 <div>
                                     <div class="flex justify-between text-xs text-slate-500 mb-1">
                                         <span>Rasio Operasional</span>
-                                        <span><?= $product_revenue > 0 ? number_format(($total_expenses / $product_revenue) * 100, 1) : 0 ?>%</span>
+                                        <span><?= number_format(($total_expenses / $net_sales) * 100, 1) ?>%</span>
                                     </div>
                                     <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                                         <div class="bg-red-500 h-2 rounded-full"
-                                            style="width: <?= min(($total_expenses / $product_revenue) * 100, 100) ?>%">
+                                            style="width: <?= min(($total_expenses / $net_sales) * 100, 100) ?>%">
                                         </div>
                                     </div>
                                 </div>

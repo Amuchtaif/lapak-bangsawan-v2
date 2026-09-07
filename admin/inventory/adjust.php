@@ -49,7 +49,7 @@ $q = "SELECT sa.*, p.name as product_name, p.unit, u.full_name as admin_name
 $adjustments = $conn->query($q);
 
 // Fetch products for dropdown
-$products_res = $conn->query("SELECT id, name, stock, unit FROM products ORDER BY name ASC");
+$products_res = $conn->query("SELECT id, name, stock, unit FROM products WHERE is_package = 0 ORDER BY name ASC");
 $products = [];
 while ($p = $products_res->fetch_assoc())
     $products[] = $p;

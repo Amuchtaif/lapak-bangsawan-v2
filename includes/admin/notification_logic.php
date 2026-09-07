@@ -16,7 +16,7 @@ if (!isset($conn)) {
 $low_stock_threshold = 5;
 
 // 1. Count Empty Stock Products (stock = 0)
-$empty_stock_query = "SELECT COUNT(*) as c FROM products WHERE stock = 0";
+$empty_stock_query = "SELECT COUNT(*) as c FROM products WHERE stock = 0 AND is_package = 0";
 $empty_stock_result = mysqli_query($conn, $empty_stock_query);
 $empty_stock_count = 0;
 if ($empty_stock_result) {
@@ -25,7 +25,7 @@ if ($empty_stock_result) {
 }
 
 // 2. Count Low Stock Products (0 < stock <= threshold)
-$low_stock_query = "SELECT COUNT(*) as c FROM products WHERE stock > 0 AND stock <= $low_stock_threshold";
+$low_stock_query = "SELECT COUNT(*) as c FROM products WHERE stock > 0 AND stock <= $low_stock_threshold AND is_package = 0";
 $low_stock_result = mysqli_query($conn, $low_stock_query);
 $low_stock_count = 0;
 if ($low_stock_result) {
@@ -34,11 +34,11 @@ if ($low_stock_result) {
 }
 
 // 3. Fetch Empty Stock Items for Popup (Limit 5)
-$empty_stock_items_query = "SELECT id, name, stock, image FROM products WHERE stock = 0 ORDER BY name ASC LIMIT 5";
+$empty_stock_items_query = "SELECT id, name, stock, image FROM products WHERE stock = 0 AND is_package = 0 ORDER BY name ASC LIMIT 5";
 $empty_stock_items_result = mysqli_query($conn, $empty_stock_items_query);
 
 // 4. Fetch Low Stock Items for Popup (Limit 5)
-$low_stock_items_query = "SELECT id, name, stock, image FROM products WHERE stock > 0 AND stock <= $low_stock_threshold ORDER BY stock ASC LIMIT 5";
+$low_stock_items_query = "SELECT id, name, stock, image FROM products WHERE stock > 0 AND stock <= $low_stock_threshold AND is_package = 0 ORDER BY stock ASC LIMIT 5";
 $low_stock_items_result = mysqli_query($conn, $low_stock_items_query);
 
 // Count Unread Messages

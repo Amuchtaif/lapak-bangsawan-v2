@@ -39,7 +39,7 @@ $sql = "
         SUM(oi.weight * p.buy_price) AS total_debt
     FROM products p
     JOIN partners pt ON p.partner_id = pt.id
-    JOIN order_items oi ON p.name = oi.product_name
+    JOIN order_items oi ON p.id = oi.product_id
     JOIN orders o ON oi.order_id = o.id
     WHERE p.product_type = 'consignment'
       AND o.status = 'completed'
